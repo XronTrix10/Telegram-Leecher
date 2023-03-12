@@ -1,8 +1,11 @@
-import os
+from __future__ import print_function
+import io
+import os.path
 import pickle
-from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
-
+from googleapiclient.errors import HttpError
+from google.oauth2.credentials import Credentials
+from googleapiclient.http import MediaIoBaseDownload
 
 def size_measure(size):
     siz = ""
@@ -17,67 +20,45 @@ def size_measure(size):
     return siz
 
 
-def get_folder_size(folder_id, service):
+# define your file id and credentials location
+file_id = '10zlXfCPKubJtvp7A1vMNxuttc1YaQ9E4'
+creds_path = '/content/token.pickle'
 
+# set up the API client
+creds = None
+if os.path.exists(creds_path):
+    with open(creds_path, 'rb') as token:
+        creds = pickle.load(token)
+service = build('drive', 'v3', credentials=creds)
+
+# get the file metadata
+try:
+    file = service.files().get(fileId=file_id, supportsAllDrives=True, fields="name, id, mimeType, size").execute()
+except HttpError as error:
+    print(f'An error occurred: {error}')
+    file = None
+
+# create a file object to write the data to
+filename = file['name']
+fd = io.BytesIO()
+
+# download the file data
+if file:
     try:
-        query = "trashed = false and '{0}' in parents".format(folder_id)
-        results = (
-            service.files()
-            .list(
-                supportsAllDrives=True,
-                includeItemsFromAllDrives=True,
-                q=query,
-                fields="nextPageToken, files(id, mimeType, size)",
-            )
-            .execute()
-        )
-
-        total_size = 0
-        items = results.get("files", [])
-
-        folders_without_size = []
-        for item in items:
-            # If the item is a folder and doesn't have a size attribute, call the function recursively
-            if (item["mimeType"] == "application/vnd.google-apps.folder") and (
-                item.get("size") is None
-            ):
-                folders_without_size.append(item["id"])
-                continue
-
-            # If the item has a size attribute
-            if "size" in item:
-                total_size += int(item["size"])
-                continue
-
-            # If none of the above condition is satisfied
-            print(f"No size found for file/folder with ID '{item['id']}'")
-
-        # Recursively call the function for folders whose size is not found
-        for folder_id in folders_without_size:
-            total_size += get_folder_size(folder_id, service)
-
-        return total_size
-
+        request = service.files().get_media(fileId=file_id, supportsAllDrives=True)
+        downloader = MediaIoBaseDownload(fd, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            downloaded_bytes = int(status.progress() * int(file['size']))
+            if status:
+                progress_percent = int(status.progress() * 100)
+                print(f'Downloading {filename}: {progress_percent}% complete')
+                print(f'Download progress: {size_measure(downloaded_bytes)} / {size_measure(file["size"])}\n')
     except HttpError as error:
-        print(f"An error occurred: {error}")
-        return -1
+        print(f'An error occurred: {error}')
 
-
-if __name__ == "__main__":
-    # create credentials object from token.pickle file
-    creds = None
-    if os.path.exists("/content/token.pickle"):
-        with open("/content/token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    else:
-        exit(1)
-
-    # create drive API client
-    service = build("drive", "v3", credentials=creds)
-
-    folder_id = "1GzH4vZNFjP6__Zt6I-URg4ky_BU0LN21"
-    folder_size = get_folder_size(folder_id, service)
-
-    siz = size_measure(folder_size)
-
-    print(f"The size of the folder with ID {folder_id} is {siz}")
+# write the downloaded data to a file
+with open(filename, 'wb') as f:
+    f.write(fd.getbuffer())
+print(f'Successfully saved {filename}!')
