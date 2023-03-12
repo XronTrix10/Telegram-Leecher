@@ -80,12 +80,94 @@ def get_time():
     currentTime = currentDateAndTime.strftime("%H:%M:%S")
     return currentTime
 
+def size_measure(size):
+    siz = ""
+    if int(size) > 1073741824:
+        siz = f"{int(size)/(1024**3):.2f} GB"
+    elif int(size) > 1048576:
+        siz = f"{int(size)/(1024**2):.2f} MB"
+    elif int(size) > 1024:
+        siz = f"{int(size)/1024:.2f} KB"
+    else:
+        siz = f"{int(size)} B"
+    return siz
 
-# async def edit_msg(msg, text):
-#     async with Client(
-#         "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
-#     ) as bot:
-#         await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=text)
+
+def get_folder_size(folder_id):
+
+    try:
+        query = "trashed = false and '{0}' in parents".format(folder_id)
+        results = (
+            service.files()
+            .list(
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+                q=query,
+                fields="nextPageToken, files(id, mimeType, size)",
+            )
+            .execute()
+        )
+
+        total_size = 0
+        items = results.get("files", [])
+
+        folders_without_size = []
+        for item in items:
+            # If the item is a folder and doesn't have a size attribute, call the function recursively
+            if (item["mimeType"] == "application/vnd.google-apps.folder") and (
+                item.get("size") is None
+            ):
+                folders_without_size.append(item["id"])
+                continue
+
+            # If the item has a size attribute
+            if "size" in item:
+                total_size += int(item["size"])
+                continue
+
+            # If none of the above condition is satisfied
+            print(f"No size found for file/folder with ID '{item['id']}'")
+
+        # Recursively call the function for folders whose size is not found
+        for folder_id in folders_without_size:
+            total_size += get_folder_size(folder_id)
+
+        return total_size
+
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return -1
+
+
+async def __down_Progress(down_bytes):
+    
+    down_done = sum(down_bytes)
+
+    speed_string = ""
+
+    if down_done > 0:
+        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+        upload_speed = down_done / elapsed_time_seconds
+        upload_speed /= 1024 * 1024
+        speed_string = f"{upload_speed:.2f} MB/s"
+
+    percentage = round(down_done / folder_size * 100, 2)
+    bar_length = 14
+    filled_length = int(percentage / 100 * bar_length) 
+    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+    message = f"\n[{bar}] {percentage}%\n\nDONE: __{size_measure(down_done)}__ OF __{size_measure(folder_size)}__  __{speed_string}__"
+    try:
+        print(message)
+        # Edit the message with updated progress information.
+        if is_time_over(current_time):
+            await bot.edit_message_text(
+                chat_id=chat_id, message_id=msg.id, text=down_msg + message
+            )
+
+    except Exception as e:
+        # Catch any exceptions that might occur while editing the message.
+        print(f"Error updating progress bar: {str(e)}")
+
 
 
 async def __download_file(file_id, path):
@@ -124,11 +206,12 @@ async def __download_file(file_id, path):
                 handle.write(file_contents.getbuffer())
             di_text = f"{os.path.basename(file_name)} => Downloaded !"
             print(di_text)
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=down_msg + di_text,
-            )
+            # Use the API to get the file metadata:
+            file_metadata = __getFileMetadata(file_id)
+            # Get the file size from the metadata:
+            size_bytes = int(file_metadata['size'])
+            down_bytes.append(size_bytes)
+            await __down_Progress(down_bytes)
 
 
 # Usage example
@@ -275,10 +358,10 @@ async def progress_bar(current, total):
         speed_string = f"{upload_speed:.2f} MB/s"
 
     percentage = round(current / total * 100, 2)
-    bar_length = 10
+    bar_length = 14
     filled_length = int(percentage / 100 * bar_length) 
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}] {percentage}%\n\nDONE: __{current / (1024 * 1024):.2f}__ OF __{total / (1024 * 1024):.2f}__ MB  __{speed_string}__"
+    message = f"\n[{bar}] {percentage}%\n\nDONE: __{size_measure(current)}__ OF __{size_measure(total)}__  __{speed_string}__"
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -385,20 +468,34 @@ d_fol_path = f"{d_path}/{d_name}"
 
 sent_file = []
 sent_fileName = []
+down_bytes = []
+
+current_time = []
+current_time.append(time.time())
 
 async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
 ) as bot:
 
-    down_msg = f"<b>DOWNLOADING: </b>\n\n<code>{d_name}</code>\n\n<b>Files LOG: </b>\n\n"
+    down_msg = f"<b>DOWNLOADING: </b>\n\n<code>{d_name}</code>\n"
 
     try:
         msg = await bot.send_message(chat_id=chat_id, text=down_msg)
     except Exception as e:
         print(f"Can not {e} ")
 
+    if meta.get("mimeType") == "application/vnd.google-apps.folder":
+        folder_size = get_folder_size(file_id)
+    else:
+        file_metadata = service.files().get(fileId=file_id, supportsAllDrives=True).execute()
+        folder_size = int(file_metadata['size'])
+
+    print(f'\nTotal Download size is: {size_measure(folder_size)}')
+
     # Determine if the ID is of file or folder
     if meta.get("mimeType") == "application/vnd.google-apps.folder":
+        current_time[0] = time.time()
+        start_time = datetime.datetime.now()
         await __download_folder(file_id, d_path)
         clear_output()
         print("*" * 40 + "\n Folder Download Complete\n" + "*" * 40)
@@ -406,6 +503,8 @@ async with Client(
     else:
         if not ospath.exists(d_fol_path):
             makedirs(d_fol_path)
+        current_time[0] = time.time()
+        start_time = datetime.datetime.now()
         await __download_file(file_id, d_fol_path)
         clear_output()
         print("*" * 40 + "\n File Download Complete\n" + "*" * 40)
@@ -439,8 +538,6 @@ async with Client(
 
     clear_output()
 
-    current_time = []
-    current_time.append(time.time())
 
     if leech:  # File was splitted
 
@@ -488,7 +585,7 @@ async with Client(
         msg = await bot.edit_message_text(
             chat_id=chat_id, message_id=msg.id, text=text_msg
         )
-        await upload_file(short_path, file_type, file_name)
+        await upload_file(z_file_path, file_type, file_name)
 
         os.remove(z_file_path)
 
