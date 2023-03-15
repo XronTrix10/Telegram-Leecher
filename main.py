@@ -75,7 +75,9 @@ def get_time():
 
 def size_measure(size):
     siz = ""
-    if int(size) > 1073741824:
+    if int(size) > 1024**4:
+        siz = f"{int(size)/(1024**4):.2f} TB"
+    elif int(size) > 1073741824:
         siz = f"{int(size)/(1024**3):.2f} GB"
     elif int(size) > 1048576:
         siz = f"{int(size)/(1024**2):.2f} MB"
@@ -133,25 +135,27 @@ def get_folder_size(folder_id):
         return -1
 
 
-async def __down_Progress(down_bytes):
+async def __down_Progress(file_size):
 
-    down_done = sum(down_bytes)
+    down_done = sum(down_bytes) + file_size
 
     speed_string = ""
 
     if down_done > 0:
         elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
-        upload_speed = down_done / elapsed_time_seconds
-        upload_speed /= 1024 * 1024
-        speed_string = f"{upload_speed:.2f} MB/s"
+        down_speed = down_done / elapsed_time_seconds
+        speed_string = f"{size_measure(down_speed)}/s"
 
-    down_msg = f"<b>DOWNLOADING: {down_count[0]} OF {folder_info[1]} Files</b>\n\n<code>{d_name}</code>\n"
+    eta = (folder_info[0] - down_done) / down_speed
+    eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
+
+    down_msg = f"<b>📥 DOWNLOADING: {down_count[0]} OF {folder_info[1]} Files</b>\n\n<code>{d_name}</code>\n"
 
     percentage = round(down_done / folder_info[0] * 100, 2)
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}] {percentage}%\n\nDONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__  __{speed_string}__"
+    message = f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: {eta}\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -168,7 +172,7 @@ async def __down_Progress(down_bytes):
 async def __download_file(file_id, path):
     # Check if the specified file or folder exists and is downloadable.
     try:
-        file = service.files().get(fileId=file_id, supportsAllDrives=True).execute()
+        file = __getFileMetadata(file_id)
     except HttpError as error:
         print("An error occurred: {0}".format(error))
         file = None
@@ -184,6 +188,8 @@ async def __download_file(file_id, path):
         else:
 
             try:
+                file_name = file.get("name", f"untitleddrivefile_{file_id}")
+                file_name = os.path.join(path, file_name)
                 # Create a BytesIO stream to hold the downloaded file data.
                 file_contents = io.BytesIO()
 
@@ -191,33 +197,31 @@ async def __download_file(file_id, path):
                 request = service.files().get_media(
                     fileId=file_id, supportsAllDrives=True
                 )
-                file_downloader = MediaIoBaseDownload(file_contents, request)
+                file_downloader = MediaIoBaseDownload(
+                    file_contents, request, chunksize=50 * 1024 * 1024
+                )
                 done = False
                 while done is False:
                     status, done = file_downloader.next_chunk()
                     print(f"Download progress: {int(status.progress() * 100)}%")
-                file_contents.seek(0)
+                    # Get current value from file_contents.
+                    file_contents.seek(0)
+                    with open(file_name, "ab") as f:
+                        f.write(file_contents.getvalue())
+                    # Reset the buffer for the next chunk.
+                    file_contents.seek(0)
+                    file_contents.truncate()
+                    # The saved bytes till now
+                    file_d_size = int(status.progress() * int(file["size"]))
+                    print(f"Downloaded size: {size_measure(file_d_size)}")
+                    await __down_Progress(file_d_size)
 
-                # Save the downloaded file or folder to disk using its original name (if available).
-                file_name = file.get("name", f"untitleddrivefile_{file_id}")
-                file_name = os.path.join(path, file_name)
-                with open(file_name, "wb") as handle:
-                    handle.write(file_contents.getbuffer())
-                di_text = f"{os.path.basename(file_name)} => Downloaded !"
-                print(di_text)
-                # Use the API to get the file metadata:
-                file_metadata = __getFileMetadata(file_id)
-                # Get the file size from the metadata:
-                size_bytes = int(file_metadata["size"])
-                down_bytes.append(size_bytes)
+                print(f"DOWNLOADED  =>   {os.path.basename(file_name)}")
+                down_bytes.append(int(file["size"]))
                 down_count[0] += 1
-                await __down_Progress(down_bytes)
+
             except Exception as e:
                 print("Error downloading: {0}".format(e))
-
-
-# Usage example
-# __download_file('1XQyVFHC44zso-HM2-EyLm8YeusxcqNOX', '/content/Downloads')
 
 
 async def __download_folder(folder_id, path):
@@ -245,13 +249,9 @@ async def __download_folder(folder_id, path):
             await __download_file(file_id, path)
 
 
-
-
 # =================================================================
 #    Telegram Upload Functions
 # =================================================================
-
-
 
 
 def get_file_type(file_path):
@@ -305,7 +305,7 @@ async def size_checker(file_path):
             chat_id=chat_id,
             message_id=msg.id,
             text=down_msg
-            + f"\nSIZE: {size_measure(file_size)}\n\n<b>SO SPLITTING !</b>",
+            + f"\nSIZE: {size_measure(file_size)}\n\n<b>✂️ SPLITTING !</b>",
         )
 
         if not ospath.exists(d_fol_path):
@@ -360,14 +360,16 @@ async def progress_bar(current, total):
     if current > 0:
         elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
         upload_speed = current / elapsed_time_seconds
-        upload_speed /= 1024 * 1024
-        speed_string = f"{upload_speed:.2f} MB/s"
+        speed_string = f"{size_measure(upload_speed)}/s"
 
-    percentage = round(current / total * 100, 2)
+    eta = (z_file_size - current - sum(up_bytes)) / upload_speed
+    eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
+
+    percentage = round((current + sum(up_bytes)) / z_file_size * 100, 2)
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}] {percentage}%\n\nDONE: __{size_measure(current)}__ OF __{size_measure(total)}__  __{speed_string}__"
+    message = f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__ ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__ OF __{size_measure(z_file_size)}__"
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -385,6 +387,8 @@ async def upload_file(file_path, type, file_name):
 
     # Upload the file
     try:
+
+        global sent
 
         caption = f"<code>{file_name}</code>"
 
@@ -414,12 +418,12 @@ async def upload_file(file_path, type, file_name):
 
         elif type == "document":
 
-            sent = await bot.send_document(
-                chat_id=dump_id,
+            sent = await sent.reply_document(
                 document=file_path,
                 caption=caption,
                 thumb=thumb_path,
                 progress=progress_bar,
+                reply_to_message_id=sent.id
             )
 
         elif type == "photo":
@@ -445,6 +449,7 @@ async def upload_file(file_path, type, file_name):
 #    Main Functions, function calls and variable declarations
 # ****************************************************************
 
+link_p = str(dump_id)[4:]
 # Replace THUMB_PATH with the path to your thumbnail file (optional)
 thumb_path = "/content/thmb.jpg"
 # Replace FILE_PATH with the path to your media file
@@ -453,6 +458,9 @@ d_path = "/content/Downloads"
 sent_file = []
 sent_fileName = []
 down_bytes = []
+down_bytes.append(0)
+up_bytes = []
+up_bytes.append(0)
 
 current_time = []
 current_time.append(time.time())
@@ -495,11 +503,11 @@ async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
 ) as bot:
 
-    down_msg = f"<b>DOWNLOADING: </b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING: </b>\n\n<code>{d_name}</code>\n"
 
     try:
         msg = await bot.send_message(
-            chat_id=chat_id, text=down_msg + f"\n__Calculating DOWNLOAD SIZE...__"
+            chat_id=chat_id, text=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__"
         )
     except Exception as e:
         print(f"Can not {e} ")
@@ -530,32 +538,37 @@ async with Client(
         clear_output()
         print("*" * 40 + "\n File Download Complete\n" + "*" * 40)
 
-    down_msg = f"\n<b>Download COMPLETE:</b>\n\n<code>{d_name}</code>\n"
-
     msg = await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
-        text=f"\n<b>ZIPPING:</b>\n\n<code>{d_name}</code>\n",
+        text=f"\n<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n",
     )
 
     print("\nNow Zipping the folder...")
     z_file_path = create_zip(d_fol_path)
+    z_file_size = os.stat(z_file_path).st_size
+
     print(f"\nZip file saved as: {z_file_path}")
 
     shutil.rmtree(d_fol_path)
     print("\nDELETED Original Directory !\n")
 
-    msg = await bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=msg.id,
-        text=down_msg + f"\nNow Checking The FILE for Leech",
-    )
+    down_msg = f"\n<b>✅ Download COMPLETE:</b>\n\n<code>{d_name}</code>\n"
 
     leech = await size_checker(z_file_path)
 
     file_size = os.stat(z_file_path).st_size
 
     clear_output()
+
+    if ospath.exists(d_fol_path):
+        file_count = len(os.listdir(d_fol_path))
+    else:
+        file_count = 1
+
+    dump_text = final_text = f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size: {size_measure(z_file_size)}</b>\n\n<b>📂 Total Files:</b>  <code>{file_count}</code>\n"
+
+    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
 
     if leech:  # File was splitted
 
@@ -576,17 +589,14 @@ async with Client(
             print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
-            text_msg = f"<b>UPLOADING: {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
+            text_msg = f"<b>📤 UPLOADING: {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
             msg = await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=text_msg
-            )
-            await upload_file(short_path, file_type, file_name)
-
-            await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=f"<b>UPLOAD COMPLETE:</b>\n\n<code>{file_name}</code>\n",
+                text=text_msg + "\n⏳ __Starting.....__",
             )
+            await upload_file(short_path, file_type, file_name)
+            up_bytes.append(os.stat(short_path).st_size)
 
             count += 1
 
@@ -599,23 +609,24 @@ async with Client(
         print(f"\nNow uploading {file_name}\n")
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
-        text_msg = f"<b>UPLOADING: 1 File</b>\n\n<code>{file_name}</code>\n"
+        text_msg = f"<b>📤 UPLOADING: 1 File</b>\n\n<code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
-            chat_id=chat_id, message_id=msg.id, text=text_msg
+            chat_id=chat_id, message_id=msg.id, text=text_msg + "\n⏳ __Starting.....__"
         )
         await upload_file(z_file_path, file_type, file_name)
 
         os.remove(z_file_path)
 
-    final_text = f"<b>Name:</b>  <code>{d_name}</code>\n\n<b>Total Files:</b>  <code>{len(sent_file)}</code>\n"
+    final_text = f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size: {size_measure(z_file_size)}</b>\n\n<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n"
     i = 0
 
     for sent in sent_file:
 
-        file_link = f"https://t.me/c/1578391154/{sent.id}"
+        file_link = f"https://t.me/c/{link_p}/{sent.id}"
         fileName = sent_fileName[i]
         fileText = f"\n{i+1}. <a href={file_link}>{fileName}</a>"
         final_text += fileText
         i += 1
 
-    await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=final_text)
+    await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
+    await bot.send_photo(chat_id=chat_id, photo=thumb_path, caption=final_text)
