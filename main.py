@@ -394,8 +394,7 @@ async def upload_file(file_path, type, file_name):
 
         if type == "video":
 
-            sent = await bot.send_video(
-                chat_id=dump_id,
+            sent = await sent.reply_video(
                 video=file_path,
                 supports_streaming=True,
                 width=480,
@@ -403,17 +402,18 @@ async def upload_file(file_path, type, file_name):
                 caption=caption,
                 thumb=thumb_path,
                 progress=progress_bar,
+                reply_to_message_id=sent.id,
             )
 
         elif type == "audio":
 
-            sent = await bot.send_audio(
-                chat_id=dump_id,
+            sent = await sent.reply_audio(
                 audio=file_path,
                 supports_streaming=True,
                 caption=caption,
                 thumb=thumb_path,
                 progress=progress_bar,
+                reply_to_message_id=sent.id,
             )
 
         elif type == "document":
@@ -423,16 +423,16 @@ async def upload_file(file_path, type, file_name):
                 caption=caption,
                 thumb=thumb_path,
                 progress=progress_bar,
-                reply_to_message_id=sent.id
+                reply_to_message_id=sent.id,
             )
 
         elif type == "photo":
 
-            sent = await bot.send_photo(
-                chat_id=dump_id,
+            sent = await sent.reply_photo(
                 photo=file_path,
                 caption=caption,
                 progress=progress_bar,
+                reply_to_message_id=sent.id,
             )
 
         clear_output()
@@ -566,7 +566,9 @@ async with Client(
     else:
         file_count = 1
 
-    dump_text = final_text = f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size: {size_measure(z_file_size)}</b>\n\n<b>📂 Total Files:</b>  <code>{file_count}</code>\n"
+    dump_text = (
+        final_text
+    ) = f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size: {size_measure(z_file_size)}</b>\n\n<b>📂 Total Files:</b>  <code>{file_count}</code>\n"
 
     sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
 
