@@ -31,29 +31,45 @@ def get_time():
 
 
 def size_measure(size):
-    siz = ""
-    if int(size) > 1024**4:
-        siz = f"{int(size)/(1024**4):.2f} TB"
-    elif int(size) > 1073741824:
-        siz = f"{int(size)/(1024**3):.2f} GB"
-    elif int(size) > 1048576:
-        siz = f"{int(size)/(1024**2):.2f} MB"
-    elif int(size) > 1024:
-        siz = f"{int(size)/1024:.2f} KB"
+
+    if size > 1024 * 1024 * 1024 * 1024:
+        siz = f"{size/(1024**4):.2f} TB"
+    elif size > 1024 * 1024 * 1024:
+        siz = f"{size/(1024**3):.2f} GB"
+    elif size > 1024 * 1024:
+        siz = f"{size/(1024**2):.2f} MB"
+    elif size > 1024:
+        siz = f"{size/1024:.2f} KB"
     else:
-        siz = f"{int(size)} B"
+        siz = f"{size} B"
     return siz
 
 
 def get_file_type(file_path):
     name, extension = os.path.splitext(file_path)
-    if extension in [".mp4", ".avi", ".mkv", ".mov", ".webm", ".m4v"]:
-        video_extension_fixer(file_path)
-        return "video"
-    elif extension in [".mp3", ".wav", ".flac", ".aac", ".ogg"]:
-        return "audio"
-    elif extension in [".jpg", ".jpeg", ".png", ".gif"]:
-        return "photo"
+
+    extensions_dict = {
+        ".mp4": "video",
+        ".avi": "video",
+        ".mkv": "video",
+        ".mov": "video",
+        ".webm": "video",
+        ".m4v": "video",
+        ".mp3": "audio",
+        ".wav": "audio",
+        ".flac": "audio",
+        ".aac": "audio",
+        ".ogg": "audio",
+        ".jpg": "photo",
+        ".jpeg": "photo",
+        ".png": "photo",
+        ".gif": "photo",
+    }
+
+    if extension in extensions_dict:
+        if extensions_dict[extension] == "video":
+            video_extension_fixer(file_path)
+        return extensions_dict[extension]
     else:
         return "document"
 
@@ -109,7 +125,7 @@ async def zip_folder(folder_path):
                     percentage = int((current_size / total_size) * 100)
                     print(
                         f"Zipping {relative_path} - {percentage}%"
-                        + " ({size_measure(current_size)}/{size_measure(total_size)} bytes)"
+                        + f" ({size_measure(current_size)}/{size_measure(total_size)} bytes)"
                     )
 
                     bar_length = 14
@@ -194,7 +210,7 @@ def split_zipFile(file_path, max_size):
 
 
 def is_time_over(current_time):
-    ten_sec_passed = time.time() - current_time[0] >= 6
+    ten_sec_passed = time.time() - current_time[0] >= 3
     if ten_sec_passed:
         current_time[0] = time.time()
     return ten_sec_passed
@@ -493,7 +509,11 @@ async def progress_bar(current, total):
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__ ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__ OF __{size_measure(total_down_size)}__"
+    message = (
+        f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__"
+        + " ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
+        + " OF __{size_measure(total_down_size)}__"
+    )
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -643,7 +663,7 @@ async def Leech(d_fol_path):
 
 async def ZipLeech(d_fol_path):
 
-    global msg, down_msg, start_time, d_name
+    global msg, down_msg, start_time, d_name, total_down_size
 
     down_msg = f"\n<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n"
 
@@ -656,7 +676,11 @@ async def ZipLeech(d_fol_path):
     print("\nNow Zipping the folder...")
     current_time[0] = time.time()
     start_time = datetime.datetime.now()
+
     z_file_path = await zip_folder(d_fol_path)
+    total_down_size = os.stat(z_file_path).st_size
+
+    shutil.rmtree(d_fol_path)
 
     await Leecher(z_file_path)
 
