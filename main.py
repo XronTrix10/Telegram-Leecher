@@ -189,14 +189,16 @@ async def extract_zip(zip_filepath):
                 + f"__{size_measure(os.stat(zip_filepath).st_size)}__"
             )
 
-        print(f"File size is {size_measure(file_size)} SPLITTING.......")
+            print(message)
 
-        await bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=msg.id,
-            text=down_msg
-            + f"\nSIZE: {size_measure(file_size)}\n\n<b>✂️ SPLITTING !</b>",
-        )
+            try:
+                # Edit the message with updated progress information.
+                if is_time_over(current_time):
+                    await bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=msg.id,
+                        text=down_msg + message,
+                    )
 
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
