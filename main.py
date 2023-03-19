@@ -863,6 +863,8 @@ async with Client(
         chat_id=chat_id, text=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__"
     )
 
+    sent = msg
+
     await g_DownLoad()
 
     total_down_size = get_folder_size(d_fol_path)
