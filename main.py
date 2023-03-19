@@ -599,6 +599,7 @@ async def progress_bar(current, total):
 
 async def upload_file(file_path, type, file_name):
 
+    global sent
     # Upload the file
     try:
 
@@ -718,7 +719,22 @@ async def Leecher(file_path):
         os.remove(file_path)
 
 
-async def Leech(d_fol_path):
+async def Leech(folder_path):
+
+    global sent
+
+    dump_text = (
+        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>"
+        + f"\n\n<b>📂 Total Files:</b>  <code>{get_file_count(folder_path)}</code>\n"
+    )
+
+    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
+
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for f in sorted(filenames):
+            file_path = os.path.join(dirpath,f)
+            print(f"\nNow uploading {os.path.basename(file_path)}\n")
+            await Leecher(file_path)
 
     file_list = os.listdir(d_fol_path)
 
