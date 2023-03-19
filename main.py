@@ -833,7 +833,8 @@ if not ospath.exists(d_path):
     makedirs(d_path)
 d_name = ""
 d_fol_path = d_path  # Initial Declaration
-temp_lpath = f"{d_path}/Leech_Files"
+temp_lpath = f"{d_path}/Leeched_Files"
+temp_unzip_path = f"{d_path}/Unzipped_Files"
 sent_file = []
 sent_fileName = []
 down_bytes = []
