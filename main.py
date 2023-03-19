@@ -597,7 +597,7 @@ async def progress_bar(current, total):
         print(f"Error updating progress bar: {str(e)}")
 
 
-async def upload_file(file_path, type, file_name, sent):
+async def upload_file(file_path, type, file_name):
 
     # Upload the file
     try:
