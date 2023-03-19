@@ -83,6 +83,14 @@ def get_folder_size(folder_path):
     return total_size
 
 
+def get_file_count(folder_path):
+    count = 0
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for f in filenames:
+            count += 1
+    return count
+
+
 def video_extension_fixer(file_path):
 
     dir_path, filename = os.path.split(file_path)
