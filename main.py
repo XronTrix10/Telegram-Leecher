@@ -736,13 +736,15 @@ async def Leech(folder_path):
             print(f"\nNow uploading {os.path.basename(file_path)}\n")
             await Leecher(file_path)
 
-    file_list = os.listdir(d_fol_path)
+    # file_list = sorted(os.listdir(folder_path))
 
-    for file_path in file_list:
+    # for file_path in file_list:
 
-        short_path = os.path.join(d_fol_path, file_path)
-        file_name = os.path.basename(short_path)
-        print(f"\nNow uploading {file_name}\n")
+    #     short_path = os.path.join(folder_path, file_path)
+    #     file_name = os.path.basename(short_path)
+    #     print(f"\nNow uploading {file_name}\n")
+
+    #     await Leecher(short_path)
 
         await Leecher(short_path)
 
