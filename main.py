@@ -773,8 +773,37 @@ async def ZipLeech(d_fol_path):
     await Leecher(z_file_path)
 
 
-async def UnzipLeech():
-    pass
+async def UnzipLeech(d_fol_path):
+
+    global msg
+
+    down_msg = f"\n<b>📂 UNZIPPING:</b>\n\n<code>{d_name}</code>\n"
+
+    msg = await bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=msg.id,
+        text=down_msg,
+    )
+
+    file_list = os.listdir(d_fol_path)
+
+    for file in file_list:
+
+        short_path = os.path.join(d_fol_path, file)
+        name, extension = os.path.splitext(short_path)
+
+        if extension == '.zip':
+
+            await extract_zip(short_path)
+            clear_output()
+            shutil.rmtree(d_fol_path)
+            await Leech(temp_unzip_path)
+
+        else:
+            clear_output()
+            print(f'Unable to extract a {extension} file. Starting Leeching !')
+            await Leecher(short_path)
+
 
 
 async def FinalStep():
