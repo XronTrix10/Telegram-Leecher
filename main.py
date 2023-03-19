@@ -217,7 +217,7 @@ async def size_checker(file_path):
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
 
-        split_zipFile(file_path, max_size)
+        await split_zipFile(file_path, max_size)
 
         return True
     else:
@@ -226,15 +226,20 @@ async def size_checker(file_path):
         return False
 
 
-def split_zipFile(file_path, max_size):
-
+async def split_zipFile(file_path, max_size):
     dir_path, filename = os.path.split(file_path)
-
     new_path = f"{temp_lpath}/{filename}"
+    down_msg = (
+        f"<b>✂️ SPLITTING !</b>\n\n<code>{d_name}</code>\n"
+        + f"\nSIZE: {size_measure(os.stat(file_path).st_size)}\n"
+    )
+    # Get the total size of the file
+    total_size = os.path.getsize(file_path)
 
     with open(file_path, "rb") as f:
         chunk = f.read(max_size)
         i = 1
+        bytes_written = 0
 
         while chunk:
             # Generate filename for this chunk
@@ -245,9 +250,31 @@ def split_zipFile(file_path, max_size):
             with open(output_filename, "wb") as out:
                 out.write(chunk)
 
+            bytes_written += len(chunk)
+            progress_percent = bytes_written / total_size * 100
+
+            bar_length = 14
+            filled_length = int(progress_percent / 100 * bar_length)
+            bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+            message = (
+                f"\n[{bar}]  {progress_percent}%"
+                + f"\n✅ DONE: __{size_measure(bytes_written)}__ OF __{size_measure(total_size)}__"
+            )
+            print(message)
+            try:
+                await bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=msg.id,
+                    text=down_msg
+                    + f"\n[{bar}]  {progress_percent:.2f}%"
+                    + f"\n✅ DONE: __{size_measure(bytes_written)}__ OF __{size_measure(total_size)}__",
+                )
+            except Exception as e:
+                # Catch any exceptions that might occur while editing the message.
+                print(f"Error updating progress bar: {str(e)}")
+
             # Get next chunk
             chunk = f.read(max_size)
-
             # Increment chunk counter
             i += 1
 
