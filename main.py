@@ -200,6 +200,20 @@ async def extract_zip(zip_filepath):
                         text=down_msg + message,
                     )
 
+            except Exception as e:
+                # Catch any exceptions that might occur while editing the message.
+                print(f"Error updating progress bar: {str(e)}")
+
+
+async def size_checker(file_path):
+
+    max_size = 2097152000  # 2 GB
+    file_size = os.stat(file_path).st_size
+
+    if file_size > max_size:
+
+        print(f"File size is {size_measure(file_size)} SPLITTING.......")
+
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
 
