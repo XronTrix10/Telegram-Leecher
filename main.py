@@ -163,12 +163,31 @@ async def zip_folder(folder_path):
 
 async def extract_zip(zip_filepath):
 
-    max_size = 2097152000  # 2 GB
-    file_size = os.stat(file_path).st_size
+    if not os.path.exists(temp_unzip_path):
+        makedirs(temp_unzip_path)
 
-    down_msg = f"\n<b>✅ Download COMPLETE:</b>\n\n<code>{d_name}</code>\n"
+    with zipfile.ZipFile(zip_filepath) as zf:
+        num_files = len(zf.infolist())
 
-    if file_size > max_size:
+        total_size = sum(file.file_size for file in zf.infolist())
+        extracted_size = 0
+        print(f"Extracting {num_files} files...")
+        for i, member in enumerate(zf.infolist(), 1):
+            # print(f"Extracting {member.filename} ({member.file_size} bytes)")
+            extracted_size += member.file_size
+            zf.extract(member, temp_unzip_path)
+            percent_complete = (extracted_size / total_size) * 100 if total_size else 0
+
+            down_msg = f"<b>📂 UNZIPPING:</b>\n\n<code>{d_name}</code>\n"
+
+            bar_length = 14
+            filled_length = int(percent_complete / 100 * bar_length)
+            bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+            message = (
+                f"\n[{bar}]  {percent_complete:.2f}%"
+                + f"\n✅ DONE: __{size_measure(extracted_size)}__ OF "
+                + f"__{size_measure(os.stat(zip_filepath).st_size)}__"
+            )
 
         print(f"File size is {size_measure(file_size)} SPLITTING.......")
 
