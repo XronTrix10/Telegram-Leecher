@@ -730,7 +730,7 @@ async def Leech(folder_path):
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
         for f in sorted(filenames):
-            file_path = os.path.join(dirpath,f)
+            file_path = os.path.join(dirpath, f)
             print(f"\nNow uploading {os.path.basename(file_path)}\n")
             await Leecher(file_path)
 
@@ -804,7 +804,7 @@ async def UnzipLeech(d_fol_path):
         short_path = os.path.join(d_fol_path, file)
         name, extension = os.path.splitext(short_path)
 
-        if extension == '.zip':
+        if extension == ".zip":
 
             await extract_zip(short_path)
             clear_output()
@@ -813,9 +813,8 @@ async def UnzipLeech(d_fol_path):
 
         else:
             clear_output()
-            print(f'Unable to extract a {extension} file. Starting Leeching !')
+            print(f"Unable to extract a {extension} file. Starting Leeching !")
             await Leecher(short_path)
-
 
 
 async def FinalStep():
