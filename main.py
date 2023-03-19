@@ -161,7 +161,7 @@ async def zip_folder(folder_path):
     return output_path
 
 
-async def size_checker(file_path):
+async def extract_zip(zip_filepath):
 
     max_size = 2097152000  # 2 GB
     file_size = os.stat(file_path).st_size
