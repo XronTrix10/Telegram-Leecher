@@ -887,6 +887,20 @@ async with Client(
 
     clear_output()
 
-    await ZipLeech(d_fol_path)
+    choice = input(
+        "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
+    )
+
+    if choice == "1":
+        await Leech(d_fol_path)
+
+    elif choice == "2":
+        await ZipLeech(d_fol_path)
+
+    elif choice == "3":
+        await UnzipLeech(d_fol_path)
+
+    else:
+        print("\nGo And Learn ENGLISH First ")
 
     await FinalStep()
