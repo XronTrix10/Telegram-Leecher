@@ -857,7 +857,7 @@ async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
 ) as bot:
 
-    down_msg = f"<b>📥 DOWNLOADING: </b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING: </b>\n"
 
     msg = await bot.send_message(
         chat_id=chat_id, text=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__"
