@@ -746,7 +746,7 @@ async def Leech(folder_path):
 
     #     await Leecher(short_path)
 
-        await Leecher(short_path)
+    shutil.rmtree(folder_path)
 
 
 async def ZipLeech(d_fol_path):
