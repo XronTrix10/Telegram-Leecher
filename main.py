@@ -132,20 +132,22 @@ async def zip_folder(folder_path):
                     current_size += os.path.getsize(fp)
                     percentage = int((current_size / total_size) * 100)
                     print(
-                        f"Zipping {relative_path} - {percentage}%"
-                        + f" ({size_measure(current_size)}/{size_measure(total_size)} bytes)"
+                        f"Zipping - {percentage:.2f}%"
+                        + f" ({size_measure(current_size)}/{size_measure(total_size)})"
                     )
+
+                    # Delete the file after writing it to the zip object.
+                    os.remove(fp)
 
                     bar_length = 14
                     filled_length = int(percentage / 100 * bar_length)
                     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
                     message = (
-                        f"\n[{bar}]  {percentage}%"
+                        f"\n[{bar}]  {percentage:.2f}%"
                         + f"\n✅ DONE: __{size_measure(current_size)}__ OF __{size_measure(total_size)}__"
                     )
 
                     try:
-                        print(message)
                         # Edit the message with updated progress information.
                         if is_time_over(current_time):
                             await bot.edit_message_text(
@@ -581,8 +583,8 @@ async def progress_bar(current, total):
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
     message = (
         f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__"
-        + " ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
-        + " OF __{size_measure(total_down_size)}__"
+        + f" ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
+        + f" OF __{size_measure(total_down_size)}__"
     )
     try:
         print(message)
@@ -660,11 +662,7 @@ async def upload_file(file_path, type, file_name):
 
 async def Leecher(file_path):
 
-    global text_msg, start_time, msg
-
-    dump_text = f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>\n"
-
-    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
+    global text_msg, start_time, msg, sent
 
     file_type = get_file_type(file_path)
     file_name = os.path.basename(file_path)
@@ -696,7 +694,7 @@ async def Leecher(file_path):
                 message_id=msg.id,
                 text=text_msg + "\n⏳ __Starting.....__",
             )
-            await upload_file(short_path, file_type, file_name, sent)
+            await upload_file(short_path, file_type, file_name)
             up_bytes.append(os.stat(short_path).st_size)
 
             count += 1
@@ -714,7 +712,7 @@ async def Leecher(file_path):
         msg = await bot.edit_message_text(
             chat_id=chat_id, message_id=msg.id, text=text_msg + "\n⏳ __Starting.....__"
         )
-        await upload_file(file_path, file_type, file_name, sent)
+        await upload_file(file_path, file_type, file_name)
 
         os.remove(file_path)
 
@@ -751,7 +749,7 @@ async def Leech(folder_path):
 
 async def ZipLeech(d_fol_path):
 
-    global msg, down_msg, start_time, d_name, total_down_size
+    global msg, down_msg, start_time, d_name, total_down_size, sent
 
     down_msg = f"\n<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n"
 
@@ -766,7 +764,21 @@ async def ZipLeech(d_fol_path):
     start_time = datetime.datetime.now()
 
     z_file_path = await zip_folder(d_fol_path)
+    clear_output()
+
     total_down_size = os.stat(z_file_path).st_size
+
+    if total_down_size > 2000 * 1024**2:
+        leech_count = (total_down_size // (2000 * 1024**2)) + 1
+    else:
+        leech_count = 1
+
+    dump_text = (
+        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>\n"
+        + f"\n\n<b>📂 Total Files:</b>  <code>{leech_count}</code>\n"
+    )
+
+    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
 
     shutil.rmtree(d_fol_path)
 
@@ -808,7 +820,11 @@ async def UnzipLeech(d_fol_path):
 
 async def FinalStep():
 
-    final_text = f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size: {size_measure(total_down_size)}</b>\n\n<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n"
+    final_text = (
+        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n"
+        + f"<b>📦 Size: </b><code>{size_measure(total_down_size)}</code>\n\n"
+        + f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
+    )
 
     for i in range(len(sent_file)):
 
@@ -818,7 +834,7 @@ async def FinalStep():
         final_text += fileText
 
     await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
-    await bot.send_photo(chat_id=chat_id, photo=thumb_path, caption=final_text)
+    await bot.send_message(chat_id=chat_id, text=final_text)
 
 
 # ****************************************************************
