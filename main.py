@@ -867,6 +867,14 @@ text_msg = ""
 
 service = build_service()
 
+if not os.path.exists(thumb_path):
+    thumb_path = (
+        "https://github.com/XronTrix10/Telegram-Leecher/raw/main/custom_thmb.jpg"
+    )
+    print("Didn't find thumbnail, So switching to default thumbnail")
+if not ospath.exists(d_path):
+    makedirs(d_path)
+
 
 async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
