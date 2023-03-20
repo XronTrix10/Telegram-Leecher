@@ -880,6 +880,16 @@ async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
 ) as bot:
 
+    while True:
+        choice = input(
+            "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
+        )
+        if choice in ['1','2','3']:
+            break
+        else:
+            clear_output()
+            print("Don't you understand ENGLISH ?\n")
+
     down_msg = f"<b>📥 DOWNLOADING: </b>\n"
 
     msg = await bot.send_message(
