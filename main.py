@@ -316,9 +316,9 @@ async def g_DownLoad():
     # enter the link for the file or folder that you want to download
     link = input("Enter the Google Drive link for the file or folder: ")
 
-    file_id = __getIdFromUrl(link)
+    file_id = getIDFromURL(link)
 
-    meta = __getFileMetadata(file_id)
+    meta = getFileMetadata(file_id)
 
     d_name = meta["name"]
 
@@ -330,13 +330,13 @@ async def g_DownLoad():
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
-        await __download_folder(file_id, d_path)
+        await gDownloadFolder(file_id, d_path)
         clear_output()
         print("*" * 40 + "\n Folder Download Complete\n" + "*" * 40)
 
     else:
 
-        file_metadata = __getFileMetadata(file_id)
+        file_metadata = getFileMetadata(file_id)
         folder_info[0] = int(
             file_metadata["size"]
         )  # Get the file size from the metadata:
@@ -345,12 +345,12 @@ async def g_DownLoad():
             makedirs(d_fol_path)
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
-        await __download_file(file_id, d_fol_path)
+        await gDownloadFile(file_id, d_fol_path)
         clear_output()
         print("*" * 40 + "\n File Download Complete\n" + "*" * 40)
 
 
-def __getIdFromUrl(link: str):
+def getIDFromURL(link: str):
     if "folders" in link or "file" in link:
         regex = r"https:\/\/drive\.google\.com\/(?:drive(.*?)\/folders\/|file(.*?)?\/d\/)([-\w]+)"
         res = re_search(regex, link)
@@ -361,7 +361,7 @@ def __getIdFromUrl(link: str):
     return parse_qs(parsed.query)["id"][0]
 
 
-def __getFilesByFolderId(folder_id):
+def getFilesByFolderID(folder_id):
     page_token = None
     files = []
     while True:
@@ -386,7 +386,7 @@ def __getFilesByFolderId(folder_id):
     return files
 
 
-def __getFileMetadata(file_id):
+def getFileMetadata(file_id):
     return (
         service.files()
         .get(fileId=file_id, supportsAllDrives=True, fields="name, id, mimeType, size")
@@ -441,7 +441,7 @@ def get_Gfolder_size(folder_id):
         return -1
 
 
-async def __down_Progress(file_size):
+async def downloadProgress(file_size):
 
     global start_time
 
@@ -477,10 +477,10 @@ async def __down_Progress(file_size):
         print(f"Error updating progress bar: {str(e)}")
 
 
-async def __download_file(file_id, path):
+async def gDownloadFile(file_id, path):
     # Check if the specified file or folder exists and is downloadable.
     try:
-        file = __getFileMetadata(file_id)
+        file = getFileMetadata(file_id)
     except HttpError as error:
         print("An error occurred: {0}".format(error))
         file = None
@@ -522,7 +522,7 @@ async def __download_file(file_id, path):
                     # The saved bytes till now
                     file_d_size = int(status.progress() * int(file["size"]))
                     print(f"Downloaded size: {size_measure(file_d_size)}")
-                    await __down_Progress(file_d_size)
+                    await downloadProgress(file_d_size)
 
                 print(f"DOWNLOADED  =>   {os.path.basename(file_name)}")
                 down_bytes.append(int(file["size"]))
@@ -532,14 +532,14 @@ async def __download_file(file_id, path):
                 print("Error downloading: {0}".format(e))
 
 
-async def __download_folder(folder_id, path):
+async def gDownloadFolder(folder_id, path):
 
-    folder_meta = __getFileMetadata(folder_id)
+    folder_meta = getFileMetadata(folder_id)
     folder_name = folder_meta["name"]
     if not ospath.exists(f"{path}/{folder_name}"):
         makedirs(f"{path}/{folder_name}")
     path += f"/{folder_name}"
-    result = __getFilesByFolderId(folder_id)
+    result = getFilesByFolderID(folder_id)
     if len(result) == 0:
         return
     result = sorted(result, key=lambda k: k["name"])
@@ -552,9 +552,9 @@ async def __download_folder(folder_id, path):
         else:
             mime_type = item.get("mimeType")
         if mime_type == "application/vnd.google-apps.folder":
-            await __download_folder(file_id, path)
+            await gDownloadFolder(file_id, path)
         else:
-            await __download_file(file_id, path)
+            await gDownloadFile(file_id, path)
 
 
 # =================================================================
