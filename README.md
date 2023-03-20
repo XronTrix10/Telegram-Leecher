@@ -1,4 +1,4 @@
-# <b>Colab Telegram Leecher</b>
+# <b><h1>Colab Telegram Leecher</b>
 
 ### Telegram bot to Download files/folders and upload to Telegram using Google Colab.
 
@@ -34,7 +34,7 @@
 >- running denial-of-service attacks
 >- password cracking
 
-<h3>Source: <a href="https://research.google.com/colaboratory/faq.html">Colab FAQ</a></h3>
+<h4>Source: <a href="https://research.google.com/colaboratory/faq.html">Colab FAQ</a></h4>
 
 ## <b>Maintained By :</b>  [Xron Trix](https://github.com/XronTrix10)
 
