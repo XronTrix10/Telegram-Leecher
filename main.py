@@ -866,7 +866,7 @@ service = build_service()
 
 if not os.path.exists(thumb_path):
     thumb_path = (
-        "https://github.com/XronTrix10/Telegram-Leecher/raw/main/custom_thmb.jpg"
+        "/content/Telegram-Leecher/custom_thmb.jpg"
     )
     print("Didn't find thumbnail, So switching to default thumbnail")
 if not ospath.exists(d_path):
