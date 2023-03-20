@@ -1,4 +1,4 @@
-# <b><h2>Colab Telegram Leecher</b></h2>
+# <b>Colab Telegram Leecher</b>
 
 ### Telegram bot to Download files/folders and upload to Telegram using Google Colab.
 
