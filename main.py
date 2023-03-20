@@ -892,32 +892,29 @@ async with Client(
 
     down_msg = f"<b>📥 DOWNLOADING: </b>\n"
 
-    msg = await bot.send_message(
-        chat_id=chat_id, text=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__"
-    )
+    try:
 
-    sent = msg
+        msg = await bot.send_message(
+            chat_id=chat_id, text=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__"
+        )
+        sent = msg
 
-    await g_DownLoad()
+        await g_DownLoad()
 
-    total_down_size = get_folder_size(d_fol_path)
+        total_down_size = get_folder_size(d_fol_path)
 
-    clear_output()
+        clear_output()
 
-    choice = input(
-        "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
-    )
+        if choice == "1":
+            await Leech(d_fol_path)
 
-    if choice == "1":
-        await Leech(d_fol_path)
+        elif choice == "2":
+            await ZipLeech(d_fol_path)
 
-    elif choice == "2":
-        await ZipLeech(d_fol_path)
+        elif choice == "3":
+            await UnzipLeech(d_fol_path)
 
-    elif choice == "3":
-        await UnzipLeech(d_fol_path)
-
-    else:
-        print("\nGo And Learn ENGLISH First ")
+    except Exception as e:
+        print(f"Error Occured: {e}")
 
     await FinalStep()
