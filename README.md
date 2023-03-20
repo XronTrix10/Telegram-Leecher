@@ -2,12 +2,8 @@
 
 ### Telegram bot to Download files/folders and upload to Telegram using Google Colab.
 
-<b> Please Leave a 🌟 If this repo helped you</b>
-
 
  <b><h2>OPEN THE NOTEBOOK </h2><a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
-
-<br>
 
 ## <b>Features</b>
 
@@ -38,6 +34,6 @@
 
 <h4>Source: <a href="https://research.google.com/colaboratory/faq.html">Colab FAQ</a></h4>
 
-## <b>Maintained By :</b>  [Xron Trix](https://github.com/XronTrix10)
+## <b> Please Leave a 🌟 If this repo helped you</b>
 
 ### <b>Pull Requests are welcome
