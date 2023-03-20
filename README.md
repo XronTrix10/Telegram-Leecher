@@ -11,6 +11,7 @@
  - Zip Folders/Files
  - Unzip .zip Files
  - Upload files to Telegram
+ - Operation Status with bar and percentage 
  - Split support for zip files > 2000 GB
  - Will Add direct Link support Soon !
 
