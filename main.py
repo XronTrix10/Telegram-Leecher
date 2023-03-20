@@ -882,10 +882,11 @@ async with Client(
             "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
         )
         if choice in ['1','2','3']:
+            clear_output()
             break
         else:
             clear_output()
-            print("Don't you understand ENGLISH ?\n")
+            print("Don't you understand ENGLISH ? Enter the option NUMBER !\n")
 
     down_msg = f"<b>📥 DOWNLOADING: </b>\n"
 
@@ -911,7 +912,16 @@ async with Client(
         elif choice == "3":
             await UnzipLeech(d_fol_path)
 
-    except Exception as e:
-        print(f"Error Occured: {e}")
+        await FinalStep()
 
-    await FinalStep()
+    except Exception as e:
+
+        if "Failed to retrieve" in str(e):
+            clear_output()
+            print("Authorization Error with token.pickle ! Maybe file not present !")
+
+        else:
+
+            print(f"Error Occured: {e}")
+
+
