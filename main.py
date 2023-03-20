@@ -180,7 +180,7 @@ async def extract_zip(zip_filepath):
             zf.extract(member, temp_unzip_path)
             percent_complete = (extracted_size / total_size) * 100 if total_size else 0
 
-            down_msg = f"<b>📂 UNZIPPING:</b>\n\n<code>{d_name}</code>\n"
+            down_msg = f"<b>📂 EXTRACTING:</b>\n\n<code>{d_name}</code>\n"
 
             bar_length = 14
             filled_length = int(percent_complete / 100 * bar_length)
