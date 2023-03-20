@@ -1,8 +1,9 @@
-# <b><h1>Colab Telegram Leecher</b>
+# <b>Colab Telegram Leecher</b>
 
 ### Telegram bot to Download files/folders and upload to Telegram using Google Colab.
 
-<br>
+<b> Please Leave a 🌟 If this repo helped you</b>
+
 
  <b><h2>OPEN THE NOTEBOOK </h2><a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
 
@@ -21,12 +22,13 @@
 
  - Only zip files splits correctly 
  - Another file types can be corrupted if splitted
- - Though ZipLeech totally works fine
+ - So ZipLeech totally works fine
+ - Unzipleech only supports '.zip' files, thus can't extract rar, tar or 7z files till now
 
-## <b>This whole repo is against Google Colab policy and you shouldn't be using it.</b>
+## <b>This Project is for Educational Purpose Only as it goes against Google Colab's Policy</b>
 
-> Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with bulk compute, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
->- file hosting, media serving, or other web service offerings not related to interactive compute with Colab
+> Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
+>- file hosting, `media serving`, or `other web service offerings not related to interactive compute with Colab`
 >- downloading torrents or engaging in peer-to-peer file-sharing
 >- using a remote desktop or SSH
 >- connecting to remote proxies
