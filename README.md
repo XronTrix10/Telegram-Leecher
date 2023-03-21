@@ -3,8 +3,11 @@
 
 ### 🐍 A Python code to Download files/folders and upload to Telegram using Google Colab.
 
+<br>
 
- <b><h2>📖 OPEN THE NOTEBOOK </h2><a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
+ <b><h2>📖 OPEN THE NOTEBOOK </h2>
+--- 
+ <a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
 
 <br>
 
