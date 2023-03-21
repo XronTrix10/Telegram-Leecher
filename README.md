@@ -5,17 +5,17 @@
 
 <br>
 
-## <b>📖 OPEN THE NOTEBOOK 
---- 
+## **📖 CLICK TO OPEN THE NOTEBOOK**
+
  <a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 <br>
 
-## <b>🔖 Based on</b>
+## **🔖 Based on**
 ![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
 
 
-## <b>💡 Features</b>
+## **💡 Features**
 
  - Download Files of Folders From google drive Link
  - Zip Folders/Files
@@ -25,7 +25,7 @@
  - Split support for zip files > 2000 MB
  - Will Add direct Link support Soon !
 
-## <b>🔥 Benifits</b>
+## **🔥 Benifits**
 
  - No need of VPS or RDP
  - Immersive Network speed in Google Servers
@@ -34,14 +34,14 @@
  - Unlimited storage in Telegram
  - Upload Files of size upto 2000 MB
 
-## <b>🦉 Problems</b>
+## **🦉 Problems**
 
  - You need to be aware of Runtime Disconnections
  - Limited Disk Storage in Free Colab Account ~82 GB 
  <!-- - Which Limits the zip process of files size to ~41 GB
  - Have to manually upload config files ( token.pickle, thmb.jpg, etc ) -->
 
-## <b>🪲 Known Bugs</b>
+## **🪲 Known Bugs**
 
  - Only zip files splits correctly 
  - Another file types can be corrupted if splitted
@@ -50,7 +50,7 @@
 
 <br>
 
-## <b>⚠️ This Project is for Educational Purpose Only as it goes against Google Colab's Policy</b>
+## **⚠️ This Project is for Educational Purpose Only as it goes against Google Colab's Policy**
 
 > Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
 >- file hosting, `media serving`, or `other web service offerings not related to interactive compute with Colab`
@@ -63,6 +63,6 @@
 
 <sub>Source: <a href="https://research.google.com/colaboratory/faq.html">Colab FAQ</a></sub>
 
-## <b> Please Leave a 🌟 If this repo helped you</b>
+## _Please Leave a 🌟 If this repo helped you_
 
-#### <b>Pull Requests are welcome 💗
+#### Pull Requests are welcome 💗
