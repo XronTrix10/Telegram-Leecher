@@ -1,6 +1,4 @@
-# <img src='https://user-images.githubusercontent.com/125879861/226643540-f7a199dc-4d1a-4b31-b9c5-2deaa7dcfcea.jpg' style=border-radius:30px></img>
-
-<br>
+![](https://user-images.githubusercontent.com/125879861/226649977-85a941f5-6ffe-45a2-8e09-d9f2b558cb17.png)
 
 ### 🐍 Python Script to Download files/folders and upload to Telegram using Google Colab.
 
