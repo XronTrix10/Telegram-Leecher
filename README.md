@@ -1,11 +1,15 @@
-# <b>Colab Telegram Leecher</b>
+# <img src='https://user-images.githubusercontent.com/125879861/226643540-f7a199dc-4d1a-4b31-b9c5-2deaa7dcfcea.jpg' style=border-radius:30px></img>
 
-### Telegram bot to Download files/folders and upload to Telegram using Google Colab.
+<br>
+
+### 🐍 Python Script to Download files/folders and upload to Telegram using Google Colab.
+
+ <b><h2>📖 OPEN THE NOTEBOOK </h2><a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
 
 
- <b><h2>OPEN THE NOTEBOOK </h2><a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
-
-## <b>Features</b>
+## <b>🔖 Based on</b>
+![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
+## <b>💡 Features</b>
 
  - Download Files of Folders From google drive Link
  - Zip Folders/Files
@@ -15,14 +19,14 @@
  - Split support for zip files > 2000 GB
  - Will Add direct Link support Soon !
 
-## <b>Known Bugs</b>
+## <b>🪲 Known Bugs</b>
 
  - Only zip files splits correctly 
  - Another file types can be corrupted if splitted
  - So ZipLeech totally works fine
  - Unzipleech only supports '.zip' files, thus can't extract rar, tar or 7z files till now
 
-## <b>This Project is for Educational Purpose Only as it goes against Google Colab's Policy</b>
+## <b>⚠️ This Project is for Educational Purpose Only as it goes against Google Colab's Policy</b>
 
 > Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
 >- file hosting, `media serving`, or `other web service offerings not related to interactive compute with Colab`
@@ -37,4 +41,4 @@
 
 ## <b> Please Leave a 🌟 If this repo helped you</b>
 
-### <b>Pull Requests are welcome
+### <b>Pull Requests are welcome 💗
