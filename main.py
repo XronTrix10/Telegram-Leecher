@@ -395,7 +395,6 @@ def getFileMetadata(file_id):
 
 
 def get_Gfolder_size(folder_id):
-
     try:
         query = "trashed = false and '{0}' in parents".format(folder_id)
         results = (
@@ -404,7 +403,7 @@ def get_Gfolder_size(folder_id):
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
                 q=query,
-                fields="nextPageToken, files(id, mimeType, size)",
+                fields="files(id, mimeType, size)",
             )
             .execute()
         )
@@ -412,23 +411,12 @@ def get_Gfolder_size(folder_id):
         total_size = 0
         items = results.get("files", [])
 
-        folders_without_size = []
-        for item in items:
-            # If the item is a folder and doesn't have a size attribute, call the function recursively
-            if (item["mimeType"] == "application/vnd.google-apps.folder") and (
-                item.get("size") is None
-            ):
-                folders_without_size.append(item["id"])
-                continue
+        folders_without_size = (item["id"] for item in items if item.get("size") is None and item["mimeType"] == "application/vnd.google-apps.folder")
 
+        for item in items:
             # If the item has a size attribute
             if "size" in item:
                 total_size += int(item["size"])
-                folder_info[1] += 1
-                continue
-
-            # If none of the above condition is satisfied
-            print(f"No size found for file/folder with ID '{item['id']}'")
 
         # Recursively call the function for folders whose size is not found
         for folder_id in folders_without_size:
@@ -437,7 +425,7 @@ def get_Gfolder_size(folder_id):
         return total_size
 
     except HttpError as error:
-        print(f"An error occurred: {error}")
+        print(f"Error while checking size: {error}")
         return -1
 
 
