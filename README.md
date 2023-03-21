@@ -1,12 +1,19 @@
 ![](https://user-images.githubusercontent.com/125879861/226649977-85a941f5-6ffe-45a2-8e09-d9f2b558cb17.png)
 
+<br>
+
 ### 🐍 Python Script to Download files/folders and upload to Telegram using Google Colab.
+
+<br>
 
  <b><h2>📖 OPEN THE NOTEBOOK </h2><a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a></b>
 
+<br>
 
 ## <b>🔖 Based on</b>
 ![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
+
+
 ## <b>💡 Features</b>
 
  - Download Files of Folders From google drive Link
