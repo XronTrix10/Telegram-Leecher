@@ -784,16 +784,6 @@ async def Leech(folder_path):
             print(f"\nNow uploading {os.path.basename(file_path)}\n")
             await Leecher(file_path)
 
-    # file_list = sorted(os.listdir(folder_path))
-
-    # for file_path in file_list:
-
-    #     short_path = os.path.join(folder_path, file_path)
-    #     file_name = os.path.basename(short_path)
-    #     print(f"\nNow uploading {file_name}\n")
-
-    #     await Leecher(short_path)
-
     shutil.rmtree(folder_path)
 
 
@@ -824,7 +814,7 @@ async def ZipLeech(d_fol_path):
         leech_count = 1
 
     dump_text = (
-        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>\n"
+        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>"
         + f"\n\n<b>📂 Total Files:</b>  <code>{leech_count}</code>\n"
     )
 
