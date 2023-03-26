@@ -162,68 +162,6 @@ async def zip_folder(folder_path):
 
     return output_path
 
-'''
-async def zip_folder(folder_path):
-    MAX_SIZE = 2000 * 1024 * 1024 # 2000 MB in bytes
-    output_path = folder_path + ".zip"
-    current_size = 0
-    file_count = 0
-
-    # Create initial zip file object
-    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        # Walk through each file in the folder
-        for dirpath, dirnames, filenames in os.walk(folder_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-
-                # Add file to zip file object and print progress
-                with open(fp, "rb") as file:
-                    relative_path = os.path.relpath(fp, folder_path)
-                    zip_file.write(fp, arcname=relative_path)
-                    current_size += os.path.getsize(fp)
-
-                    if current_size >= MAX_SIZE:
-                        # Create new zip file if current size exceeds the maximum size
-                        zip_file.close()
-                        file_count += 1
-                        current_size = 0
-                        zip_name = f"{folder_path}_{file_count}.zip"
-                        zip_file = zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED)
-
-                    percentage = int((current_size / MAX_SIZE) * 100)
-                    print(
-                        f"Zipping - {percentage:.2f}%"
-                        + f" ({size_measure(current_size)}/{size_measure(MAX_SIZE)})"
-                    )
-
-                    # Delete the file after writing it to the zip object.
-                    os.remove(fp)
-
-                    bar_length = 14
-                    filled_length = int(percentage / 100 * bar_length)
-                    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-                    message = (
-                        f"\n[{bar}]  {percentage:.2f}%"
-                        + f"\n✅ DONE: __{size_measure(current_size)}__ OF __{size_measure(MAX_SIZE)}__"
-                    )
-
-                    try:
-                        # Edit the message with updated progress information.
-                        if is_time_over(current_time):
-                            await bot.edit_message_text(
-                                chat_id=chat_id,
-                                message_id=msg.id,
-                                text=down_msg + message,
-                            )
-
-                    except Exception as e:
-                        # Catch any exceptions that might occur while editing the message.
-                        print(f"Error updating progress bar: {str(e)}")
-
-    return output_path
-
-'''
-
 
 async def extract_zip(zip_filepath):
 
