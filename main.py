@@ -6,6 +6,7 @@ import datetime
 import time
 import uvloop
 import zipfile
+from natsort import natsorted
 from IPython.display import clear_output
 from pyrogram import Client
 from re import search as re_search
@@ -530,7 +531,7 @@ async def gDownloadFolder(folder_id, path):
     result = getFilesByFolderID(folder_id)
     if len(result) == 0:
         return
-    result = sorted(result, key=lambda k: k["name"])
+    result = natsorted(result, key=lambda k: k["name"])
     for item in result:
         file_id = item["id"]
         shortcut_details = item.get("shortcutDetails")
@@ -664,7 +665,7 @@ async def Leecher(file_path):
         print("Big Zip File Deleted !")
         # print('\nNow uploading multiple splitted zip files..........\n')
 
-        dir_list = sorted(os.listdir(temp_lpath))
+        dir_list = natsorted(os.listdir(temp_lpath))
 
         count = 1
 
@@ -717,7 +718,7 @@ async def Leech(folder_path):
     sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
-        for f in sorted(filenames):
+        for f in natsorted(filenames):
             file_path = os.path.join(dirpath, f)
             print(f"\nNow uploading {os.path.basename(file_path)}\n")
             await Leecher(file_path)
