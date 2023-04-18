@@ -6,6 +6,7 @@ import datetime
 import time
 import uvloop
 import zipfile
+from PIL import Image
 from natsort import natsorted
 from IPython.display import clear_output
 from pyrogram import Client
@@ -598,11 +599,14 @@ async def upload_file(file_path, type, file_name):
 
         if type == "video":
 
+            with Image.open(thumb_path) as img:
+                width, height = img.size
+
             sent = await sent.reply_video(
                 video=file_path,
                 supports_streaming=True,
-                width=480,
-                height=320,
+                width=width,
+                height=height,
                 caption=caption,
                 thumb=thumb_path,
                 progress=progress_bar,
