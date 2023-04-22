@@ -23,7 +23,7 @@
  - Upload files to Telegram
  - Shows operation Status with bar and percentage 
  - Split support for zip files > 2000 MB
- - Will Add direct Link support Soon !
+ - Leech Files from Direct Download Links !
 
 ## **🔥 Benifits**
 
