@@ -7,7 +7,7 @@
 
 ## **📖 CLICK TO OPEN THE NOTEBOOK**
 
- <a href="https://colab.research.google.com/drive/1m4OFuZeuJ83fpG22dwhsJkyYHR3ld9hC?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+ <a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 <br>
 
