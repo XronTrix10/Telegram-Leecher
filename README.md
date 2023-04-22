@@ -17,7 +17,7 @@
 
 ## **💡 Features**
 
- - Download Files of Folders From google drive or any direct link Link
+ - Download Files of Folders From google drive or any direct Link
  - Zip Folders/Files
  - Unzip .zip Files
  - Upload files to Telegram
@@ -50,7 +50,7 @@
 
 <br>
 
-## **⚠️ This Project is for Educational Purpose Only as it goes against Google Colab's Policy**
+## **⚠️ You Should NOT use it as it goes against Google Colab's Policy**
 
 > Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
 >- file hosting, `media serving`, or `other web service offerings not related to interactive compute with Colab`
