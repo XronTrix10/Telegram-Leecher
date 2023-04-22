@@ -303,8 +303,6 @@ def is_time_over(current_time):
 
 async def on_output(line: str, content_length):
 
-    time.sleep(0.5)
-
     down_msg = ""
 
     match = re.search(r"(\d+[KMGT]?)K\s+.*\s+(\d+)%", line)
