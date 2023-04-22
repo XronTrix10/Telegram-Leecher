@@ -17,7 +17,7 @@
 
 ## **💡 Features**
 
- - Download Files of Folders From google drive Link
+ - Download Files of Folders From google drive or any direct link Link
  - Zip Folders/Files
  - Unzip .zip Files
  - Upload files to Telegram
