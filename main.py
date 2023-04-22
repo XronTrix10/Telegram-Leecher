@@ -1,11 +1,17 @@
 import os
 import shutil
 import io
-import pickle
-import datetime
 import time
+import sys
+import re
+import pickle
 import uvloop
 import zipfile
+import datetime
+import requests
+import posixpath
+import subprocess
+from urllib.parse import urlparse
 from PIL import Image
 from natsort import natsorted
 from IPython.display import clear_output
@@ -291,6 +297,120 @@ def is_time_over(current_time):
 
 
 # =================================================================
+#    Direct Link Handler Functions
+# =================================================================
+
+
+async def on_output(line: str, content_length):
+
+    time.sleep(0.5)
+
+    down_msg = ""
+
+    match = re.search(r"(\d+[KMGT]?)K\s+.*\s+(\d+)%", line)
+    if match:
+        kilobytes_progress, percentage = match.groups()
+
+        # Convert progress to Bytes
+        progress_in_bytes = int(kilobytes_progress) * 1024
+        down_done = size_measure(progress_in_bytes)
+
+        bar_length = 14
+        filled_length = int(int(percentage) / 100 * bar_length)
+        bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+
+        # Calculate download speed
+        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+        try:
+            current_speed = progress_in_bytes / elapsed_time_seconds
+            speed_string = f"{size_measure(current_speed)}/s"
+            eta = (content_length - int(progress_in_bytes)) / current_speed
+            eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
+            message = f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: {eta}\n✅ DONE: __{down_done}__ OF __{size_measure(int(content_length))}__"
+
+        except Exception as e1:
+            print(f"Error On Output: {e1}")
+            message = f"\nRetrying updating Progress....."
+
+        down_msg = f"<b>📥 DOWNLOADING:</b>\n\n<code>{d_name}</code>\n"
+
+    else:
+        message = line.strip()
+
+    print(message)
+
+    try:
+        # Edit the message with updated progress information.
+        if is_time_over(current_time):
+            await bot.edit_message_text(
+                chat_id=chat_id, message_id=msg.id, text=down_msg + message
+            )
+
+    except Exception as e:
+        # Catch any exceptions that might occur while editing the message.
+        print(f"Error updating progress bar: {str(e)}")
+
+
+async def wgetDownload(link):
+
+    global start_time, d_name, d_fol_path
+    filename = ""
+
+    try:
+        # Get header info using requests
+        response = requests.head(link)
+        if response.status_code == 200:
+            content_length = int(response.headers.get("Content-Length", 0))
+            print(f"Total download size: {size_measure(content_length)}")
+            content_disposition = response.headers.get("Content-Disposition")
+            if content_disposition:
+                filename_match = re.search(r'filename="(.+)"', content_disposition)
+                if filename_match:
+                    filename = filename_match.group(1)
+                else:
+                    parsed_url = urlparse(link)
+                    filename = posixpath.basename(parsed_url.path)
+            d_name = filename
+            print(f"Filename: {filename}")
+        else:
+            print("Error: Could not get header information", file=sys.stderr)
+            sys.exit(1)
+
+        d_fol_path = f"{d_path}/{d_name}"
+        if not ospath.exists(d_fol_path):
+            makedirs(d_fol_path)
+
+        downlod_path = f"{d_fol_path}/{d_name}"
+
+        # Start actual download
+        wget_command = f"wget -q --show-progress {link} -O {downlod_path}"
+        process = subprocess.Popen(
+            wget_command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+        current_time[0] = time.time()
+        start_time = datetime.datetime.now()
+        for line in process.stdout:
+            await on_output(line, content_length)
+
+        exit_code = process.wait()
+        if exit_code != 0:
+            print(f"Error: wget exited with code {exit_code}", file=sys.stderr)
+            sys.exit(exit_code)
+
+    except requests.RequestException as e:
+        print(f"Error: {str(e)}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}", file=sys.stderr)
+        sys.exit(1)
+
+
+# =================================================================
 #    G Drive Functions
 # =================================================================
 
@@ -311,12 +431,9 @@ def build_service():
     return service
 
 
-async def g_DownLoad():
+async def g_DownLoad(link):
 
     global d_fol_path, start_time, d_name
-
-    # enter the link for the file or folder that you want to download
-    link = input("Enter the Google Drive link for the file or folder: ")
 
     file_id = getIDFromURL(link)
 
@@ -413,7 +530,12 @@ def get_Gfolder_size(folder_id):
         total_size = 0
         items = results.get("files", [])
 
-        folders_without_size = (item["id"] for item in items if item.get("size") is None and item["mimeType"] == "application/vnd.google-apps.folder")
+        folders_without_size = (
+            item["id"]
+            for item in items
+            if item.get("size") is None
+            and item["mimeType"] == "application/vnd.google-apps.folder"
+        )
 
         for item in items:
             # If the item has a size attribute
@@ -449,11 +571,11 @@ async def downloadProgress(file_size):
 
     down_msg = f"<b>📥 DOWNLOADING: {down_count[0]} OF {folder_info[1]} Files</b>\n\n<code>{d_name}</code>\n"
 
-    percentage = round(down_done / folder_info[0] * 100, 2)
+    percentage = down_done / folder_info[0] * 100
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: {eta}\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
+    message = f"\n[{bar}]  {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: {eta}\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -567,12 +689,12 @@ async def progress_bar(current, total):
     eta = (total_down_size - current - sum(up_bytes)) / upload_speed
     eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
 
-    percentage = round((current + sum(up_bytes)) / total_down_size * 100, 2)
+    percentage = (current + sum(up_bytes)) / total_down_size * 100
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
     message = (
-        f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__"
+        f"\n[{bar}]  {percentage:.2f}%\n⚡️ __{speed_string}__"
         + f" ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
         + f" OF __{size_measure(total_down_size)}__"
     )
@@ -824,6 +946,10 @@ async def FinalStep():
 # ****************************************************************
 
 
+    "8311093507:ZftqVhjhvbuynDoytkdfyYgW2GBFUlu01"  # <== YOUR TELEGRAM BOT TOKEN HERE
+)
+    -100112345679
+)  # <== A CHANNEL OR SUPERGROUP CHAT ID WHERE ALL FILES WILL BE UPLOADED
 link_p = str(dump_id)[4:]
 thumb_path = "/content/thmb.jpg"
 d_path = "/content/Downloads"
@@ -848,9 +974,7 @@ text_msg = ""
 service = build_service()
 
 if not os.path.exists(thumb_path):
-    thumb_path = (
-        "/content/Telegram-Leecher/custom_thmb.jpg"
-    )
+    thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
     print("Didn't find thumbnail, So switching to default thumbnail")
 if not ospath.exists(d_path):
     makedirs(d_path)
@@ -864,7 +988,7 @@ async with Client(
         choice = input(
             "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
         )
-        if choice in ['1','2','3']:
+        if choice in ["1", "2", "3"]:
             clear_output()
             break
         else:
@@ -880,7 +1004,13 @@ async with Client(
         )
         sent = msg
 
-        await g_DownLoad()
+        # enter the link for the file or folder that you want to download
+        link = input("Enter a Google Drive or Direct link: ")
+
+        if "drive.google.com" in link:
+            await g_DownLoad(link)
+        else:
+            await wgetDownload(link)
 
         total_down_size = get_folder_size(d_fol_path)
 
@@ -906,5 +1036,3 @@ async with Client(
         else:
 
             print(f"Error Occured: {e}")
-
-
