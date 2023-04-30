@@ -4,6 +4,7 @@ import io
 import time
 import sys
 import re
+import cv2
 import pickle
 import uvloop
 import zipfile
@@ -110,7 +111,8 @@ def video_extension_fixer(file_path):
         # rename the video file with .mp4 extension
         name, ext = os.path.splitext(filename)
         os.rename(
-            os.path.join(dir_path, filename), os.path.join(dir_path, name + ".mp4")
+            os.path.join(dir_path, filename), os.path.join(
+                dir_path, name + ".mp4")
         )
         print(f"{filename} was changed to {name}.mp4")
 
@@ -149,7 +151,8 @@ async def zip_folder(folder_path):
 
                     bar_length = 14
                     filled_length = int(percentage / 100 * bar_length)
-                    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+                    bar = "⬢" * filled_length + "⬡" * \
+                        (bar_length - filled_length)
                     message = (
                         f"\n[{bar}]  {percentage:.2f}%"
                         + f"\n✅ DONE: __{size_measure(current_size)}__ OF __{size_measure(total_size)}__"
@@ -186,7 +189,8 @@ async def extract_zip(zip_filepath):
             # print(f"Extracting {member.filename} ({member.file_size} bytes)")
             extracted_size += member.file_size
             zf.extract(member, temp_unzip_path)
-            percent_complete = (extracted_size / total_size) * 100 if total_size else 0
+            percent_complete = (extracted_size / total_size) * \
+                100 if total_size else 0
 
             down_msg = f"<b>📂 EXTRACTING:</b>\n\n<code>{d_name}</code>\n"
 
@@ -232,7 +236,8 @@ async def size_checker(file_path):
         return True
     else:
 
-        print(f"File size is {size_measure(file_size)} MB. NOT SPLITTING.......")
+        print(
+            f"File size is {size_measure(file_size)} MB. NOT SPLITTING.......")
         return False
 
 
@@ -362,7 +367,8 @@ async def wgetDownload(link):
             print(f"Total download size: {size_measure(content_length)}")
             content_disposition = response.headers.get("Content-Disposition")
             if content_disposition:
-                filename_match = re.search(r'filename="(.+)"', content_disposition)
+                filename_match = re.search(
+                    r'filename="(.+)"', content_disposition)
                 if filename_match:
                     filename = filename_match.group(1)
                 else:
@@ -621,7 +627,8 @@ async def gDownloadFile(file_id, path):
                 done = False
                 while done is False:
                     status, done = file_downloader.next_chunk()
-                    print(f"Download progress: {int(status.progress() * 100)}%")
+                    print(
+                        f"Download progress: {int(status.progress() * 100)}%")
                     # Get current value from file_contents.
                     file_contents.seek(0)
                     with open(file_name, "ab") as f:
@@ -722,6 +729,13 @@ async def upload_file(file_path, type, file_name):
             with Image.open(thumb_path) as img:
                 width, height = img.size
 
+            data = cv2.VideoCapture(file_path)
+            frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
+            fps = data.get(cv2.CAP_PROP_FPS)
+            seconds=0
+            if fps != 0:
+                seconds = round(frames / fps)
+
             sent = await sent.reply_video(
                 video=file_path,
                 supports_streaming=True,
@@ -729,6 +743,7 @@ async def upload_file(file_path, type, file_name):
                 height=height,
                 caption=caption,
                 thumb=thumb_path,
+                duration=seconds,
                 progress=progress_bar,
                 reply_to_message_id=sent.id,
             )
