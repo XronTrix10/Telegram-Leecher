@@ -10,3 +10,4 @@ requests
 tenacity
 tgcrypto
 uvloop
+opencv-python
