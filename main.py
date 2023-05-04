@@ -959,8 +959,6 @@ async def FinalStep():
 # ****************************************************************
 
 
-    "8311093507:ZftqVhjhvbuynDoytkdfyYgW2GBFUlu01"  # <== YOUR TELEGRAM BOT TOKEN HERE
-)
     -100112345679
 )  # <== A CHANNEL OR SUPERGROUP CHAT ID WHERE ALL FILES WILL BE UPLOADED
 link_p = str(dump_id)[4:]
