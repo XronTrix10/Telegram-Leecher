@@ -573,7 +573,7 @@ async def downloadProgress(file_size):
     eta = (folder_info[0] - down_done) / down_speed
     eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
 
-    down_msg = f"<b>📥 DOWNLOADING: {down_count[0]} OF {folder_info[1]} Files</b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING: {down_count[0]} Files</b>\n\n<code>{d_name}</code>\n"
 
     percentage = down_done / folder_info[0] * 100
     bar_length = 14
