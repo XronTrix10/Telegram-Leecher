@@ -841,6 +841,7 @@ async def Leecher(file_path):
             chat_id=chat_id, message_id=msg.id, text=text_msg + "\n⏳ __Starting.....__"
         )
         await upload_file(file_path, file_type, file_name)
+        up_bytes.append(os.stat(file_path).st_size)
 
         os.remove(file_path)
 
