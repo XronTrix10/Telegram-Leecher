@@ -1152,7 +1152,7 @@ async with Client(
             Error_Text = f"<b>TASK FAILED 💔</b>\n\n<b>REASEON:</b>\n\n__Error :{e}__"
 
             print(f"Error Occured: {e}")
-            await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=last_text,                                    
+            await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=Error_Text,                                    
                                 reply_markup=InlineKeyboardMarkup(
                                         [
                                             [  # First row
