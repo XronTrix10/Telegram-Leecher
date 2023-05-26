@@ -23,7 +23,8 @@ from os import makedirs, path as ospath
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
-
+from pyrogram.types import (ReplyKeyboardMarkup, InlineKeyboardMarkup,
+                            InlineKeyboardButton)
 
 uvloop.install()
 
@@ -37,6 +38,25 @@ def get_time():
     currentDateAndTime = datetime.datetime.now()
     currentTime = currentDateAndTime.strftime("%H:%M:%S")
     return currentTime
+
+def convert_seconds(seconds):
+    seconds = int(seconds)
+    days = seconds // (24 * 3600)
+    seconds = seconds % (24 * 3600)
+    hours = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+    
+    if days > 0:
+        return f"{days}d {hours}h {minutes}m {seconds}s"
+    elif hours > 0:
+        return f"{hours}h {minutes}m {seconds}s"
+    elif minutes > 0:
+        return f"{minutes}m {seconds}s"
+    else:
+        return f"{seconds}s"
+
 
 
 def size_measure(size):
@@ -154,7 +174,7 @@ async def zip_folder(folder_path):
                     bar = "⬢" * filled_length + "⬡" * \
                         (bar_length - filled_length)
                     message = (
-                        f"\n[{bar}]  {percentage:.2f}%"
+                        f"\n[{bar}] » {percentage:.2f}%"
                         + f"\n✅ DONE: __{size_measure(current_size)}__ OF __{size_measure(total_size)}__"
                     )
 
@@ -198,7 +218,7 @@ async def extract_zip(zip_filepath):
             filled_length = int(percent_complete / 100 * bar_length)
             bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
             message = (
-                f"\n[{bar}]  {percent_complete:.2f}%"
+                f"\n[{bar}] » {percent_complete:.2f}%"
                 + f"\n✅ DONE: __{size_measure(extracted_size)}__ OF "
                 + f"__{size_measure(os.stat(zip_filepath).st_size)}__"
             )
@@ -272,7 +292,7 @@ async def split_zipFile(file_path, max_size):
             filled_length = int(progress_percent / 100 * bar_length)
             bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
             message = (
-                f"\n[{bar}]  {progress_percent}%"
+                f"\n[{bar}] » {progress_percent:.2f}%"
                 + f"\n✅ DONE: __{size_measure(bytes_written)}__ OF __{size_measure(total_size)}__"
             )
             print(message)
@@ -280,9 +300,7 @@ async def split_zipFile(file_path, max_size):
                 await bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=msg.id,
-                    text=down_msg
-                    + f"\n[{bar}]  {progress_percent:.2f}%"
-                    + f"\n✅ DONE: __{size_measure(bytes_written)}__ OF __{size_measure(total_size)}__",
+                    text=down_msg + message,
                 )
             except Exception as e:
                 # Catch any exceptions that might occur while editing the message.
@@ -328,8 +346,8 @@ async def on_output(line: str, content_length):
             current_speed = progress_in_bytes / elapsed_time_seconds
             speed_string = f"{size_measure(current_speed)}/s"
             eta = (content_length - int(progress_in_bytes)) / current_speed
-            eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
-            message = f"\n[{bar}]  {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: {eta}\n✅ DONE: __{down_done}__ OF __{size_measure(int(content_length))}__"
+            eta = convert_seconds(eta)
+            message = f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{down_done}__ OF __{size_measure(int(content_length))}__"
 
         except Exception as e1:
             print(f"Error On Output: {e1}")
@@ -571,7 +589,7 @@ async def downloadProgress(file_size):
         speed_string = f"{size_measure(down_speed)}/s"
 
     eta = (folder_info[0] - down_done) / down_speed
-    eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
+    eta = convert_seconds(eta)
 
     down_msg = f"<b>📥 DOWNLOADING: {down_count[0]} Files</b>\n\n<code>{d_name}</code>\n"
 
@@ -579,7 +597,7 @@ async def downloadProgress(file_size):
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}]  {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: {eta}\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
+    message = f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -692,15 +710,15 @@ async def progress_bar(current, total):
         speed_string = f"{size_measure(upload_speed)}/s"
 
     eta = (total_down_size - current - sum(up_bytes)) / upload_speed
-    eta = time.strftime("%Hh %Mm %Ss", time.gmtime(eta))
+    eta = convert_seconds(eta)
 
     percentage = (current + sum(up_bytes)) / total_down_size * 100
     bar_length = 14
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
     message = (
-        f"\n[{bar}]  {percentage:.2f}%\n⚡️ __{speed_string}__"
-        + f" ⏳ ETA: {eta}\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
+        f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__"
+        + f" ⏳ ETA: __{eta}__\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
         + f" OF __{size_measure(total_down_size)}__"
     )
     try:
@@ -855,7 +873,17 @@ async def Leech(folder_path):
         + f"\n\n<b>📂 Total Files:</b>  <code>{get_file_count(folder_path)}</code>\n"
     )
 
-    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
+    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text,
+                                reply_markup=InlineKeyboardMarkup(
+                                    [
+                                        [  # First row
+                                            InlineKeyboardButton(  # Opens a web URL
+                                                "Source URL 🔗",
+                                                url=link
+                                            )
+                                        ]
+                                    ]
+    ))
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
         for f in natsorted(filenames):
@@ -897,7 +925,17 @@ async def ZipLeech(d_fol_path):
         + f"\n\n<b>📂 Total Files:</b>  <code>{leech_count}</code>\n"
     )
 
-    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text)
+    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text,
+                                reply_markup=InlineKeyboardMarkup(
+                                    [
+                                        [  # First row
+                                            InlineKeyboardButton(  # Opens a web URL
+                                                "Source URL 🔗",
+                                                url=link
+                                            )
+                                        ]
+                                    ]
+    ))
 
     shutil.rmtree(d_fol_path)
 
@@ -938,11 +976,7 @@ async def UnzipLeech(d_fol_path):
 
 async def FinalStep():
 
-    final_text = (
-        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n"
-        + f"<b>📦 Size: </b><code>{size_measure(total_down_size)}</code>\n\n"
-        + f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
-    )
+    final_text = f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
 
     for i in range(len(sent_file)):
 
@@ -951,8 +985,25 @@ async def FinalStep():
         fileText = f"\n{i+1}. <a href={file_link}>{fileName}</a>"
         final_text += fileText
 
-    await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
-    await bot.send_message(chat_id=chat_id, text=final_text)
+    last_text = (f"<b>LEECH COMPLETE 🔥</b>\n\n"
+                + f"<i>📛 Name:</i>  <code>{d_name}</code>\n\n"
+                + f"<i>📦 Size: </i><code>{size_measure(total_down_size)}</code>\n\n")
+    await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=last_text,                                    
+                                reply_markup=InlineKeyboardMarkup(
+                                        [
+                                            [  # First row
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Source URL 🔗",
+                                                    url=link
+                                                ),
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "GitHub REPO 🐈‍⬛",
+                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
+                                                )
+                                            ]
+                                        ]
+    ))
+    await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
 
 
 # ****************************************************************
@@ -1009,13 +1060,27 @@ async with Client(
 
     try:
 
-        msg = await bot.send_message(
-            chat_id=chat_id, text=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__"
-        )
-        sent = msg
-
         # enter the link for the file or folder that you want to download
         link = input("Enter a Google Drive or Direct link: ")
+        
+        msg = await bot.send_photo(chat_id=chat_id, photo=thumb_path, caption=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
+                                    reply_markup=InlineKeyboardMarkup(
+                                        [
+                                            [  # First row
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Source URL 🔗",
+                                                    url=link
+                                                ),
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Bot REPO 🦥",
+                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
+                                                )
+                                            ]
+                                        ]
+        ))
+
+        sent = msg
+        
 
         if "drive.google.com" in link:
             await g_DownLoad(link)
