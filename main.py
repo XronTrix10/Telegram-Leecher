@@ -364,8 +364,21 @@ async def on_output(line: str, content_length):
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=down_msg + message
-            )
+                chat_id=chat_id, message_id=msg.id, text=down_msg + message,                                
+                reply_markup=InlineKeyboardMarkup(
+                                        [
+                                            [  # First row
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Source URL 🔗",
+                                                    url=link
+                                                ),
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "BOT REPO 🐈‍⬛",
+                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
+                                                )
+                                            ]
+                                        ]
+            ))
 
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
@@ -603,8 +616,21 @@ async def downloadProgress(file_size):
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=down_msg + message
-            )
+                chat_id=chat_id, message_id=msg.id, text=down_msg + message,
+                                reply_markup=InlineKeyboardMarkup(
+                                        [
+                                            [  # First row
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Source URL 🔗",
+                                                    url=link
+                                                ),
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "BOT REPO 🐈‍⬛",
+                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
+                                                )
+                                            ]
+                                        ]
+            ))
 
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
@@ -726,8 +752,21 @@ async def progress_bar(current, total):
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=text_msg + message
-            )
+                chat_id=chat_id, message_id=msg.id, text=text_msg + message,
+                reply_markup=InlineKeyboardMarkup(
+                                        [
+                                            [  # First row
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Source URL 🔗",
+                                                    url=link
+                                                ),
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "BOT REPO 🐈‍⬛",
+                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
+                                                )
+                                            ]
+                                        ]
+            ))
 
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
@@ -997,7 +1036,7 @@ async def FinalStep():
                                                     url=link
                                                 ),
                                                 InlineKeyboardButton(  # Opens a web URL
-                                                    "GitHub REPO 🐈‍⬛",
+                                                    "BOT REPO 🔥",
                                                     url="https://github.com/XronTrix10/Telegram-Leecher"
                                                 )
                                             ]
@@ -1072,7 +1111,7 @@ async with Client(
                                                     url=link
                                                 ),
                                                 InlineKeyboardButton(  # Opens a web URL
-                                                    "Bot REPO 🦥",
+                                                    "Bot REPO 🔥",
                                                     url="https://github.com/XronTrix10/Telegram-Leecher"
                                                 )
                                             ]
