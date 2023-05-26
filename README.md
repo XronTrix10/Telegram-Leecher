@@ -17,7 +17,7 @@
 
 ## **💡 Features**
 
- - Download Files of Folders From google drive or any direct Link
+ - Download Files or Folders From google drive link ~~or any direct Link~~
  - Zip Folders/Files
  - Unzip .zip Files
  - Upload files to Telegram
@@ -43,6 +43,7 @@
 
 ## **🪲 Known Bugs**
 
+ - Direct Link not Working most of the time (Fixing Soon)
  - Only zip files splits correctly 
  - Another file types can be corrupted if splitted
  - So ZipLeech totally works fine
