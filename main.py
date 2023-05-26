@@ -1148,5 +1148,18 @@ async with Client(
             print("Authorization Error with token.pickle ! Maybe file not present !")
 
         else:
+            
+            Error_Text = f"<b>TASK FAILED 💔</b>\n\n<b>REASEON:</b>\n\n__Error :{e}__"
 
             print(f"Error Occured: {e}")
+            await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=last_text,                                    
+                                reply_markup=InlineKeyboardMarkup(
+                                        [
+                                            [  # First row
+                                                InlineKeyboardButton(  # Opens a web URL
+                                                    "Report Issue 🥺",
+                                                    url="https://github.com/XronTrix10/Telegram-Leecher/issues"
+                                                )
+                                            ]
+                                        ]
+            ))
