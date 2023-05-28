@@ -38,7 +38,7 @@
 
 ## **🚀 UPTO 70 MiB/s Download Speed and 27 MiB/s Upload Speed**
 
-![Image 1](https://user-images.githubusercontent.com/125879861/241571220-5df9d6d8-069e-46a9-b8c1-02e0a6a6a7ff.png)
+![Image 1](https://user-images.githubusercontent.com/125879861/241571496-49e7a148-181f-4d97-bd39-876e57f3c32f.png)
 
 
 ## **🦉 Problems**
