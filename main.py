@@ -123,7 +123,9 @@ def video_extension_fixer(file_path):
     else:
         # rename the video file with .mp4 extension
         name, ext = os.path.splitext(filename)
-        os.rename(os.path.join(dir_path, filename), os.path.join(dir_path, name + ".mp4"))
+        os.rename(
+            os.path.join(dir_path, filename), os.path.join(dir_path, name + ".mp4")
+        )
         print(f"{filename} was changed to {name}.mp4")
 
 
@@ -172,7 +174,7 @@ async def zip_folder(folder_path):
                             await bot.edit_message_text(
                                 chat_id=chat_id,
                                 message_id=msg.id,
-                                text=down_msg + message,
+                                text=task_msg + down_msg + message,
                             )
 
                     except Exception as e:
@@ -217,7 +219,7 @@ async def extract_zip(zip_filepath):
                     await bot.edit_message_text(
                         chat_id=chat_id,
                         message_id=msg.id,
-                        text=down_msg + message,
+                        text=task_msg + down_msg + message,
                     )
 
             except Exception as e:
@@ -282,7 +284,7 @@ async def split_zipFile(file_path, max_size):
                 await bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=msg.id,
-                    text=down_msg + message,
+                    text=task_msg + down_msg + message,
                 )
             except Exception as e:
                 # Catch any exceptions that might occur while editing the message.
@@ -365,15 +367,12 @@ async def on_output(output: str):
             await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=down_msg + message,
+                text=task_msg + down_msg + message,
                 reply_markup=InlineKeyboardMarkup(
                     [
                         [  # First row
                             InlineKeyboardButton(  # Opens a web URL
-                                "Source URL 🔗", url=links[0]
-                            ),
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🐈‍⬛",
+                                "BOT REPO 🪲",
                                 url="https://github.com/XronTrix10/Telegram-Leecher",
                             ),
                         ]
@@ -593,15 +592,12 @@ async def downloadProgress(file_size):
             await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=down_msg + message,
+                text=task_msg + down_msg + message,
                 reply_markup=InlineKeyboardMarkup(
                     [
                         [  # First row
                             InlineKeyboardButton(  # Opens a web URL
-                                "Source URL 🔗", url=link
-                            ),
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🐈‍⬛",
+                                "BOT REPO 🪲",
                                 url="https://github.com/XronTrix10/Telegram-Leecher",
                             ),
                         ]
@@ -727,15 +723,12 @@ async def progress_bar(current, total):
             await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=text_msg + message,
+                text=task_msg + text_msg + message,
                 reply_markup=InlineKeyboardMarkup(
                     [
                         [  # First row
                             InlineKeyboardButton(  # Opens a web URL
-                                "Source URL 🔗", url=link
-                            ),
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🐈‍⬛",
+                                "BOT REPO 🪲",
                                 url="https://github.com/XronTrix10/Telegram-Leecher",
                             ),
                         ]
@@ -843,7 +836,7 @@ async def Leecher(file_path):
             msg = await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=text_msg + "\n⏳ __Starting.....__",
+                text=task_msg + text_msg + "\n⏳ __Starting.....__",
             )
             await upload_file(short_path, file_type, file_name)
             up_bytes.append(os.stat(short_path).st_size)
@@ -860,7 +853,7 @@ async def Leecher(file_path):
         current_time[0] = time.time()
         text_msg = f"<b>📤 UPLOADING:</b>\n\n<code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
-            chat_id=chat_id, message_id=msg.id, text=text_msg + "\n⏳ __Starting.....__"
+            chat_id=chat_id, message_id=msg.id, text=task_msg + text_msg + "\n⏳ __Starting.....__"
         )
         await upload_file(file_path, file_type, file_name)
         up_bytes.append(os.stat(file_path).st_size)
@@ -879,11 +872,13 @@ async def Leech(folder_path):
     sent = await bot.send_photo(
         chat_id=dump_id,
         photo=thumb_path,
-        caption=dump_text,
+        caption=task_msg + dump_text,
         reply_markup=InlineKeyboardMarkup(
             [
                 [  # First row
-                    InlineKeyboardButton("Source URL 🔗", url=link)  # Opens a web URL
+                    InlineKeyboardButton(
+                        "BOT REPO 🪲", url="https://github.com/XronTrix10/Telegram-Leecher"
+                    )  # Opens a web URL
                 ]
             ]
         ),
@@ -907,7 +902,7 @@ async def ZipLeech(d_fol_path):
         msg = await bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.id,
-            text=down_msg,
+            text=task_msg + down_msg,
         )
     except Exception as e2:
         print(f"Problem in ZipLeech !{e2}")
@@ -938,7 +933,7 @@ async def ZipLeech(d_fol_path):
         reply_markup=InlineKeyboardMarkup(
             [
                 [  # First row
-                    InlineKeyboardButton("Source URL 🔗", url=link)  # Opens a web URL
+                    InlineKeyboardButton("BOT REPO 🪲", url="https://github.com/XronTrix10/Telegram-Leecher")  # Opens a web URL
                 ]
             ]
         ),
@@ -957,7 +952,7 @@ async def UnzipLeech(d_fol_path):
     msg = await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
-        text=down_msg,
+        text=task_msg + down_msg,
     )
 
     for dirpath, dirnames, filenames in os.walk(d_fol_path):
@@ -978,7 +973,9 @@ async def UnzipLeech(d_fol_path):
 
 
 async def FinalStep():
-    final_text = f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
+    final_text = (
+        f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
+    )
 
     for i in range(len(sent_file)):
         file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
@@ -994,15 +991,12 @@ async def FinalStep():
     await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
-        text=last_text,
+        text=task_msg + last_text,
         reply_markup=InlineKeyboardMarkup(
             [
-                [  # First row
-                    InlineKeyboardButton(
-                        "Source URL 🔗", url=links[0]
-                    ),  # Opens a web URL
+                [  # First row 
                     InlineKeyboardButton(  # Opens a web URL
-                        "BOT REPO 🔥",
+                        "BOT REPO 🦀",
                         url="https://github.com/XronTrix10/Telegram-Leecher",
                     ),
                 ]
@@ -1061,7 +1055,9 @@ async with Client(
             clear_output()
             print("Don't you understand ENGLISH ? Enter the option NUMBER !\n")
 
-    down_msg = f"<b>📥 DOWNLOADING: </b>\n"
+    down_msg = f"\n<b>📥 DOWNLOADING: </b>\n"
+
+    task_msg = ""
 
     try:
         links = []
@@ -1073,6 +1069,18 @@ async with Client(
             if link != "c":
                 links.append(link)
 
+        if choice == "1":
+            task = "Leech"
+        elif choice == "2":
+            task = "Zipleech"
+        else:
+            task = "Unzipleech"
+
+        task_msg = f"<b>❄️ TASK MODE :</b> __{task}__\n\n|  "
+        for a in range(len(links)):
+            task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
+        task_msg += "\n\n"
+
         d_name = input("Enter the name of the File/Folder: ")
         # enter the link for the file or folder that you want to download
 
@@ -1080,19 +1088,16 @@ async with Client(
 
         if not ospath.exists(d_fol_path):
             makedirs(d_fol_path)
-            
+
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
-            caption=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
+            caption=task_msg + down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
             reply_markup=InlineKeyboardMarkup(
                 [
                     [  # First row
                         InlineKeyboardButton(  # Opens a web URL
-                            "Source URL 🔗", url=links[0]
-                        ),
-                        InlineKeyboardButton(  # Opens a web URL
-                            "Bot REPO 🔥",
+                            "Bot REPO 🪲",
                             url="https://github.com/XronTrix10/Telegram-Leecher",
                         ),
                     ]
