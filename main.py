@@ -966,24 +966,21 @@ async def UnzipLeech(d_fol_path):
         text=down_msg,
     )
 
-    file_list = os.listdir(d_fol_path)
+    for dirpath, dirnames, filenames in os.walk(d_fol_path):
+        for f in natsorted(filenames):
+            short_path = os.path.join(dirpath, f)
+            name, extension = os.path.splitext(short_path)
 
-    for file in file_list:
+            if extension == ".zip":
+                await extract_zip(short_path)
+                clear_output()
+                shutil.rmtree(d_fol_path)
+                await Leech(temp_unzip_path)
 
-        short_path = os.path.join(d_fol_path, file)
-        name, extension = os.path.splitext(short_path)
-
-        if extension == ".zip":
-
-            await extract_zip(short_path)
-            clear_output()
-            shutil.rmtree(d_fol_path)
-            await Leech(temp_unzip_path)
-
-        else:
-            clear_output()
-            print(f"Unable to extract a {extension} file. Starting Leeching !")
-            await Leecher(short_path)
+            else:
+                clear_output()
+                print(f"Unable to extract a {extension} file. Starting Leeching !")
+                await Leecher(short_path)
 
 
 async def FinalStep():
