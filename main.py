@@ -149,7 +149,7 @@ async def zip_folder(folder_path):
                     relative_path = os.path.relpath(fp, folder_path)
                     zip_file.write(fp, arcname=relative_path)
                     current_size += os.path.getsize(fp)
-                    percentage = int((current_size / total_size) * 100)
+                    percentage = (current_size / total_size) * 100
                     print(
                         f"Zipping - {percentage:.2f}%"
                         + f" ({size_measure(current_size)}/{size_measure(total_size)})"
