@@ -54,17 +54,16 @@ def convert_seconds(seconds):
         return f"{seconds}s"
 
 
-
 def size_measure(size):
 
     if size > 1024 * 1024 * 1024 * 1024:
-        siz = f"{size/(1024**4):.2f} TB"
+        siz = f"{size/(1024**4):.2f} TiB"
     elif size > 1024 * 1024 * 1024:
-        siz = f"{size/(1024**3):.2f} GB"
+        siz = f"{size/(1024**3):.2f} GiB"
     elif size > 1024 * 1024:
-        siz = f"{size/(1024**2):.2f} MB"
+        siz = f"{size/(1024**2):.2f} MiB"
     elif size > 1024:
-        siz = f"{size/1024:.2f} KB"
+        siz = f"{size/1024:.2f} KiB"
     else:
         siz = f"{size} B"
     return siz
