@@ -1068,8 +1068,12 @@ async with Client(
 
         d_name = input("Enter the name of the File/Folder: ")
         # enter the link for the file or folder that you want to download
-        link = input("Enter a Google Drive or Direct link: ")
-        
+
+        d_fol_path = f"{d_path}/{d_name}"
+
+        if not ospath.exists(d_fol_path):
+            makedirs(d_fol_path)
+            
         msg = await bot.send_photo(chat_id=chat_id, photo=thumb_path, caption=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
                                     reply_markup=InlineKeyboardMarkup(
                                         [
@@ -1088,9 +1092,10 @@ async with Client(
 
         sent = msg
 
-        if "drive.google.com" in link:
-            await g_DownLoad(link)
-        else:
+        for link in links:
+            if "drive.google.com" in link:
+                await g_DownLoad(link)
+            else:
             await wgetDownload(link)
 
         total_down_size = get_folder_size(d_fol_path)
