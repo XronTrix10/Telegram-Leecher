@@ -1,13 +1,10 @@
-aria2p
 asyncio
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 httpx
-pymongo
 pyrogram==2.0.27
 requests
-tenacity
 tgcrypto
 uvloop
 opencv-python
