@@ -35,11 +35,6 @@ uvloop.install()
 # =================================================================
 
 
-def get_time():
-    currentDateAndTime = datetime.datetime.now()
-    currentTime = currentDateAndTime.strftime("%H:%M:%S")
-    return currentTime
-
 def convert_seconds(seconds):
     seconds = int(seconds)
     days = seconds // (24 * 3600)
