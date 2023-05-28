@@ -43,7 +43,7 @@ def convert_seconds(seconds):
     seconds %= 3600
     minutes = seconds // 60
     seconds %= 60
-    
+
     if days > 0:
         return f"{days}d {hours}h {minutes}m {seconds}s"
     elif hours > 0:
@@ -306,39 +306,56 @@ def is_time_over(current_time):
 # =================================================================
 
 
-async def on_output(line: str, content_length):
+async def on_output(output: str):
+    # print("=" * 60 + f"\n\n{output}\n\n" + "*" * 60)
 
-    down_msg = ""
+    total_size = "0B"
+    progress_percentage = "0B"
+    downloaded_bytes = "0B"
+    chunk_size = "0B"
+    eta = "0S"
+    try:
+        if "ETA:" in output:
+            parts = output.split()
+            total_size = parts[1].split("/")[1]
+            total_size = total_size.split("(")[0]
+            progress_percentage = parts[1][parts[1].find("(") + 1 : parts[1].find(")")]
+            downloaded_bytes = parts[1].split("/")[0]
+            eta = parts[4].split(":")[1][:-1]
+    except Exception as do:
+        print(f"Could't Get Info Due to: {do}")
 
-    match = re.search(r"(\d+[KMGT]?)K\s+.*\s+(\d+)%", line)
-    if match:
-        kilobytes_progress, percentage = match.groups()
+    # print("Total download size:", total_size)
+    # print("Progress percentage:", progress_percentage)
+    # print("Downloaded bytes:", downloaded_bytes)
+    # print("Estimated Time:", eta)
 
-        # Convert progress to Bytes
-        progress_in_bytes = int(kilobytes_progress) * 1024
-        down_done = size_measure(progress_in_bytes)
-
-        bar_length = 14
-        filled_length = int(int(percentage) / 100 * bar_length)
-        bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-
-        # Calculate download speed
-        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
-        try:
-            current_speed = progress_in_bytes / elapsed_time_seconds
-            speed_string = f"{size_measure(current_speed)}/s"
-            eta = (content_length - int(progress_in_bytes)) / current_speed
-            eta = convert_seconds(eta)
-            message = f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{down_done}__ OF __{size_measure(int(content_length))}__"
-
-        except Exception as e1:
-            print(f"Error On Output: {e1}")
-            message = f"\nRetrying updating Progress....."
-
-        down_msg = f"<b>📥 DOWNLOADING:</b>\n\n<code>{d_name}</code>\n"
-
+    percentage = re.findall("\d+\.\d+|\d+", progress_percentage)[0]
+    down = re.findall("\d+\.\d+|\d+", downloaded_bytes)[0]
+    down_unit = re.findall("[a-zA-Z]+", downloaded_bytes)[0]
+    if "G" in down_unit:
+        spd = 3
+    elif "M" in down_unit:
+        spd = 2
+    elif "K" in down_unit:
+        spd = 1
     else:
-        message = line.strip()
+        spd = 0
+
+    bar_length = 14
+    filled_length = int(int(percentage) / 100 * bar_length)
+    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+
+    # Calculate download speed
+    elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+    try:
+        current_speed = (float(down) * 1024**spd) / elapsed_time_seconds
+        speed_string = f"{size_measure(current_speed)}/s"
+        message = f"\n[{bar}] » {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{downloaded_bytes}__ OF __{total_size}__"
+    except Exception as e1:
+        print(f"Error On Output: {e1}")
+        message = f"\nRetrying updating Progress....."
+    down_msg = f"<b>📥 DOWNLOADING:</b>\n\n<code>{d_name}</code>\n"
 
     print(message)
 
@@ -369,64 +386,40 @@ async def on_output(line: str, content_length):
         print(f"Error updating progress bar: {str(e)}")
 
 
-async def wgetDownload(link):
+async def aria2_Download(link):
+    # Create a command to run aria2p with the link
+    command = [
+        "aria2c",
+        "--summary-interval=1",
+        "--console-log-level=notice",
+        "-d",
+        d_fol_path,
+        link,
+    ]
 
-    global start_time, d_name, d_fol_path
-    filename = ""
+    # Run the command using subprocess.Popen
+    process = subprocess.Popen(
+        command, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
 
-    try:
-        # Get header info using requests
-        response = requests.head(link)
-        if response.status_code == 200:
-            content_length = int(response.headers.get("Content-Length", 0))
-            print(f"Total download size: {size_measure(content_length)}")
-            content_disposition = response.headers.get("Content-Disposition")
-            if content_disposition:
-                filename_match = re.search(
-                    r'filename="(.+)"', content_disposition)
-                if filename_match:
-                    filename = filename_match.group(1)
-                else:
-                    parsed_url = urlparse(link)
-                    filename = posixpath.basename(parsed_url.path)
-            d_name = filename
-            print(f"Filename: {filename}")
-        else:
-            print("Error: Could not get header information", file=sys.stderr)
-            sys.exit(1)
+    # Read and print output in real-time
+    while True:
+        output = process.stdout.readline()
 
-        d_fol_path = f"{d_path}/{d_name}"
-        if not ospath.exists(d_fol_path):
-            makedirs(d_fol_path)
+        if output == b"" and process.poll() is not None:
+            break
+        if output:
+            # sys.stdout.write(output.decode("utf-8"))
+            # sys.stdout.flush()
+            await on_output(output.decode("utf-8"))
 
-        downlod_path = f"{d_fol_path}/{d_name}"
-
-        # Start actual download
-        wget_command = f"wget -q --show-progress {link} -O {downlod_path}"
-        process = subprocess.Popen(
-            wget_command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
+    # Retrieve exit code and any error output
+    exit_code = process.wait()
+    error_output = process.stderr.read()
+    if exit_code != 0:
+        raise Exception(
+            f"aria2c command failed with return code {exit_code}\n\nError: {error_output}"
         )
-
-        current_time[0] = time.time()
-        start_time = datetime.datetime.now()
-        for line in process.stdout:
-            await on_output(line, content_length)
-
-        exit_code = process.wait()
-        if exit_code != 0:
-            print(f"Error: wget exited with code {exit_code}", file=sys.stderr)
-            sys.exit(exit_code)
-
-    except requests.RequestException as e:
-        print(f"Error: {str(e)}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}", file=sys.stderr)
-        sys.exit(1)
 
 
 # =================================================================
