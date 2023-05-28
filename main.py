@@ -448,23 +448,23 @@ def build_service():
 
 
 async def g_DownLoad(link):
-
-    global d_fol_path, start_time, d_name
+    global start_time
 
     file_id = getIDFromURL(link)
 
     meta = getFileMetadata(file_id)
 
-    d_name = meta["name"]
+    # d_name = meta["name"]
+    nd_name = meta["name"]
 
-    d_fol_path = f"{d_path}/{d_name}"
+    nd_fol_path = f"{d_fol_path}/{nd_name}"
 
     if meta.get("mimeType") == "application/vnd.google-apps.folder":
         folder_info[0] = get_Gfolder_size(file_id)
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
-        await gDownloadFolder(file_id, d_path)
+        await gDownloadFolder(file_id, d_fol_path)
         clear_output()
         print("*" * 40 + "\n Folder Download Complete\n" + "*" * 40)
 
@@ -474,11 +474,12 @@ async def g_DownLoad(link):
             file_metadata["size"]
         )  # Get the file size from the metadata:
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
-        if not ospath.exists(d_fol_path):
-            makedirs(d_fol_path)
+
+        if not ospath.exists(nd_fol_path):
+            makedirs(nd_fol_path)
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
-        await gDownloadFile(file_id, d_fol_path)
+        await gDownloadFile(file_id, nd_fol_path)
         clear_output()
         print("*" * 40 + "\n File Download Complete\n" + "*" * 40)
 
@@ -1056,7 +1057,16 @@ async with Client(
     down_msg = f"<b>📥 DOWNLOADING: </b>\n"
 
     try:
+        links = []
 
+        link = "something"
+
+        while link != "c":
+            link = input(f"Download link (GDrive / Direct) [ Enter c to Terminate]: ")
+            if link != "c":
+                links.append(link)
+
+        d_name = input("Enter the name of the File/Folder: ")
         # enter the link for the file or folder that you want to download
         link = input("Enter a Google Drive or Direct link: ")
         
