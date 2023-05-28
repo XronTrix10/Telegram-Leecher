@@ -17,7 +17,9 @@
 
 ## **💡 Features**
 
- - Download Files or Folders From google drive link ~~or any direct Link~~
+ - Download Files or Folders From google drive Link or any Direct Link
+ - Download Multiple Files or Folders with Multiple Links ( New 🔥)
+ - Added Custom Name support ( New 🔥)
  - Zip Folders/Files
  - Unzip .zip Files
  - Upload files to Telegram
@@ -43,11 +45,12 @@
 
 ## **🪲 Known Bugs**
 
- - Direct Link not Working most of the time (Fixing Soon)
- - Only zip files splits correctly 
- - Another file types can be corrupted if splitted
- - So ZipLeech totally works fine
+ - Only zip files splits correctly, other files get corrupted after splitting
+ - So use ZipLeech to avoid corruption 
  - Unzipleech only supports '.zip' files, thus can't extract rar, tar or 7z files till now
+
+## **🚨 NOTE:**
+ - Torrent Links are supported, But don't use to avoid your Google account Ban ! [Google Colab Stricly Prohibits Torrents]
 
 <br>
 
