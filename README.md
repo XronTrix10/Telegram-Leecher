@@ -36,6 +36,23 @@
  - Unlimited storage in Telegram
  - Upload Files of size upto 2000 MB
 
+<br>
+
+<body>
+  <div style="display: flex; justify-content: center;">
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+      <img src="https://user-images.githubusercontent.com/125879861/241569765-951917ba-3842-4953-b1d3-1cfdf9ac9952.png"
+        alt="First Image" height=auto>
+      <p style="padding-top: 10px;">Download Speed upto 70 MiB/s 🚀</p>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+      <img src="https://user-images.githubusercontent.com/125879861/241569774-51a7c2e9-5a98-4f2f-862b-eae9af5af30c.png"
+        alt="Second Image" height=auto>
+      <p style="padding-top: 10px;">Upload Speed upto 27 MiB/s 🚀</p>
+    </div>
+  </div>
+</body>
+
 ## **🦉 Problems**
 
  - You need to be aware of Runtime Disconnections
