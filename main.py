@@ -344,23 +344,25 @@ async def on_output(line: str, content_length):
 
     try:
         # Edit the message with updated progress information.
-        if is_time_over(current_time):
+        if is_time_over(current_time) and total_size != "0B":
             await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=down_msg + message,                                
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=down_msg + message,
                 reply_markup=InlineKeyboardMarkup(
-                                        [
-                                            [  # First row
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Source URL 🔗",
-                                                    url=link
-                                                ),
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "BOT REPO 🐈‍⬛",
-                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
-                                                )
-                                            ]
-                                        ]
-            ))
+                    [
+                        [  # First row
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Source URL 🔗", url=links[0]
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "BOT REPO 🐈‍⬛",
+                                url="https://github.com/XronTrix10/Telegram-Leecher",
+                            ),
+                        ]
+                    ]
+                ),
+            )
 
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
@@ -595,21 +597,23 @@ async def downloadProgress(file_size):
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=down_msg + message,
-                                reply_markup=InlineKeyboardMarkup(
-                                        [
-                                            [  # First row
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Source URL 🔗",
-                                                    url=link
-                                                ),
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "BOT REPO 🐈‍⬛",
-                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
-                                                )
-                                            ]
-                                        ]
-            ))
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=down_msg + message,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [  # First row
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Source URL 🔗", url=link
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "BOT REPO 🐈‍⬛",
+                                url="https://github.com/XronTrix10/Telegram-Leecher",
+                            ),
+                        ]
+                    ]
+                ),
+            )
 
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
@@ -727,21 +731,23 @@ async def progress_bar(current, total):
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
-                chat_id=chat_id, message_id=msg.id, text=text_msg + message,
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=text_msg + message,
                 reply_markup=InlineKeyboardMarkup(
-                                        [
-                                            [  # First row
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Source URL 🔗",
-                                                    url=link
-                                                ),
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "BOT REPO 🐈‍⬛",
-                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
-                                                )
-                                            ]
-                                        ]
-            ))
+                    [
+                        [  # First row
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Source URL 🔗", url=link
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "BOT REPO 🐈‍⬛",
+                                url="https://github.com/XronTrix10/Telegram-Leecher",
+                            ),
+                        ]
+                    ]
+                ),
+            )
 
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
@@ -876,17 +882,18 @@ async def Leech(folder_path):
         + f"\n\n<b>📂 Total Files:</b>  <code>{get_file_count(folder_path)}</code>\n"
     )
 
-    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text,
-                                reply_markup=InlineKeyboardMarkup(
-                                    [
-                                        [  # First row
-                                            InlineKeyboardButton(  # Opens a web URL
-                                                "Source URL 🔗",
-                                                url=link
-                                            )
-                                        ]
-                                    ]
-    ))
+    sent = await bot.send_photo(
+        chat_id=dump_id,
+        photo=thumb_path,
+        caption=dump_text,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [  # First row
+                    InlineKeyboardButton("Source URL 🔗", url=link)  # Opens a web URL
+                ]
+            ]
+        ),
+    )
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
         for f in natsorted(filenames):
@@ -927,17 +934,18 @@ async def ZipLeech(d_fol_path):
         + f"\n\n<b>📂 Total Files:</b>  <code>{leech_count}</code>\n"
     )
 
-    sent = await bot.send_photo(chat_id=dump_id, photo=thumb_path, caption=dump_text,
-                                reply_markup=InlineKeyboardMarkup(
-                                    [
-                                        [  # First row
-                                            InlineKeyboardButton(  # Opens a web URL
-                                                "Source URL 🔗",
-                                                url=link
-                                            )
-                                        ]
-                                    ]
-    ))
+    sent = await bot.send_photo(
+        chat_id=dump_id,
+        photo=thumb_path,
+        caption=dump_text,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [  # First row
+                    InlineKeyboardButton("Source URL 🔗", url=link)  # Opens a web URL
+                ]
+            ]
+        ),
+    )
 
     shutil.rmtree(d_fol_path)
 
@@ -984,24 +992,29 @@ async def FinalStep():
         fileText = f"\n{i+1}. <a href={file_link}>{fileName}</a>"
         final_text += fileText
 
-    last_text = (f"<b>LEECH COMPLETE 🔥</b>\n\n"
-                + f"<i>📛 Name:</i>  <code>{d_name}</code>\n\n"
-                + f"<i>📦 Size: </i><code>{size_measure(total_down_size)}</code>\n\n")
-    await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=last_text,                                    
-                                reply_markup=InlineKeyboardMarkup(
-                                        [
-                                            [  # First row
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Source URL 🔗",
-                                                    url=link
-                                                ),
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "BOT REPO 🔥",
-                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
-                                                )
-                                            ]
-                                        ]
-    ))
+    last_text = (
+        f"<b>LEECH COMPLETE 🔥</b>\n\n"
+        + f"<i>📛 Name:</i>  <code>{d_name}</code>\n\n"
+        + f"<i>📦 Size: </i><code>{size_measure(total_down_size)}</code>\n\n"
+    )
+    await bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=msg.id,
+        text=last_text,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [  # First row
+                    InlineKeyboardButton(
+                        "Source URL 🔗", url=links[0]
+                    ),  # Opens a web URL
+                    InlineKeyboardButton(  # Opens a web URL
+                        "BOT REPO 🔥",
+                        url="https://github.com/XronTrix10/Telegram-Leecher",
+                    ),
+                ]
+            ]
+        ),
+    )
     await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
 
 
@@ -1074,21 +1087,24 @@ async with Client(
         if not ospath.exists(d_fol_path):
             makedirs(d_fol_path)
             
-        msg = await bot.send_photo(chat_id=chat_id, photo=thumb_path, caption=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
-                                    reply_markup=InlineKeyboardMarkup(
-                                        [
-                                            [  # First row
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Source URL 🔗",
-                                                    url=link
-                                                ),
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Bot REPO 🔥",
-                                                    url="https://github.com/XronTrix10/Telegram-Leecher"
-                                                )
-                                            ]
-                                        ]
-        ))
+        msg = await bot.send_photo(
+            chat_id=chat_id,
+            photo=thumb_path,
+            caption=down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [  # First row
+                        InlineKeyboardButton(  # Opens a web URL
+                            "Source URL 🔗", url=links[0]
+                        ),
+                        InlineKeyboardButton(  # Opens a web URL
+                            "Bot REPO 🔥",
+                            url="https://github.com/XronTrix10/Telegram-Leecher",
+                        ),
+                    ]
+                ]
+            ),
+        )
 
         sent = msg
 
@@ -1096,7 +1112,27 @@ async with Client(
             if "drive.google.com" in link:
                 await g_DownLoad(link)
             else:
-            await wgetDownload(link)
+                aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
+                try:
+                    await bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=msg.id,
+                        text=aria2_dn,
+                        reply_markup=InlineKeyboardMarkup(
+                            [
+                                [  # First row
+                                    InlineKeyboardButton(  # Opens a web URL
+                                        "Bot Repo 🦀",
+                                        url="https://github.com/XronTrix10/Telegram-Leecher",
+                                    )
+                                ]
+                            ]
+                        ),
+                    )
+                except Exception as e1:
+                    print(f"Couldn't Update text ! Because: {e1}")
+
+                await aria2_Download(link)
 
         total_down_size = get_folder_size(d_fol_path)
 
@@ -1119,18 +1155,21 @@ async with Client(
             print("Authorization Error with token.pickle ! Maybe file not present !")
 
         else:
-            
-            Error_Text = f"<b>TASK FAILED 💔</b>\n\n<b>REASEON:</b>\n\n__Error :{e}__"
+            Error_Text = f"<b>TASK FAILED 💔</b>\n\n<b>REASEON:</b>\n\n__{e}__"
 
             print(f"Error Occured: {e}")
-            await bot.edit_message_text(chat_id=chat_id, message_id=msg.id, text=Error_Text,                                    
-                                reply_markup=InlineKeyboardMarkup(
-                                        [
-                                            [  # First row
-                                                InlineKeyboardButton(  # Opens a web URL
-                                                    "Report Issue 🥺",
-                                                    url="https://github.com/XronTrix10/Telegram-Leecher/issues"
-                                                )
-                                            ]
-                                        ]
-            ))
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=Error_Text,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [  # First row
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Report Issue 🥺",
+                                url="https://github.com/XronTrix10/Telegram-Leecher/issues",
+                            )
+                        ]
+                    ]
+                ),
+            )
