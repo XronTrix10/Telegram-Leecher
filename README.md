@@ -58,7 +58,7 @@
 
 > Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
 >- file hosting, `media serving`, or `other web service offerings not related to interactive compute with Colab`
->- downloading torrents or engaging in peer-to-peer file-sharing
+>- `downloading torrents` or `engaging in peer-to-peer file-sharing`
 >- using a remote desktop or SSH
 >- connecting to remote proxies
 >- mining cryptocurrency
