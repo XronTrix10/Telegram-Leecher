@@ -3,7 +3,7 @@ google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 httpx
-pyrogram==2.0.27
+pyrogram==2.0.59
 requests
 tgcrypto
 uvloop
