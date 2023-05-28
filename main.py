@@ -909,11 +909,14 @@ async def ZipLeech(d_fol_path):
 
     down_msg = f"\n<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n"
 
-    msg = await bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=msg.id,
-        text=down_msg,
-    )
+    try:
+        msg = await bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg.id,
+            text=down_msg,
+        )
+    except Exception as e2:
+        print(f"Problem in ZipLeech !{e2}")
 
     print("\nNow Zipping the folder...")
     current_time[0] = time.time()
