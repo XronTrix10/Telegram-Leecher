@@ -963,13 +963,16 @@ async def UnzipLeech(d_fol_path):
             if extension == ".zip":
                 await extract_zip(short_path)
                 clear_output()
-                shutil.rmtree(d_fol_path)
+                os.remove(short_path)
                 await Leech(temp_unzip_path)
 
             else:
                 clear_output()
                 print(f"Unable to extract a {extension} file. Starting Leeching !")
                 await Leecher(short_path)
+    
+    shutil.rmtree(d_fol_path)
+
 
 
 async def FinalStep():
