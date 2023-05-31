@@ -1009,7 +1009,13 @@ async def FinalStep():
             ]
         ),
     )
-    await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
+    try:
+        await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
+    except Exception as c:
+        final_text = f"<b>📜 Couldn't Send Log Because: </b>\n{c}"
+        print(final_text)
+        await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
+
 
 
 # ****************************************************************
