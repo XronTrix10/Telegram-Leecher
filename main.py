@@ -1171,6 +1171,12 @@ async with Client(
                     [
                         [  # First row
                             InlineKeyboardButton(  # Opens a web URL
+                                "Discuss in Group 🤔",
+                                url="https://t.me/+2n9HLR2F1uJhZGY1",
+                            )
+                        ],
+                        [
+                            InlineKeyboardButton(  # Opens a web URL
                                 "Report Issue 🥺",
                                 url="https://github.com/XronTrix10/Telegram-Leecher/issues",
                             )
