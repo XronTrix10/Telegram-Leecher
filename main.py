@@ -344,45 +344,48 @@ async def on_output(output: str):
     else:
         spd = 0
 
-    bar_length = 14
-    filled_length = int(int(percentage) / 100 * bar_length)
-    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+    # Only Do this if got Information
+    if total_size != "0B":
+        bar_length = 14
+        filled_length = int(int(percentage) / 100 * bar_length)
+        bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
 
-    # Calculate download speed
-    elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
-    try:
-        current_speed = (float(down) * 1024**spd) / elapsed_time_seconds
-        speed_string = f"{size_measure(current_speed)}/s"
-        message = f"\n[{bar}] » {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{downloaded_bytes}__ OF __{total_size}__"
-    except Exception as e1:
-        print(f"Error On Output: {e1}")
-        message = f"\nRetrying updating Progress....."
-    down_msg = f"<b>📥 DOWNLOADING:</b>\n\n<code>{d_name}</code>\n"
+        # Calculate download speed
+        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+        try:
+            current_speed = (float(down) * 1024**spd) / elapsed_time_seconds
+            speed_string = f"{size_measure(current_speed)}/s"
+            message = f"\n[{bar}] » {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{downloaded_bytes}__ OF __{total_size}__"
+            message += f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+        except Exception as e1:
+            print(f"Error On Output: {e1}")
+            message = f"\nRetrying updating Progress....."
+        down_msg = f"<b>📥 DOWNLOADING:</b>\n\n<code>{d_name}</code>\n"
 
-    print(message)
+        print(message)
 
-    try:
-        # Edit the message with updated progress information.
-        if is_time_over(current_time) and total_size != "0B":
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=task_msg + down_msg + message,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [  # First row
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🪲",
-                                url="https://github.com/XronTrix10/Telegram-Leecher",
-                            ),
+        try:
+            # Edit the message with updated progress information.
+            if is_time_over(current_time):
+                await bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=msg.id,
+                    text=task_msg + down_msg + message,
+                    reply_markup=InlineKeyboardMarkup(
+                        [
+                            [  # First row
+                                InlineKeyboardButton(  # Opens a web URL
+                                    "BOT REPO 🪲",
+                                    url="https://github.com/XronTrix10/Telegram-Leecher",
+                                ),
+                            ]
                         ]
-                    ]
-                ),
-            )
+                    ),
+                )
 
-    except Exception as e:
-        # Catch any exceptions that might occur while editing the message.
-        print(f"Error updating progress bar: {str(e)}")
+        except Exception as e:
+            # Catch any exceptions that might occur while editing the message.
+            print(f"Error updating progress bar: {str(e)}")
 
 
 async def aria2_Download(link):
