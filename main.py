@@ -1,6 +1,7 @@
 import os
 import io
 import re
+
 # import sys
 import cv2
 import time
@@ -166,6 +167,7 @@ async def zip_folder(folder_path):
                     message = (
                         f"\n[{bar}] » {percentage:.2f}%"
                         + f"\n✅ DONE: __{size_measure(current_size)}__ OF __{size_measure(total_size)}__"
+                        + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
                     )
 
                     try:
@@ -209,6 +211,7 @@ async def extract_zip(zip_filepath):
                 f"\n[{bar}] » {percent_complete:.2f}%"
                 + f"\n✅ DONE: __{size_measure(extracted_size)}__ OF "
                 + f"__{size_measure(os.stat(zip_filepath).st_size)}__"
+                + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
             )
 
             print(message)
@@ -249,7 +252,7 @@ async def split_zipFile(file_path, max_size):
     dir_path, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
     down_msg = (
-        f"<b>✂️ SPLITTING !</b>\n\n<code>{d_name}</code>\n"
+        f"<b>✂️ SPLITTING :</b>\n\n<code>{filename}</code>\n"
         + f"\nSIZE: {size_measure(os.stat(file_path).st_size)}\n"
     )
     # Get the total size of the file
@@ -278,6 +281,7 @@ async def split_zipFile(file_path, max_size):
             message = (
                 f"\n[{bar}] » {progress_percent:.2f}%"
                 + f"\n✅ DONE: __{size_measure(bytes_written)}__ OF __{size_measure(total_size)}__"
+                + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
             )
             print(message)
             try:
@@ -588,6 +592,7 @@ async def downloadProgress(file_size):
     filled_length = int(percentage / 100 * bar_length)
     bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
     message = f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
+    message += f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
     try:
         print(message)
         # Edit the message with updated progress information.
@@ -718,6 +723,7 @@ async def progress_bar(current, total):
         f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__"
         + f" ⏳ ETA: __{eta}__\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
         + f" OF __{size_measure(total_down_size)}__"
+        + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
     )
     try:
         print(message)
@@ -856,7 +862,9 @@ async def Leecher(file_path):
         current_time[0] = time.time()
         text_msg = f"<b>📤 UPLOADING:</b>\n\n<code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
-            chat_id=chat_id, message_id=msg.id, text=task_msg + text_msg + "\n⏳ __Starting.....__"
+            chat_id=chat_id,
+            message_id=msg.id,
+            text=task_msg + text_msg + "\n⏳ __Starting.....__",
         )
         await upload_file(file_path, file_type, file_name)
         up_bytes.append(os.stat(file_path).st_size)
@@ -880,7 +888,8 @@ async def Leech(folder_path):
             [
                 [  # First row
                     InlineKeyboardButton(
-                        "BOT REPO 🪲", url="https://github.com/XronTrix10/Telegram-Leecher"
+                        "BOT REPO 🪲",
+                        url="https://github.com/XronTrix10/Telegram-Leecher",
                     )  # Opens a web URL
                 ]
             ]
@@ -899,7 +908,7 @@ async def Leech(folder_path):
 async def ZipLeech(d_fol_path):
     global msg, down_msg, start_time, d_name, total_down_size, sent
 
-    down_msg = f"\n<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n"
 
     try:
         msg = await bot.edit_message_text(
@@ -936,7 +945,10 @@ async def ZipLeech(d_fol_path):
         reply_markup=InlineKeyboardMarkup(
             [
                 [  # First row
-                    InlineKeyboardButton("BOT REPO 🪲", url="https://github.com/XronTrix10/Telegram-Leecher")  # Opens a web URL
+                    InlineKeyboardButton(
+                        "BOT REPO 🪲",
+                        url="https://github.com/XronTrix10/Telegram-Leecher",
+                    )  # Opens a web URL
                 ]
             ]
         ),
@@ -973,9 +985,8 @@ async def UnzipLeech(d_fol_path):
                 clear_output()
                 print(f"Unable to extract a {extension} file. Starting Leeching !")
                 await Leecher(short_path)
-    
-    shutil.rmtree(d_fol_path)
 
+    shutil.rmtree(d_fol_path)
 
 
 async def FinalStep():
@@ -993,6 +1004,7 @@ async def FinalStep():
         f"<b>LEECH COMPLETE 🔥</b>\n\n"
         + f"<i>📛 Name:</i>  <code>{d_name}</code>\n\n"
         + f"<i>📦 Size: </i><code>{size_measure(total_down_size)}</code>\n\n"
+        + f"<i>🍃 Elapsed Time:</i> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>\n\n"
     )
     await bot.edit_message_text(
         chat_id=chat_id,
@@ -1000,7 +1012,7 @@ async def FinalStep():
         text=task_msg + last_text,
         reply_markup=InlineKeyboardMarkup(
             [
-                [  # First row 
+                [  # First row
                     InlineKeyboardButton(  # Opens a web URL
                         "BOT REPO 🦀",
                         url="https://github.com/XronTrix10/Telegram-Leecher",
@@ -1022,7 +1034,7 @@ async def FinalStep():
 #    Main Functions, function calls and variable declarations
 # ****************************************************************
 
-
+task_start = datetime.datetime.now()
 link_p = str(dump_id)[4:]
 thumb_path = "/content/thmb.jpg"
 d_path = "/content/Downloads"
@@ -1044,6 +1056,11 @@ down_count = []
 down_count.append(1)
 start_time = datetime.datetime.now()
 text_msg = ""
+links = []
+link = "something"
+task_msg = ""
+
+
 service = build_service()
 
 if not os.path.exists(thumb_path):
@@ -1056,6 +1073,7 @@ if not ospath.exists(d_path):
 async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
 ) as bot:
+    # Getting Task Mode
     while True:
         choice = input(
             "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
@@ -1067,34 +1085,35 @@ async with Client(
             clear_output()
             print("Don't you understand ENGLISH ? Enter the option NUMBER !\n")
 
+    # Getting Download Links
+    while link.lower() != "c":
+        link = input(f"Download link [ Enter c to Terminate]: ")
+        if link.lower() != "c":
+            links.append(link)
+
     down_msg = f"\n<b>📥 DOWNLOADING: </b>\n"
 
-    task_msg = ""
+    if choice == "1":
+        task = "Leech"
+    elif choice == "2":
+        task = "Zipleech"
+    else:
+        task = "Unzipleech"
+
+    task_msg = f"<b>🦞 TASK MODE :</b> __{task}__\n\n|  "
 
     try:
-        links = []
-
-        link = "something"
-
-        while link != "c":
-            link = input(f"Download link (GDrive / Direct) [ Enter c to Terminate]: ")
-            if link != "c":
-                links.append(link)
-
-        if choice == "1":
-            task = "Leech"
-        elif choice == "2":
-            task = "Zipleech"
-        else:
-            task = "Unzipleech"
-
-        task_msg = f"<b>❄️ TASK MODE :</b> __{task}__\n\n|  "
         for a in range(len(links)):
-            task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
+            if "magnet" in links[a]:
+                proxy_magnet = "https://mag.net/" + links[a]
+                task_msg += f"<a href={proxy_magnet}>🔗 Link {a+1}</a>  |  "
+            else:
+                task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
         task_msg += "\n\n"
 
         d_name = input("Enter the name of the File/Folder: ")
         # enter the link for the file or folder that you want to download
+        task_start = datetime.datetime.now()
 
         d_fol_path = f"{d_path}/{d_name}"
 
@@ -1166,13 +1185,17 @@ async with Client(
             print("Authorization Error with token.pickle ! Maybe file not present !")
 
         else:
-            Error_Text = f"<b>TASK FAILED 💔</b>\n\n<b>REASEON:</b>\n\n__{e}__"
+            Error_Text = (
+                "<b>TASK FAILED TO COMPLETE 💔</b>\n\n🍃 Elapsed Time: "
+                + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n\n"
+                + f"<b>REASEON:</b>\t\t__{e}__"
+            )
 
             print(f"Error Occured: {e}")
             await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=Error_Text,
+                text=task_msg + Error_Text,
                 reply_markup=InlineKeyboardMarkup(
                     [
                         [  # First row
@@ -1186,7 +1209,7 @@ async with Client(
                                 "Report Issue 🥺",
                                 url="https://github.com/XronTrix10/Telegram-Leecher/issues",
                             )
-                        ]
+                        ],
                     ]
                 ),
             )
