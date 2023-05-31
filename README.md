@@ -14,6 +14,8 @@
 ## **🔖 Based on**
 ![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
 
+## 🎓 **How To Use**
+[![Watch It](https://img.youtube.com/vi/MretHTXykBY/0.jpg)](https://www.youtube.com/watch?v=MretHTXykBY)
 
 ## **💡 Features**
 
