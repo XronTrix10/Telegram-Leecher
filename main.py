@@ -782,7 +782,6 @@ async def upload_file(file_path, type, file_name):
         elif type == "audio":
             sent = await sent.reply_audio(
                 audio=file_path,
-                supports_streaming=True,
                 caption=caption,
                 thumb=thumb_path,
                 progress=progress_bar,
@@ -1001,7 +1000,7 @@ async def FinalStep():
         final_text += fileText
 
     last_text = (
-        f"<b>LEECH COMPLETE 🔥</b>\n\n"
+        f"<b>{task} COMPLETE 🔥</b>\n\n"
         + f"<i>📛 Name:</i>  <code>{d_name}</code>\n\n"
         + f"<i>📦 Size: </i><code>{size_measure(total_down_size)}</code>\n\n"
         + f"<i>🍃 Elapsed Time:</i> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>\n\n"
