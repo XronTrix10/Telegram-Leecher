@@ -726,6 +726,7 @@ async def progress_bar(current, total):
         + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
     )
     try:
+        clear_output()
         print(message)
         # Edit the message with updated progress information.
         if is_time_over(current_time):
@@ -988,16 +989,23 @@ async def UnzipLeech(d_fol_path):
     shutil.rmtree(d_fol_path)
 
 
-async def FinalStep():
+async def FinalStep(msg):
     final_text = (
         f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
     )
+
+    final_texts = []
 
     for i in range(len(sent_file)):
         file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
         fileName = sent_fileName[i]
         fileText = f"\n{i+1}. <a href={file_link}>{fileName}</a>"
-        final_text += fileText
+        if len(final_text + fileText) >= 4096:
+            final_texts.append(final_text)
+            final_text = fileText
+        else:
+            final_text += fileText
+    final_texts.append(final_text)
 
     last_text = (
         f"<b>{task} COMPLETE 🔥</b>\n\n"
@@ -1020,15 +1028,10 @@ async def FinalStep():
             ]
         ),
     )
-    try:
-        await bot.send_message(
-            chat_id=chat_id, reply_to_message_id=msg.id, text=final_text
-        )
-    except Exception as c:
-        final_text = f"<b>📜 Couldn't Send Log Because: </b>\n{c}"
-        print(final_text)
-        await bot.send_message(
-            chat_id=chat_id, reply_to_message_id=msg.id, text=final_text
+
+    for fn_txt in final_texts:
+        msg = await bot.send_message(
+            chat_id=chat_id, reply_to_message_id=msg.id, text=fn_txt
         )
 
 
@@ -1177,7 +1180,7 @@ async with Client(
         elif choice == "3":
             await UnzipLeech(d_fol_path)
 
-        await FinalStep()
+        await FinalStep(msg)
 
     except Exception as e:
         if "Failed to retrieve" in str(e):
