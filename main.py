@@ -1021,12 +1021,15 @@ async def FinalStep():
         ),
     )
     try:
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
+        await bot.send_message(
+            chat_id=chat_id, reply_to_message_id=msg.id, text=final_text
+        )
     except Exception as c:
         final_text = f"<b>📜 Couldn't Send Log Because: </b>\n{c}"
         print(final_text)
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=final_text)
-
+        await bot.send_message(
+            chat_id=chat_id, reply_to_message_id=msg.id, text=final_text
+        )
 
 
 # ****************************************************************
@@ -1068,57 +1071,55 @@ if not os.path.exists(thumb_path):
 if not ospath.exists(d_path):
     makedirs(d_path)
 
+# Getting Task Mode
+while True:
+    choice = input(
+        "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
+    )
+    if choice in ["1", "2", "3"]:
+        clear_output()
+        break
+    else:
+        clear_output()
+        print("Don't you understand ENGLISH ? Enter the option NUMBER !\n")
+
+# Getting Download Links
+while link.lower() != "c":
+    link = input(f"Download link [ Enter c to Terminate]: ")
+    if link.lower() != "c":
+        links.append(link)
+
+down_msg = f"\n<b>📥 DOWNLOADING: </b>\n"
+
+if choice == "1":
+    task = "Leech"
+elif choice == "2":
+    task = "Zipleech"
+else:
+    task = "Unzipleech"
+
+task_msg = f"<b>🦞 TASK MODE :</b> __{task}__\n\n|  "
+
+for a in range(len(links)):
+    if "magnet" in links[a]:
+        proxy_magnet = "https://mag.net/" + links[a]
+        task_msg += f"<a href={proxy_magnet}>🔗 Link {a+1}</a>  |  "
+    else:
+        task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
+    task_msg += "\n\n"
+
+# enter the link for the file or folder that you want to download
+d_name = input("Enter the name of the File/Folder: ")
+task_start = datetime.datetime.now()
+
+d_fol_path = f"{d_path}/{d_name}"
+if not ospath.exists(d_fol_path):
+    makedirs(d_fol_path)
 
 async with Client(
     "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
 ) as bot:
-    # Getting Task Mode
-    while True:
-        choice = input(
-            "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
-        )
-        if choice in ["1", "2", "3"]:
-            clear_output()
-            break
-        else:
-            clear_output()
-            print("Don't you understand ENGLISH ? Enter the option NUMBER !\n")
-
-    # Getting Download Links
-    while link.lower() != "c":
-        link = input(f"Download link [ Enter c to Terminate]: ")
-        if link.lower() != "c":
-            links.append(link)
-
-    down_msg = f"\n<b>📥 DOWNLOADING: </b>\n"
-
-    if choice == "1":
-        task = "Leech"
-    elif choice == "2":
-        task = "Zipleech"
-    else:
-        task = "Unzipleech"
-
-    task_msg = f"<b>🦞 TASK MODE :</b> __{task}__\n\n|  "
-
     try:
-        for a in range(len(links)):
-            if "magnet" in links[a]:
-                proxy_magnet = "https://mag.net/" + links[a]
-                task_msg += f"<a href={proxy_magnet}>🔗 Link {a+1}</a>  |  "
-            else:
-                task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
-        task_msg += "\n\n"
-
-        d_name = input("Enter the name of the File/Folder: ")
-        # enter the link for the file or folder that you want to download
-        task_start = datetime.datetime.now()
-
-        d_fol_path = f"{d_path}/{d_name}"
-
-        if not ospath.exists(d_fol_path):
-            makedirs(d_fol_path)
-
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
