@@ -1,3 +1,4 @@
+#@title 🖥️ Main Colab Leech Code [ Click to Magic ✨ ]
 import os
 import io
 import re
@@ -137,13 +138,11 @@ def system_info():
     disk_usage = psutil.disk_usage("/")
     cpu_usage_percent = psutil.cpu_percent()
 
-    string = "\n\n⍟───── [Colab Usage](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟"
-    string += f"\n\nCPU » {cpu_usage_percent}% | RAM » {size_measure(ram_usage)}"
-    string += f"\nTOT » {size_measure(disk_usage.total)} | FREE » {size_measure(disk_usage.free)} "
-    string += (
-        f"\nUP » {convert_seconds((datetime.datetime.now() - task_start).seconds)} | "
-    )
-    string += f"TIMER » {convert_seconds(21600 - ((datetime.datetime.now() - task_start).seconds))}"
+    string = "\n\n⍟───── [Colab Usage](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+    string += f"\n╭🖥️ **CPU Usage »**  {cpu_usage_percent}%"
+    string += f"\n├💽 **RAM Usage »**  {size_measure(ram_usage)}"
+    string += f"\n╰💾 **DISK Free »**  {size_measure(disk_usage.free)}"
+    string += f"\n\n<i>💖 When I'm Doin This, Do Something Else. **Time Is Precious ✨**</i>"
 
     return string
 
@@ -241,10 +240,7 @@ async def size_checker(file_path):
 async def split_zipFile(file_path, max_size):
     dir_path, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
-    down_msg = (
-        f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
-        + f"\nSIZE » {size_measure(os.stat(file_path).st_size)}\n"
-    )
+    down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     # Get the total size of the file
     total_size = os.path.getsize(file_path)
 
@@ -276,8 +272,7 @@ async def split_zipFile(file_path, max_size):
             )
             # Get next chunk
             chunk = f.read(max_size)
-            # Increment chunk counter
-            i += 1
+            i += 1 # Increment chunk counter
 
 
 def is_time_over(current_time):
@@ -640,10 +635,10 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
     # bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
     bar = "█" * filled_length + "░" * (bar_length - filled_length)
     message = (
-        f"\n╭|{bar}| » {percentage:.2f}%\n├⚡️ Speed: __{speed}__\n├⚙️ Engine » {engine}"
-        + f"\n├⏳ Esti Time » __{eta}__"
-        + f"\n├🍃 Active Time » __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
-        + f"\n├✅ Processed » __{done}__\n╰💾 Total Size » __{left}__"
+        f"\n╭|{bar}| » {percentage:.2f}%\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** {engine}"
+        + f"\n├⏳ **Esti Time »** __{eta}__"
+        + f"\n├🍃 **Active Time »** __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+        + f"\n├✅ **Processed »** __{done}__\n╰💾 **Total Size »** __{left}__"
     )
     sys_text = system_info()
     try:
