@@ -5,6 +5,7 @@ import re
 # import sys
 import cv2
 import time
+import psutil
 import shutil
 import pickle
 import uvloop
@@ -78,6 +79,7 @@ def get_file_type(file_path):
         ".mkv": "video",
         ".mov": "video",
         ".webm": "video",
+        ".vob": "video",
         ".m4v": "video",
         ".mp3": "audio",
         ".wav": "audio",
@@ -90,7 +92,7 @@ def get_file_type(file_path):
         ".gif": "photo",
     }
 
-    if extension in extensions_dict:
+    if extension.lower() in extensions_dict:
         if extensions_dict[extension] == "video":
             video_extension_fixer(file_path)
         return extensions_dict[extension]
@@ -130,6 +132,22 @@ def video_extension_fixer(file_path):
         print(f"{filename} was changed to {name}.mp4")
 
 
+def system_info():
+    ram_usage = psutil.Process(os.getpid()).memory_info().rss
+    disk_usage = psutil.disk_usage("/")
+    cpu_usage_percent = psutil.cpu_percent()
+
+    string = "\n\n⍟───── [Colab Usage](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟"
+    string += f"\n\nCPU » {cpu_usage_percent}% | RAM » {size_measure(ram_usage)}"
+    string += f"\nTOT » {size_measure(disk_usage.total)} | FREE » {size_measure(disk_usage.free)} "
+    string += (
+        f"\nUP » {convert_seconds((datetime.datetime.now() - task_start).seconds)} | "
+    )
+    string += f"TIMER » {convert_seconds(21600 - ((datetime.datetime.now() - task_start).seconds))}"
+
+    return string
+
+
 async def zip_folder(folder_path):
     output_path = folder_path + ".zip"
     # Calculate total size of folder to track progress
@@ -161,28 +179,15 @@ async def zip_folder(folder_path):
                     # Delete the file after writing it to the zip object.
                     os.remove(fp)
 
-                    bar_length = 14
-                    filled_length = int(percentage / 100 * bar_length)
-                    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-                    message = (
-                        f"\n[{bar}] » {percentage:.2f}%"
-                        + f"\n✅ DONE: __{size_measure(current_size)}__ OF __{size_measure(total_size)}__"
-                        + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+                    await status_bar(
+                        down_msg,
+                        "N/A",
+                        percentage,
+                        "N/A",
+                        size_measure(current_size),
+                        size_measure(total_size),
+                        "Xr-Zipp 🔒",
                     )
-
-                    try:
-                        # Edit the message with updated progress information.
-                        if is_time_over(current_time):
-                            await bot.edit_message_text(
-                                chat_id=chat_id,
-                                message_id=msg.id,
-                                text=task_msg + down_msg + message,
-                            )
-
-                    except Exception as e:
-                        # Catch any exceptions that might occur while editing the message.
-                        print(f"Error updating progress bar: {str(e)}")
-
     return output_path
 
 
@@ -200,34 +205,19 @@ async def extract_zip(zip_filepath):
             # print(f"Extracting {member.filename} ({member.file_size} bytes)")
             extracted_size += member.file_size
             zf.extract(member, temp_unzip_path)
-            percent_complete = (extracted_size / total_size) * 100 if total_size else 0
+            percentage = (extracted_size / total_size) * 100 if total_size else 0
 
-            down_msg = f"<b>📂 EXTRACTING:</b>\n\n<code>{d_name}</code>\n"
+            down_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{d_name}</code>\n"
 
-            bar_length = 14
-            filled_length = int(percent_complete / 100 * bar_length)
-            bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-            message = (
-                f"\n[{bar}] » {percent_complete:.2f}%"
-                + f"\n✅ DONE: __{size_measure(extracted_size)}__ OF "
-                + f"__{size_measure(os.stat(zip_filepath).st_size)}__"
-                + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+            await status_bar(
+                down_msg,
+                "N/A",
+                percentage,
+                "N/A",
+                size_measure(extracted_size),
+                size_measure(os.stat(zip_filepath).st_size),
+                "Xr-Unzip 🔓",
             )
-
-            print(message)
-
-            try:
-                # Edit the message with updated progress information.
-                if is_time_over(current_time):
-                    await bot.edit_message_text(
-                        chat_id=chat_id,
-                        message_id=msg.id,
-                        text=task_msg + down_msg + message,
-                    )
-
-            except Exception as e:
-                # Catch any exceptions that might occur while editing the message.
-                print(f"Error updating progress bar: {str(e)}")
 
 
 async def size_checker(file_path):
@@ -252,8 +242,8 @@ async def split_zipFile(file_path, max_size):
     dir_path, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
     down_msg = (
-        f"<b>✂️ SPLITTING :</b>\n\n<code>{filename}</code>\n"
-        + f"\nSIZE: {size_measure(os.stat(file_path).st_size)}\n"
+        f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
+        + f"\nSIZE » {size_measure(os.stat(file_path).st_size)}\n"
     )
     # Get the total size of the file
     total_size = os.path.getsize(file_path)
@@ -273,27 +263,17 @@ async def split_zipFile(file_path, max_size):
                 out.write(chunk)
 
             bytes_written += len(chunk)
-            progress_percent = bytes_written / total_size * 100
+            percentage = bytes_written / total_size * 100
 
-            bar_length = 14
-            filled_length = int(progress_percent / 100 * bar_length)
-            bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-            message = (
-                f"\n[{bar}] » {progress_percent:.2f}%"
-                + f"\n✅ DONE: __{size_measure(bytes_written)}__ OF __{size_measure(total_size)}__"
-                + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+            await status_bar(
+                down_msg,
+                "N/A",
+                percentage,
+                "N/A",
+                size_measure(bytes_written),
+                size_measure(total_size),
+                "Xr-Split ✂️",
             )
-            print(message)
-            try:
-                await bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=msg.id,
-                    text=task_msg + down_msg + message,
-                )
-            except Exception as e:
-                # Catch any exceptions that might occur while editing the message.
-                print(f"Error updating progress bar: {str(e)}")
-
             # Get next chunk
             chunk = f.read(max_size)
             # Increment chunk counter
@@ -350,46 +330,20 @@ async def on_output(output: str):
 
     # Only Do this if got Information
     if total_size != "0B":
-        bar_length = 14
-        filled_length = int(int(percentage) / 100 * bar_length)
-        bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-
         # Calculate download speed
         elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
-        try:
-            current_speed = (float(down) * 1024**spd) / elapsed_time_seconds
-            speed_string = f"{size_measure(current_speed)}/s"
-            message = f"\n[{bar}] » {percentage}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{downloaded_bytes}__ OF __{total_size}__"
-            message += f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
-        except Exception as e1:
-            print(f"Error On Output: {e1}")
-            message = f"\nRetrying updating Progress....."
-        down_msg = f"<b>📥 DOWNLOADING:</b>\n\n<code>{d_name}</code>\n"
+        current_speed = (float(down) * 1024**spd) / elapsed_time_seconds
+        speed_string = f"{size_measure(current_speed)}/s"
 
-        print(message)
-
-        try:
-            # Edit the message with updated progress information.
-            if is_time_over(current_time):
-                await bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=msg.id,
-                    text=task_msg + down_msg + message,
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [  # First row
-                                InlineKeyboardButton(  # Opens a web URL
-                                    "BOT REPO 🪲",
-                                    url="https://github.com/XronTrix10/Telegram-Leecher",
-                                ),
-                            ]
-                        ]
-                    ),
-                )
-
-        except Exception as e:
-            # Catch any exceptions that might occur while editing the message.
-            print(f"Error updating progress bar: {str(e)}")
+        await status_bar(
+            down_msg,
+            speed_string,
+            int(percentage),
+            eta,
+            downloaded_bytes,
+            total_size,
+            "Aria2c 🧨",
+        )
 
 
 async def aria2_Download(link):
@@ -583,39 +537,20 @@ async def downloadProgress(file_size):
         speed_string = f"{size_measure(down_speed)}/s"
 
     eta = (folder_info[0] - down_done) / down_speed
-    eta = convert_seconds(eta)
 
-    down_msg = f"<b>📥 DOWNLOADING: </b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
 
     percentage = down_done / folder_info[0] * 100
-    bar_length = 14
-    filled_length = int(percentage / 100 * bar_length)
-    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__  ⏳ ETA: __{eta}__\n✅ DONE: __{size_measure(down_done)}__ OF __{size_measure(folder_info[0])}__"
-    message += f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
-    try:
-        print(message)
-        # Edit the message with updated progress information.
-        if is_time_over(current_time):
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=task_msg + down_msg + message,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [  # First row
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🪲",
-                                url="https://github.com/XronTrix10/Telegram-Leecher",
-                            ),
-                        ]
-                    ]
-                ),
-            )
 
-    except Exception as e:
-        # Catch any exceptions that might occur while editing the message.
-        print(f"Error updating progress bar: {str(e)}")
+    await status_bar(
+        down_msg=down_msg,
+        speed=speed_string,
+        percentage=percentage,
+        eta=convert_seconds(eta),
+        done=size_measure(down_done),
+        left=size_measure(folder_info[0]),
+        engine="G-API ♻️",
+    )
 
 
 async def gDownloadFile(file_id, path):
@@ -651,7 +586,6 @@ async def gDownloadFile(file_id, path):
                 done = False
                 while done is False:
                     status, done = file_downloader.next_chunk()
-                    print(f"Download progress: {int(status.progress() * 100)}%")
                     # Get current value from file_contents.
                     file_contents.seek(0)
                     with open(file_name, "ab") as f:
@@ -661,7 +595,6 @@ async def gDownloadFile(file_id, path):
                     file_contents.truncate()
                     # The saved bytes till now
                     file_d_size = int(status.progress() * int(file["size"]))
-                    print(f"Downloaded size: {size_measure(file_d_size)}")
                     await downloadProgress(file_d_size)
 
                 print(f"DOWNLOADED  =>   {os.path.basename(file_name)}")
@@ -701,6 +634,54 @@ async def gDownloadFolder(folder_id, path):
 # =================================================================
 
 
+async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
+    bar_length = 12
+    filled_length = int(percentage / 100 * bar_length)
+    # bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+    message = (
+        f"\n╭|{bar}| » {percentage:.2f}%\n├⚡️ Speed: __{speed}__\n├⚙️ Engine » {engine}"
+        + f"\n├⏳ Esti Time » __{eta}__"
+        + f"\n├🍃 Active Time » __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+        + f"\n├✅ Processed » __{done}__\n╰💾 Total Size » __{left}__"
+    )
+    sys_text = system_info()
+    try:
+        clear_output()
+        print(message)
+        # Edit the message with updated progress information.
+        if is_time_over(current_time):
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=task_msg + down_msg + message + sys_text,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [  # First row
+                            InlineKeyboardButton(  # Opens a web URL
+                                "BOT REPO 🪲",
+                                url="https://github.com/XronTrix10/Telegram-Leecher",
+                            ),
+                        ],
+                        [
+                            InlineKeyboardButton(  # Opens a web URL
+                                "CHANNEL 📣",
+                                url="https://t.me/Colab_Leecher",
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "GROUP 💬",
+                                url="https://t.me/+2n9HLR2F1uJhZGY1",
+                            ),
+                        ],
+                    ]
+                ),
+            )
+
+    except Exception as e:
+        # Catch any exceptions that might occur while editing the message.
+        print(f"Error Updating Status bar: {str(e)}")
+
+
 async def progress_bar(current, total):
     global start_time
 
@@ -713,42 +694,18 @@ async def progress_bar(current, total):
         speed_string = f"{size_measure(upload_speed)}/s"
 
     eta = (total_down_size - current - sum(up_bytes)) / upload_speed
-    eta = convert_seconds(eta)
 
     percentage = (current + sum(up_bytes)) / total_down_size * 100
-    bar_length = 14
-    filled_length = int(percentage / 100 * bar_length)
-    bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    message = (
-        f"\n[{bar}] » {percentage:.2f}%\n⚡️ __{speed_string}__"
-        + f" ⏳ ETA: __{eta}__\n✅ DONE: __{size_measure(current + sum(up_bytes))}__"
-        + f" OF __{size_measure(total_down_size)}__"
-        + f"\n🍃 Elapsed Time: __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
-    )
-    try:
-        clear_output()
-        print(message)
-        # Edit the message with updated progress information.
-        if is_time_over(current_time):
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=task_msg + text_msg + message,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [  # First row
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🪲",
-                                url="https://github.com/XronTrix10/Telegram-Leecher",
-                            ),
-                        ]
-                    ]
-                ),
-            )
 
-    except Exception as e:
-        # Catch any exceptions that might occur while editing the message.
-        print(f"Error updating progress bar: {str(e)}")
+    await status_bar(
+        down_msg=text_msg,
+        speed=speed_string,
+        percentage=percentage,
+        eta=convert_seconds(eta),
+        done=size_measure(current + sum(up_bytes)),
+        left=size_measure(total_down_size),
+        engine="Pyrogram 💥",
+    )
 
 
 async def upload_file(file_path, type, file_name):
@@ -841,7 +798,7 @@ async def Leecher(file_path):
             print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
-            text_msg = f"<b>📤 UPLOADING: {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
+            text_msg = f"<b>📤 UPLOADING » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
             msg = await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
@@ -860,7 +817,7 @@ async def Leecher(file_path):
         print(f"\nNow uploading {file_name}\n")
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
-        text_msg = f"<b>📤 UPLOADING:</b>\n\n<code>{file_name}</code>\n"
+        text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.id,
@@ -876,8 +833,8 @@ async def Leech(folder_path):
     global sent
 
     dump_text = (
-        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>"
-        + f"\n\n<b>📂 Total Files:</b>  <code>{get_file_count(folder_path)}</code>\n"
+        f"<b>📛 Name » </b>  <code>{d_name}</code>\n\n<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
+        + f"\n\n<b>📂 Total Files » </b>  <code>{get_file_count(folder_path)}</code>\n"
     )
 
     sent = await bot.send_photo(
@@ -908,7 +865,7 @@ async def Leech(folder_path):
 async def ZipLeech(d_fol_path):
     global msg, down_msg, start_time, d_name, total_down_size, sent
 
-    down_msg = f"<b>🔐 ZIPPING:</b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{d_name}</code>\n"
 
     try:
         msg = await bot.edit_message_text(
@@ -934,8 +891,8 @@ async def ZipLeech(d_fol_path):
         leech_count = 1
 
     dump_text = (
-        f"<b>📛 Name:</b>  <code>{d_name}</code>\n\n<b>📦 Size:</b> <code>{size_measure(total_down_size)}</code>"
-        + f"\n\n<b>📂 Total Files:</b>  <code>{leech_count}</code>\n"
+        f"<b>📛 Name » </b>  <code>{d_name}</code>\n\n<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
+        + f"\n\n<b>📂 Total Files » </b>  <code>{leech_count}</code>\n"
     )
 
     sent = await bot.send_photo(
@@ -962,7 +919,7 @@ async def ZipLeech(d_fol_path):
 async def UnzipLeech(d_fol_path):
     global msg
 
-    down_msg = f"\n<b>📂 UNZIPPING:</b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"\n<b>📂 UNZIPPING » </b>\n\n<code>{d_name}</code>\n"
 
     msg = await bot.edit_message_text(
         chat_id=chat_id,
@@ -1009,9 +966,9 @@ async def FinalStep(msg):
 
     last_text = (
         f"<b>{task} COMPLETE 🔥</b>\n\n"
-        + f"<i>📛 Name:</i>  <code>{d_name}</code>\n\n"
-        + f"<i>📦 Size: </i><code>{size_measure(total_down_size)}</code>\n\n"
-        + f"<i>🍃 Elapsed Time:</i> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>\n\n"
+        + f"<b>📛 Name » </b>  <code>{d_name}</code>\n\n"
+        + f"<b>📦 Size » </b><code>{size_measure(total_down_size)}</code>\n\n"
+        + f"<b>🍃 Elapsed Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>\n\n"
     )
     await bot.edit_message_text(
         chat_id=chat_id,
@@ -1039,7 +996,6 @@ async def FinalStep(msg):
 #    Main Functions, function calls and variable declarations
 # ****************************************************************
 
-task_start = datetime.datetime.now()
 link_p = str(dump_id)[4:]
 thumb_path = "/content/thmb.jpg"
 d_path = "/content/Downloads"
@@ -1065,7 +1021,6 @@ links = []
 link = "something"
 task_msg = ""
 
-
 service = build_service()
 
 if not os.path.exists(thumb_path):
@@ -1074,25 +1029,14 @@ if not os.path.exists(thumb_path):
 if not ospath.exists(d_path):
     makedirs(d_path)
 
-# Getting Task Mode
-while True:
-    choice = input(
-        "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
-    )
-    if choice in ["1", "2", "3"]:
-        clear_output()
-        break
-    else:
-        clear_output()
-        print("Don't you understand ENGLISH ? Enter the option NUMBER !\n")
 
-# Getting Download Links
-while link.lower() != "c":
-    link = input(f"Download link [ Enter c to Terminate]: ")
-    if link.lower() != "c":
-        links.append(link)
+choice = input(
+    "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
+)
 
-down_msg = f"\n<b>📥 DOWNLOADING: </b>\n"
+if choice not in ["1", "2", "3"]:
+    print("Wrong Choice ! 🦥\n")
+    exit(1)
 
 if choice == "1":
     task = "Leech"
@@ -1101,7 +1045,21 @@ elif choice == "2":
 else:
     task = "Unzipleech"
 
-task_msg = f"<b>🦞 TASK MODE :</b> __{task}__\n\n|  "
+print("TASK MODE: " + task)
+
+# Getting Download Links
+while link.lower() != "c":
+    link = input(f"Download link [ Enter c to Terminate]: ")
+    if link.lower() != "c":
+        links.append(link)
+
+# enter the link for the file or folder that you want to download
+d_name = input("Enter the name of the File/Folder: ")
+
+task_start = datetime.datetime.now()
+
+down_msg = f"\n<b>📥 DOWNLOADING » </b>\n"
+task_msg = f"<b>🦞 TASK MODE »</b> __{task}__\n\n|  "
 
 for a in range(len(links)):
     if "magnet" in links[a]:
@@ -1111,9 +1069,6 @@ for a in range(len(links)):
         task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
     task_msg += "\n\n"
 
-# enter the link for the file or folder that you want to download
-d_name = input("Enter the name of the File/Folder: ")
-task_start = datetime.datetime.now()
 
 d_fol_path = f"{d_path}/{d_name}"
 if not ospath.exists(d_fol_path):
@@ -1127,16 +1082,6 @@ async with Client(
             chat_id=chat_id,
             photo=thumb_path,
             caption=task_msg + down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [  # First row
-                        InlineKeyboardButton(  # Opens a web URL
-                            "Bot REPO 🪲",
-                            url="https://github.com/XronTrix10/Telegram-Leecher",
-                        ),
-                    ]
-                ]
-            ),
         )
 
         sent = msg
@@ -1151,16 +1096,6 @@ async with Client(
                         chat_id=chat_id,
                         message_id=msg.id,
                         text=aria2_dn,
-                        reply_markup=InlineKeyboardMarkup(
-                            [
-                                [  # First row
-                                    InlineKeyboardButton(  # Opens a web URL
-                                        "Bot Repo 🦀",
-                                        url="https://github.com/XronTrix10/Telegram-Leecher",
-                                    )
-                                ]
-                            ]
-                        ),
                     )
                 except Exception as e1:
                     print(f"Couldn't Update text ! Because: {e1}")
