@@ -1140,12 +1140,12 @@ async with Client(
         await FinalStep(msg)
 
     except Exception as e:
-        if "Failed to retrieve" in str(e):
-            clear_output()
-            print("Authorization Error with token.pickle ! Maybe file not present !")
+        clear_output()
+        if ospath.exists(d_path):
+            shutil.rmtree(d_path)
+            print("Download Folder was DELETED 💀!")
 
-        else:
-            Error_Text = (
+        Error_Text = (
             "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
             + f"\n<b>TASK FAILED TO COMPLETE 💔</b>\n\n╭<b>📛 Name » </b> <code>{d_name}</code>\n├<b>🍃 Wasted Time » </b>"
             + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n"
