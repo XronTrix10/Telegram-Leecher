@@ -437,8 +437,20 @@ async def g_DownLoad(link):
     global start_time
 
     file_id = getIDFromURL(link)
-
-    meta = getFileMetadata(file_id)
+    try:
+        meta = getFileMetadata(file_id)
+    except Exception as e:
+        if "File not found" in str(e):
+            raise Exception(
+                "The file link you gave either doesn't exist or You don't have access to it!"
+            )
+        elif "Failed to retrieve" in str(e):
+            clear_output()
+            raise Exception(
+                "Authorization Error with Google ! Make Sure you uploaded token.pickle !"
+            )
+        else:
+            raise Exception(f"Error in G-API: {e}")
 
     # d_name = meta["name"]
     nd_name = meta["name"]
