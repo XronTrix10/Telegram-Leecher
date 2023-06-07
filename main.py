@@ -255,9 +255,16 @@ async def size_checker(file_path):
 
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
-
-        await split_zipFile(file_path, max_size)
-
+        dir_path, filename = os.path.split(file_path)
+        if (
+            filename.endswith(".zip")
+            or filename.endswith(".rar")
+            or filename.endswith(".7z")
+        ):
+            await split_zipFile(file_path, max_size)
+        else:
+            new_path = await zip_folder(file_path)
+            await split_zipFile(new_path, max_size)
         return True
     else:
         print(f"File size is {size_measure(file_size)} MB. NOT SPLITTING.......")
