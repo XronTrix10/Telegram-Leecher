@@ -345,6 +345,7 @@ async def aria2_Download(link):
     # Create a command to run aria2p with the link
     command = [
         "aria2c",
+        "-x10",
         "--seed-time=0",
         "--summary-interval=1",
         "--console-log-level=notice",
