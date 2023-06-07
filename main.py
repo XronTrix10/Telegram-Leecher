@@ -1146,30 +1146,29 @@ async with Client(
 
         else:
             Error_Text = (
-                "<b>TASK FAILED TO COMPLETE 💔</b>\n\n🍃 Elapsed Time: "
-                + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n\n"
-                + f"<b>REASEON:</b>\t\t__{e}__"
-            )
-
-            print(f"Error Occured: {e}")
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=task_msg + Error_Text,
-                reply_markup=InlineKeyboardMarkup(
+            "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+            + f"\n<b>TASK FAILED TO COMPLETE 💔</b>\n\n╭<b>📛 Name » </b> <code>{d_name}</code>\n├<b>🍃 Wasted Time » </b>"
+            + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n"
+            + f"<b>╰🤔 Reason » </b>__{e}__"
+        )
+        await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
+        await bot.send_photo(
+            chat_id=chat_id,
+            photo=thumb_path,
+            caption=task_msg + Error_Text,
+            reply_markup=InlineKeyboardMarkup(
+                [
                     [
-                        [  # First row
-                            InlineKeyboardButton(  # Opens a web URL
-                                "Discuss in Group 🤔",
-                                url="https://t.me/+2n9HLR2F1uJhZGY1",
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(  # Opens a web URL
-                                "Report Issue 🥺",
-                                url="https://github.com/XronTrix10/Telegram-Leecher/issues",
-                            )
-                        ],
-                    ]
-                ),
-            )
+                        InlineKeyboardButton(  # Opens a web URL
+                            "Report Issue 🥺",
+                            url="https://github.com/XronTrix10/Telegram-Leecher/issues",
+                        ),
+                        InlineKeyboardButton(  # Opens a web URL
+                            "Group Discuss 🤔",
+                            url="https://t.me/+2n9HLR2F1uJhZGY1",
+                        ),
+                    ],
+                ]
+            ),
+        )
+        print(f"Error Occured: {e}")
