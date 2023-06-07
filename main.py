@@ -676,46 +676,26 @@ async def gDownloadFolder(folder_id, path):
 # =================================================================
 
 
-async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
-    bar_length = 12
-    filled_length = int(percentage / 100 * bar_length)
-    # bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
-    bar = "█" * filled_length + "░" * (bar_length - filled_length)
-    message = (
-        f"\n╭|{bar}| » {percentage:.2f}%\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** {engine}"
-        + f"\n├⏳ **Esti Time »** __{eta}__"
-        + f"\n├🍃 **Active Time »** __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
-        + f"\n├✅ **Processed »** __{done}__\n╰💾 **Total Size »** __{left}__"
-    )
-    sys_text = system_info()
-    try:
-        clear_output()
-        print(message)
-        # Edit the message with updated progress information.
-        if is_time_over(current_time):
-            await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=task_msg + down_msg + message + sys_text,
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [  # First row
-                            InlineKeyboardButton(  # Opens a web URL
-                                "BOT REPO 🪲",
-                                url="https://github.com/XronTrix10/Telegram-Leecher",
-                            ),
-                        ],
-                        [
-                            InlineKeyboardButton(  # Opens a web URL
-                                "CHANNEL 📣",
-                                url="https://t.me/Colab_Leecher",
-                            ),
-                            InlineKeyboardButton(  # Opens a web URL
-                                "GROUP 💬",
-                                url="https://t.me/+2n9HLR2F1uJhZGY1",
-                            ),
-                        ],
-                    ]
+def keyboard():
+    return InlineKeyboardMarkup(
+        [
+            [  # First row
+                InlineKeyboardButton(  # Opens a web URL
+                    "BOT REPO 🪲",
+                    url="https://github.com/XronTrix10/Telegram-Leecher",
+                ),
+            ],
+            [
+                InlineKeyboardButton(  # Opens a web URL
+                    "CHANNEL 📣",
+                    url="https://t.me/Colab_Leecher",
+                ),
+                InlineKeyboardButton(  # Opens a web URL
+                    "GROUP 💬",
+                    url="https://t.me/+2n9HLR2F1uJhZGY1",
+                ),
+            ],
+        ]
                 ),
             )
 
