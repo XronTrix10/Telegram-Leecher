@@ -815,7 +815,7 @@ async def Leecher(file_path):
 
         for dir_path in dir_list:
             short_path = os.path.join(temp_lpath, dir_path)
-            file_type = get_file_type(short_path)
+            file_type = "document" if LEECH_DOCUMENT else get_file_type(short_path)
             file_name = os.path.basename(short_path)
             print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
@@ -834,7 +834,7 @@ async def Leecher(file_path):
         shutil.rmtree(temp_lpath)
 
     else:
-        file_type = get_file_type(file_path)
+        file_type = "document" if LEECH_DOCUMENT else get_file_type(file_path)
         file_name = os.path.basename(file_path)
         print(f"\nNow uploading {file_name}\n")
         start_time = datetime.datetime.now()
