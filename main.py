@@ -1,4 +1,4 @@
-#@title 🖥️ Main Colab Leech Code [ Click to Magic ✨ ]
+# @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
 import os
 import io
 import re
@@ -120,10 +120,8 @@ def get_file_count(folder_path):
 
 def video_extension_fixer(file_path):
     dir_path, filename = os.path.split(file_path)
-
     if filename.endswith(".mp4") or filename.endswith(".mkv"):
         pass
-    # split the file name and the extension
     else:
         # rename the video file with .mp4 extension
         name, ext = os.path.splitext(filename)
@@ -139,10 +137,10 @@ def system_info():
     cpu_usage_percent = psutil.cpu_percent()
 
     string = "\n\n⍟───── [Colab Usage](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
-    string += f"\n╭🖥️ **CPU Usage »**  {cpu_usage_percent}%"
-    string += f"\n├💽 **RAM Usage »**  {size_measure(ram_usage)}"
-    string += f"\n╰💾 **DISK Free »**  {size_measure(disk_usage.free)}"
-    string += f"\n\n<i>💖 When I'm Doin This, Do Something Else. **Time Is Precious ✨**</i>"
+    string += f"\n╭🖥️ **CPU Usage »**  __{cpu_usage_percent}%__"
+    string += f"\n├💽 **RAM Usage »**  __{size_measure(ram_usage)}__"
+    string += f"\n╰💾 **DISK Free »**  __{size_measure(disk_usage.free)}__"
+    string += f"\n\n<i>💖 When I'm Doin This, Do Something Else ! **Because, Time Is Precious ✨**</i>"
 
     return string
 
@@ -203,8 +201,8 @@ async def zip_folder(path):
                             )
                             await status_bar(
                                 down_msg,
-                        "N/A",
-                        percentage,
+                                speed_string,
+                                percentage,
                                 convert_seconds(eta),
                                 size_measure(bytes_written),
                                 size_measure(total_size),
@@ -218,6 +216,7 @@ async def zip_folder(path):
 
 
 async def extract_zip(zip_filepath):
+    starting_time = datetime.datetime.now()
     if not os.path.exists(temp_unzip_path):
         makedirs(temp_unzip_path)
 
@@ -231,15 +230,16 @@ async def extract_zip(zip_filepath):
             # print(f"Extracting {member.filename} ({member.file_size} bytes)")
             extracted_size += member.file_size
             zf.extract(member, temp_unzip_path)
-            percentage = (extracted_size / total_size) * 100 if total_size else 0
-
-            down_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{d_name}</code>\n"
-
+            # percentage = (extracted_size / total_size) * 100 if total_size else 0
+            unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{d_name}</code>\n"
+            speed_string, eta, percentage = speed_eta(
+                starting_time, extracted_size, total_size
+            )
             await status_bar(
-                down_msg,
-                "N/A",
+                unzip_msg,
+                speed_string,
                 percentage,
-                "N/A",
+                convert_seconds(eta),
                 size_measure(extracted_size),
                 size_measure(os.stat(zip_filepath).st_size),
                 "Xr-Unzip 🔓",
@@ -272,17 +272,16 @@ async def size_checker(file_path):
 
 
 async def split_zipFile(file_path, max_size):
+    starting_time = datetime.datetime.now()
     dir_path, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
     down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     # Get the total size of the file
     total_size = os.path.getsize(file_path)
-
     with open(file_path, "rb") as f:
         chunk = f.read(max_size)
         i = 1
         bytes_written = 0
-
         while chunk:
             # Generate filename for this chunk
             ext = str(i).zfill(3)
@@ -293,20 +292,21 @@ async def split_zipFile(file_path, max_size):
                 out.write(chunk)
 
             bytes_written += len(chunk)
-            percentage = bytes_written / total_size * 100
-
+            speed_string, eta, percentage = speed_eta(
+                starting_time, bytes_written, total_size
+            )
             await status_bar(
                 down_msg,
-                "N/A",
+                speed_string,
                 percentage,
-                "N/A",
+                convert_seconds(eta),
                 size_measure(bytes_written),
                 size_measure(total_size),
                 "Xr-Split ✂️",
             )
             # Get next chunk
             chunk = f.read(max_size)
-            i += 1 # Increment chunk counter
+            i += 1  # Increment chunk counter
 
 
 def is_time_over(current_time):
@@ -316,6 +316,18 @@ def is_time_over(current_time):
     return ten_sec_passed
 
 
+def speed_eta(start, done, total):
+    percentage = (done / total) * 100
+    elapsed_time = (datetime.datetime.now() - start).seconds
+    if done > 0 and elapsed_time != 0:
+        zip_speed = done / elapsed_time
+        speed = f"{size_measure(zip_speed)}/s"
+        eta = (total - done) / zip_speed
+    else:
+        speed, eta = "N/A", 0
+    return speed, eta, percentage
+
+
 # =================================================================
 #    Direct Link Handler Functions
 # =================================================================
@@ -323,7 +335,7 @@ def is_time_over(current_time):
 
 async def on_output(output: str):
     # print("=" * 60 + f"\n\n{output}\n\n" + "*" * 60)
-
+    global link_info
     total_size = "0B"
     progress_percentage = "0B"
     downloaded_bytes = "0B"
@@ -357,10 +369,14 @@ async def on_output(output: str):
     else:
         spd = 0
 
+    elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+
+    if elapsed_time_seconds >= 270 and not link_info:
+        raise Exception("Failed to get download information ! Probably dead link 💀")
     # Only Do this if got Information
     if total_size != "0B":
         # Calculate download speed
-        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+        link_info = True
         current_speed = (float(down) * 1024**spd) / elapsed_time_seconds
         speed_string = f"{size_measure(current_speed)}/s"
 
@@ -376,6 +392,8 @@ async def on_output(output: str):
 
 
 async def aria2_Download(link):
+    global start_time
+    start_time = datetime.datetime.now()
     # Create a command to run aria2p with the link
     command = [
         "aria2c",
@@ -409,7 +427,7 @@ async def aria2_Download(link):
     error_output = process.stderr.read()
     if exit_code != 0:
         raise Exception(
-            f"aria2c command failed with return code {exit_code}\n\nError: {error_output}"
+            f"aria2c download failed with return code {exit_code}. Error: {error_output}"
         )
 
 
@@ -452,7 +470,6 @@ async def g_DownLoad(link):
         else:
             raise Exception(f"Error in G-API: {e}")
 
-    # d_name = meta["name"]
     nd_name = meta["name"]
 
     nd_fol_path = f"{d_fol_path}/{nd_name}"
@@ -566,35 +583,6 @@ def get_Gfolder_size(folder_id):
         return -1
 
 
-async def downloadProgress(file_size):
-    global start_time
-
-    down_done = sum(down_bytes) + file_size
-
-    speed_string = ""
-
-    if down_done > 0:
-        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
-        down_speed = down_done / elapsed_time_seconds
-        speed_string = f"{size_measure(down_speed)}/s"
-
-    eta = (folder_info[0] - down_done) / down_speed
-
-    down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
-
-    percentage = down_done / folder_info[0] * 100
-
-    await status_bar(
-        down_msg=down_msg,
-        speed=speed_string,
-        percentage=percentage,
-        eta=convert_seconds(eta),
-        done=size_measure(down_done),
-        left=size_measure(folder_info[0]),
-        engine="G-API ♻️",
-    )
-
-
 async def gDownloadFile(file_id, path):
     # Check if the specified file or folder exists and is downloadable.
     try:
@@ -637,7 +625,19 @@ async def gDownloadFile(file_id, path):
                     file_contents.truncate()
                     # The saved bytes till now
                     file_d_size = int(status.progress() * int(file["size"]))
-                    await downloadProgress(file_d_size)
+                    down_done = sum(down_bytes) + file_d_size
+                    speed_string, eta, percentage = speed_eta(
+                        start_time, down_done, folder_info[0]
+                    )
+                    await status_bar(
+                        down_msg=down_msg,
+                        speed=speed_string,
+                        percentage=percentage,
+                        eta=convert_seconds(eta),
+                        done=size_measure(down_done),
+                        left=size_measure(folder_info[0]),
+                        engine="G-API ♻️",
+                    )
 
                 print(f"DOWNLOADED  =>   {os.path.basename(file_name)}")
                 down_bytes.append(int(file["size"]))
@@ -696,7 +696,31 @@ def keyboard():
                 ),
             ],
         ]
-                ),
+    )
+
+
+async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
+    bar_length = 12
+    filled_length = int(percentage / 100 * bar_length)
+    # bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
+    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+    message = (
+        f"\n╭|{bar}| » __{percentage:.2f}%__\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** __{engine}__"
+        + f"\n├⏳ **Time Left »** __{eta}__"
+        + f"\n├🍃 **Time Spent »** __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+        + f"\n├✅ **Processed »** __{done}__\n╰📦 **Total Size »** __{left}__"
+    )
+    sys_text = system_info()
+    try:
+        clear_output()
+        print(message)
+        # Edit the message with updated progress information.
+        if is_time_over(current_time):
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=task_msg + down_msg + message + sys_text,
+                reply_markup=keyboard(),
             )
 
     except Exception as e:
@@ -707,18 +731,8 @@ def keyboard():
 async def progress_bar(current, total):
     global start_time
 
-    speed_string = ""
-    upload_speed = 0
-
-    if current > 0:
-        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
-        upload_speed = current / elapsed_time_seconds
-        speed_string = f"{size_measure(upload_speed)}/s"
-
-    eta = (total_down_size - current - sum(up_bytes)) / upload_speed
-
+    speed_string, eta, percentage = speed_eta(start_time, current, total_down_size)
     percentage = (current + sum(up_bytes)) / total_down_size * 100
-
     await status_bar(
         down_msg=text_msg,
         speed=speed_string,
@@ -820,11 +834,12 @@ async def Leecher(file_path):
             print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
-            text_msg = f"<b>📤 UPLOADING » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
+            text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
             msg = await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
-                text=task_msg + text_msg + "\n⏳ __Starting.....__",
+                text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
+                reply_markup=keyboard(),
             )
             await upload_file(short_path, file_type, file_name)
             up_bytes.append(os.stat(short_path).st_size)
@@ -836,14 +851,14 @@ async def Leecher(file_path):
     else:
         file_type = "document" if LEECH_DOCUMENT else get_file_type(file_path)
         file_name = os.path.basename(file_path)
-        print(f"\nNow uploading {file_name}\n")
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
         text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.id,
-            text=task_msg + text_msg + "\n⏳ __Starting.....__",
+            text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
+            reply_markup=keyboard(),
         )
         await upload_file(file_path, file_type, file_name)
         up_bytes.append(os.stat(file_path).st_size)
@@ -855,24 +870,16 @@ async def Leech(folder_path):
     global sent
 
     dump_text = (
-        f"<b>📛 Name » </b>  <code>{d_name}</code>\n\n<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
-        + f"\n\n<b>📂 Total Files » </b>  <code>{get_file_count(folder_path)}</code>\n"
+        "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+        + f"\n╭<b>📛 Name » </b>  <code>{d_name}</code>\n├<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
+        + f"\n╰<b>📂 Total Files » </b>  <code>{get_file_count(folder_path)}</code>"
     )
 
     sent = await bot.send_photo(
         chat_id=dump_id,
         photo=thumb_path,
         caption=task_msg + dump_text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [  # First row
-                    InlineKeyboardButton(
-                        "BOT REPO 🪲",
-                        url="https://github.com/XronTrix10/Telegram-Leecher",
-                    )  # Opens a web URL
-                ]
-            ]
-        ),
+        reply_markup=keyboard(),
     )
 
     for dirpath, dirnames, filenames in os.walk(folder_path):
@@ -893,7 +900,7 @@ async def ZipLeech(d_fol_path):
         msg = await bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.id,
-            text=task_msg + down_msg,
+            text=task_msg + down_msg + system_info(),
         )
     except Exception as e2:
         print(f"Problem in ZipLeech !{e2}")
@@ -913,28 +920,15 @@ async def ZipLeech(d_fol_path):
         leech_count = 1
 
     dump_text = (
-        f"<b>📛 Name » </b>  <code>{d_name}</code>\n\n<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
-        + f"\n\n<b>📂 Total Files » </b>  <code>{leech_count}</code>\n"
+        "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+        + f"\n╭<b>📛 Name » </b>  <code>{d_name}</code>\n├<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
+        + f"\n╰<b>📂 Total Files » </b>  <code>{leech_count}</code>"
     )
 
     sent = await bot.send_photo(
-        chat_id=dump_id,
-        photo=thumb_path,
-        caption=dump_text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [  # First row
-                    InlineKeyboardButton(
-                        "BOT REPO 🪲",
-                        url="https://github.com/XronTrix10/Telegram-Leecher",
-                    )  # Opens a web URL
-                ]
-            ]
-        ),
+        chat_id=dump_id, photo=thumb_path, caption=dump_text, reply_markup=keyboard()
     )
-
     shutil.rmtree(d_fol_path)
-
     await Leecher(z_file_path)
 
 
@@ -946,7 +940,7 @@ async def UnzipLeech(d_fol_path):
     msg = await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
-        text=task_msg + down_msg,
+        text=task_msg + down_msg + system_info(),
     )
 
     for dirpath, dirnames, filenames in os.walk(d_fol_path):
@@ -978,7 +972,7 @@ async def FinalStep(msg):
     for i in range(len(sent_file)):
         file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
         fileName = sent_fileName[i]
-        fileText = f"\n{i+1}. <a href={file_link}>{fileName}</a>"
+        fileText = f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
         if len(final_text + fileText) >= 4096:
             final_texts.append(final_text)
             final_text = fileText
@@ -987,25 +981,17 @@ async def FinalStep(msg):
     final_texts.append(final_text)
 
     last_text = (
-        f"<b>{task} COMPLETE 🔥</b>\n\n"
-        + f"<b>📛 Name » </b>  <code>{d_name}</code>\n\n"
-        + f"<b>📦 Size » </b><code>{size_measure(total_down_size)}</code>\n\n"
-        + f"<b>🍃 Elapsed Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>\n\n"
+        f"⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+        + f"\n<b>{task} COMPLETE 🔥</b>\n\n"
+        + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
+        + f"├<b>📦 Size » </b><code>{size_measure(total_down_size)}</code>\n"
+        + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>"
     )
     await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
         text=task_msg + last_text,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [  # First row
-                    InlineKeyboardButton(  # Opens a web URL
-                        "BOT REPO 🦀",
-                        url="https://github.com/XronTrix10/Telegram-Leecher",
-                    ),
-                ]
-            ]
-        ),
+        reply_markup=keyboard(),
     )
 
     for fn_txt in final_texts:
@@ -1017,11 +1003,12 @@ async def FinalStep(msg):
 # ****************************************************************
 #    Main Functions, function calls and variable declarations
 # ****************************************************************
-
+api_id, chat_id, dump_id = int(API_ID), int(CHAT_ID), int(DUMP_ID)
 link_p = str(dump_id)[4:]
 thumb_path = "/content/thmb.jpg"
 d_path = "/content/Downloads"
 d_name = ""
+link_info = False
 d_fol_path = d_path  # Initial Declaration
 temp_lpath = f"{d_path}/Leeched_Files"
 temp_unzip_path = f"{d_path}/Unzipped_Files"
@@ -1057,8 +1044,7 @@ choice = input(
 )
 
 if choice not in ["1", "2", "3"]:
-    print("Wrong Choice ! 🦥\n")
-    exit(1)
+    raise Exception("No Such Option ! Can't Proceed Further 🦥\n")
 
 if choice == "1":
     task = "Leech"
@@ -1066,8 +1052,10 @@ elif choice == "2":
     task = "Zipleech"
 else:
     task = "Unzipleech"
-
-print("TASK MODE: " + task)
+leech_type = "Document" if LEECH_DOCUMENT else "Media"
+clear_output()
+time.sleep(1)
+print(f"TASK MODE: {task} as {leech_type}")
 
 # Getting Download Links
 while link.lower() != "c":
@@ -1079,17 +1067,17 @@ while link.lower() != "c":
 d_name = input("Enter the name of the File/Folder: ")
 
 task_start = datetime.datetime.now()
-
-down_msg = f"\n<b>📥 DOWNLOADING » </b>\n"
-task_msg = f"<b>🦞 TASK MODE »</b> __{task}__\n\n|  "
+down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
+task_msg = f"<b>🦞 TASK MODE »</b> __{task} as {leech_type}__\n\n<b>🖇️ SOURCES » </b>"
 
 for a in range(len(links)):
     if "magnet" in links[a]:
         proxy_magnet = "https://mag.net/" + links[a]
-        task_msg += f"<a href={proxy_magnet}>🔗 Link {a+1}</a>  |  "
+        task_msg += f"<a href={proxy_magnet}>🔗{str(a+1).zfill(2)}</a> "
     else:
-        task_msg += f"<a href={links[a]}>🔗 Link {a+1}</a>  |  "
-    task_msg += "\n\n"
+        task_msg += f"<a href={links[a]}>🔗{str(a+1).zfill(2)}</a> "
+
+task_msg += "\n\n"
 
 
 d_fol_path = f"{d_path}/{d_name}"
@@ -1097,13 +1085,17 @@ if not ospath.exists(d_fol_path):
     makedirs(d_fol_path)
 
 async with Client(
-    "my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token
+    "my_bot", api_id=api_id, api_hash=API_HASH, bot_token=BOT_TOKEN
 ) as bot:
     try:
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
-            caption=task_msg + down_msg + f"\n📝 __Calculating DOWNLOAD SIZE...__",
+            caption=task_msg
+            + down_msg
+            + f"\n📝 __Calculating DOWNLOAD SIZE...__"
+            + system_info(),
+            reply_markup=keyboard(),
         )
 
         sent = msg
@@ -1117,11 +1109,12 @@ async with Client(
                     await bot.edit_message_text(
                         chat_id=chat_id,
                         message_id=msg.id,
-                        text=aria2_dn,
+                        text=aria2_dn + system_info(),
+                        reply_markup=keyboard(),
                     )
                 except Exception as e1:
                     print(f"Couldn't Update text ! Because: {e1}")
-
+                link_info = False
                 await aria2_Download(link)
 
         total_down_size = get_folder_size(d_fol_path)
