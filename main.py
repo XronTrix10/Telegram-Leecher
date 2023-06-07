@@ -147,47 +147,74 @@ def system_info():
     return string
 
 
-async def zip_folder(folder_path):
-    output_path = folder_path + ".zip"
+async def zip_folder(path):
     # Calculate total size of folder to track progress
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            total_size += os.path.getsize(fp)
-
-    # Create zip file object
-    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        # Walk through each file in the folder
-        current_size = 0
-        for dirpath, dirnames, filenames in os.walk(folder_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-
-                # Add file to zip file object and print progress
-                with open(fp, "rb") as file:
-                    relative_path = os.path.relpath(fp, folder_path)
-                    zip_file.write(fp, arcname=relative_path)
-                    current_size += os.path.getsize(fp)
-                    percentage = (current_size / total_size) * 100
-                    print(
-                        f"Zipping - {percentage:.2f}%"
-                        + f" ({size_measure(current_size)}/{size_measure(total_size)})"
+    print("Function Triggered")
+    chunk_size = 1024 * 1024 * 80  # 80 megabyte
+    bytes_written = zip_speed = 0
+    starting_time = datetime.datetime.now()
+    if os.path.isfile(path):
+        total_size = os.path.getsize(path)
+        zip_msg = (
+            f"<b>🔐 ZIPPING B4 SPLIT » </b>\n\n<code>{os.path.basename(path)}</code>\n"
+        )
+        with zipfile.ZipFile(
+            f"{path}.zip", "w", compression=zipfile.ZIP_STORED
+        ) as zipf:
+            with open(path, "rb") as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    zipf.writestr(os.path.basename(path), chunk)
+                    bytes_written += len(chunk)
+                    speed_string, eta, percentage = speed_eta(
+                        starting_time, bytes_written, total_size
                     )
-
-                    # Delete the file after writing it to the zip object.
-                    os.remove(fp)
-
                     await status_bar(
-                        down_msg,
-                        "N/A",
+                        zip_msg,
+                        speed_string,
                         percentage,
-                        "N/A",
-                        size_measure(current_size),
+                        convert_seconds(eta),
+                        size_measure(bytes_written),
                         size_measure(total_size),
                         "Xr-Zipp 🔒",
                     )
-    return output_path
+        os.remove(path)
+
+    elif os.path.isdir(path):
+        total_size = get_folder_size(path)
+        with zipfile.ZipFile(
+            f"{path}.zip", "w", compression=zipfile.ZIP_STORED
+        ) as zip_file:
+            for root, dirs, files in os.walk(path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, path)
+                    with open(file_path, "rb") as f:
+                        while True:
+                            chunk = f.read(chunk_size)
+                            if not chunk:
+                                break
+                            zip_file.writestr(rel_path, chunk)
+                            bytes_written += len(chunk)
+                            speed_string, eta, percentage = speed_eta(
+                                starting_time, bytes_written, total_size
+                            )
+                            await status_bar(
+                                down_msg,
+                        "N/A",
+                        percentage,
+                                convert_seconds(eta),
+                                size_measure(bytes_written),
+                                size_measure(total_size),
+                                "Xr-Zipp 🔒",
+                            )
+                        # Delete the file after writing it to the zip object.
+                        os.remove(file_path)
+    else:
+        raise ValueError("Invalid path")
+    return f"{path}.zip"
 
 
 async def extract_zip(zip_filepath):
