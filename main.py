@@ -252,15 +252,17 @@ async def size_checker(file_path):
     file_size = os.stat(file_path).st_size
 
     if file_size > max_size:
-        print(f"File size is {size_measure(file_size)} SPLITTING.......")
 
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
         dir_path, filename = os.path.split(file_path)
+        filename = filename.lower()
         if (
             filename.endswith(".zip")
             or filename.endswith(".rar")
             or filename.endswith(".7z")
+            or filename.endswith(".tar")
+            or filename.endswith(".gz")
         ):
             await split_zipFile(file_path, max_size)
         else:
@@ -268,7 +270,6 @@ async def size_checker(file_path):
             await split_zipFile(new_path, max_size)
         return True
     else:
-        print(f"File size is {size_measure(file_size)} MB. NOT SPLITTING.......")
         return False
 
 
@@ -392,9 +393,11 @@ async def on_output(output: str):
         )
 
 
-async def aria2_Download(link):
-    global start_time
+async def aria2_Download(link, num):
+    global start_time, down_msg
     start_time = datetime.datetime.now()
+    down_msg = f"<b>📥 DOWNLOADING » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{d_name}</code>\n"
+
     # Create a command to run aria2p with the link
     command = [
         "aria2c",
@@ -484,11 +487,9 @@ async def g_DownLoad(link, num):
     file_id = getIDFromURL(link)
     meta = getFileMetadata(file_id)
     nd_name = meta["name"]
-
     nd_fol_path = f"{d_fol_path}/{nd_name}"
 
     if meta.get("mimeType") == "application/vnd.google-apps.folder":
-        folder_info[0] = get_Gfolder_size(file_id)
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
@@ -497,10 +498,6 @@ async def g_DownLoad(link, num):
         print("*" * 40 + "\n Folder Download Complete\n" + "*" * 40)
 
     else:
-        file_metadata = getFileMetadata(file_id)
-        folder_info[0] = int(
-            file_metadata["size"]
-        )  # Get the file size from the metadata:
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
 
         if not ospath.exists(nd_fol_path):
@@ -624,7 +621,7 @@ async def gDownloadFile(file_id, path):
                     fileId=file_id, supportsAllDrives=True
                 )
                 file_downloader = MediaIoBaseDownload(
-                    file_contents, request, chunksize=50 * 1024 * 1024
+                    file_contents, request, chunksize=70 * 1024 * 1024
                 )
                 done = False
                 while done is False:
@@ -953,7 +950,7 @@ async def UnzipLeech(d_fol_path):
     msg = await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
-        text=task_msg + down_msg + system_info(),
+        text=task_msg + down_msg + "\n⏳ __Starting.....__" + system_info(),
     )
 
     for dirpath, dirnames, filenames in os.walk(d_fol_path):
@@ -1033,15 +1030,13 @@ up_bytes = []
 up_bytes.append(0)
 current_time = []
 current_time.append(time.time())
-folder_info = []
-folder_info.extend([0, 1])
+folder_info = [0, 1]
 down_count = []
 down_count.append(1)
 start_time = datetime.datetime.now()
 text_msg = ""
-links = []
 link = "something"
-task_msg = ""
+links = []
 
 service = build_service()
 
@@ -1081,7 +1076,7 @@ d_name = input("Enter the name of the File/Folder: ")
 
 task_start = datetime.datetime.now()
 down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
-task_msg = f"<b>🦞 TASK MODE »</b> __{task} as {leech_type}__\n\n<b>🖇️ SOURCES » </b>"
+task_msg = f"<b>🦞 TASK MODE »</b> <i>{task} as {leech_type}</i>\n\n<b>🖇️ SOURCES » </b>"
 
 for a in range(len(links)):
     if "magnet" in links[a]:
@@ -1113,11 +1108,13 @@ async with Client(
 
         sent = msg
 
-        for link in links:
-            if "drive.google.com" in link:
-                await g_DownLoad(link)
+        calG_DownSize(links)
+        links = natsorted(links)
+        for c in range(len(links)):
+            if "drive.google.com" in links[c]:
+                await g_DownLoad(links[c], c + 1)
             else:
-                aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
+                aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{links[c]}</code>"
                 try:
                     await bot.edit_message_text(
                         chat_id=chat_id,
@@ -1128,7 +1125,7 @@ async with Client(
                 except Exception as e1:
                     print(f"Couldn't Update text ! Because: {e1}")
                 link_info = False
-                await aria2_Download(link)
+                await aria2_Download(links[c], c + 1)
 
         total_down_size = get_folder_size(d_fol_path)
 
