@@ -452,25 +452,37 @@ def build_service():
     return service
 
 
-async def g_DownLoad(link):
-    global start_time
-
-    file_id = getIDFromURL(link)
-    try:
-        meta = getFileMetadata(file_id)
-    except Exception as e:
-        if "File not found" in str(e):
-            raise Exception(
-                "The file link you gave either doesn't exist or You don't have access to it!"
-            )
-        elif "Failed to retrieve" in str(e):
-            clear_output()
-            raise Exception(
-                "Authorization Error with Google ! Make Sure you uploaded token.pickle !"
-            )
+def calG_DownSize(links):
+    for link in natsorted(links):
+        if "drive.google.com" in link:
+            id = getIDFromURL(link)
+            try:
+                meta = getFileMetadata(id)
+            except Exception as e:
+                if "File not found" in str(e):
+                    raise Exception(
+                        "The file link you gave either doesn't exist or You don't have access to it!"
+                    )
+                elif "Failed to retrieve" in str(e):
+                    clear_output()
+                    raise Exception(
+                        "Authorization Error with Google ! Make Sure you uploaded token.pickle !"
+                    )
+                else:
+                    raise Exception(f"Error in G-API: {e}")
+            if meta.get("mimeType") == "application/vnd.google-apps.folder":
+                folder_info[0] += get_Gfolder_size(id)
+            else:
+                folder_info[0] += int(meta["size"])
         else:
-            raise Exception(f"Error in G-API: {e}")
+            pass
 
+
+async def g_DownLoad(link, num):
+    global start_time, down_msg
+    down_msg = f"<b>📥 DOWNLOADING » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{d_name}</code>\n"
+    file_id = getIDFromURL(link)
+    meta = getFileMetadata(file_id)
     nd_name = meta["name"]
 
     nd_fol_path = f"{d_fol_path}/{nd_name}"
