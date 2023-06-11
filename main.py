@@ -10,6 +10,7 @@ import psutil
 import shutil
 import pickle
 import uvloop
+import pathlib
 import zipfile
 import datetime
 import subprocess
@@ -882,11 +883,11 @@ async def Leech(folder_path):
         reply_markup=keyboard(),
     )
 
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        for f in natsorted(filenames):
-            file_path = os.path.join(dirpath, f)
-            print(f"\nNow uploading {os.path.basename(file_path)}\n")
-            await Leecher(file_path)
+    files = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
+    for f in natsorted(files):
+        file_path = os.path.join(folder_path, f)
+        print(f"\nNow uploading {os.path.basename(file_path)}\n")
+        await Leecher(file_path)
 
     shutil.rmtree(folder_path)
 
