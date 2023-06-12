@@ -19,14 +19,14 @@
 
 ## **💡 Features**
 
- - Download Files or Folders From google drive Link or any Direct Link
+ - Download Files or Folders From any Direct, Magnet or Google Drive Link
  - Download Multiple Files or Folders with Multiple Links ( New 🔥)
  - Added Custom Name support ( New 🔥)
  - Zip Folders/Files
  - Unzip .zip Files
  - Upload files to Telegram
  - Shows operation Status with bar and percentage 
- - Split support for zip files > 2000 MB
+ - Split support for all files > 2000 MB
  - Leech Files from Direct Download Links !
 
 ## **🔥 Benifits**
@@ -38,26 +38,26 @@
  - Unlimited storage in Telegram
  - Upload Files of size upto 2000 MB
 
-## **🚀 UPTO 70 MiB/s Download Speed and 27 MiB/s Upload Speed**
+## **🚀 UPTO 200 MiB/s Download Speed and 30 MiB/s Upload Speed**
 
-![Image 1](https://user-images.githubusercontent.com/125879861/241571496-49e7a148-181f-4d97-bd39-876e57f3c32f.png)
+![Image 1](https://user-images.githubusercontent.com/125879861/245217970-aa132967-c304-4b6d-a594-8c57a8f3d066.png)
 
 
 ## **🦉 Problems**
 
  - You need to be aware of Runtime Disconnections
- - Limited Disk Storage in Free Colab Account ~82 GB 
+ - Limited Disk Storage in Free Colab Account ~84 GB 
  <!-- - Which Limits the zip process of files size to ~41 GB
  - Have to manually upload config files ( token.pickle, thmb.jpg, etc ) -->
 
 ## **🪲 Known Bugs**
 
- - Only zip files splits correctly, other files get corrupted after splitting
- - So use ZipLeech to avoid corruption 
+ - Video Splitting is not supported  yet
  - Unzipleech only supports '.zip' files, thus can't extract rar, tar or 7z files till now
+ - Links are only taken from Notebook. Bot Commands are not available till now
 
 ## **🚨 NOTE:**
- - Torrent Links are supported, But don't use to avoid your Google account Ban ! [Google Colab Stricly Prohibits Torrents]
+ - Magnet or Torrent Links are supported, But avoid using because `Google Colab Stricly Prohibits Torrents`
 
 <br>
 
