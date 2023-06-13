@@ -7,9 +7,8 @@
 
 ## **📖 CLICK TO OPEN THE NOTEBOOK**
 
- <a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+ <a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/245568025-59b05175-35a7-4c0f-8c15-5e38516bbc4b.png" alt="Open In Colab" height=70px/></a>
 
-<br>
 
 ## **🔖 Based on**
 ![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
