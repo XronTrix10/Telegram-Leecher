@@ -154,9 +154,7 @@ async def zip_folder(path):
     starting_time = datetime.datetime.now()
     if os.path.isfile(path):
         total_size = os.path.getsize(path)
-        zip_msg = (
-            f"<b>🔐 ZIPPING B4 SPLIT » </b>\n\n<code>{os.path.basename(path)}</code>\n"
-        )
+        zip_msg = f"<b>🔐 ZIPPING B4 SPLIT » </b>\n\n<b>🏷️ Name » </b><code>{os.path.basename(path)}</code>\n"
         with zipfile.ZipFile(
             f"{path}.zip", "w", compression=zipfile.ZIP_STORED
         ) as zipf:
@@ -232,7 +230,9 @@ async def extract_zip(zip_filepath):
             extracted_size += member.file_size
             zf.extract(member, temp_unzip_path)
             # percentage = (extracted_size / total_size) * 100 if total_size else 0
-            unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{d_name}</code>\n"
+            unzip_msg = (
+                f"<b>📂 EXTRACTING »</b><b>🏷️ Name » </b>\n\n<code>{os.path.basename(zip_filepath)}</code>\n"
+            )
             speed_string, eta, percentage = speed_eta(
                 starting_time, extracted_size, total_size
             )
@@ -252,7 +252,6 @@ async def size_checker(file_path):
     file_size = os.stat(file_path).st_size
 
     if file_size > max_size:
-
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
         dir_path, filename = os.path.split(file_path)
@@ -277,7 +276,7 @@ async def split_zipFile(file_path, max_size):
     starting_time = datetime.datetime.now()
     dir_path, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
-    down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
+    down_msg = f"<b>✂️ SPLITTING » </b>\n\n<b>🏷️ Name » </b><code>{filename}</code>\n"
     # Get the total size of the file
     total_size = os.path.getsize(file_path)
     with open(file_path, "rb") as f:
@@ -322,9 +321,9 @@ def speed_eta(start, done, total):
     percentage = (done / total) * 100
     elapsed_time = (datetime.datetime.now() - start).seconds
     if done > 0 and elapsed_time != 0:
-        zip_speed = done / elapsed_time
-        speed = f"{size_measure(zip_speed)}/s"
-        eta = (total - done) / zip_speed
+        raw_speed = done / elapsed_time
+        speed = f"{size_measure(raw_speed)}/s"
+        eta = (total - done) / raw_speed
     else:
         speed, eta = "N/A", 0
     return speed, eta, percentage
@@ -396,7 +395,7 @@ async def on_output(output: str):
 async def aria2_Download(link, num):
     global start_time, down_msg
     start_time = datetime.datetime.now()
-    down_msg = f"<b>📥 DOWNLOADING » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
 
     # Create a command to run aria2p with the link
     command = [
@@ -483,7 +482,7 @@ def calG_DownSize(links):
 
 async def g_DownLoad(link, num):
     global start_time, down_msg
-    down_msg = f"<b>📥 DOWNLOADING » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
     file_id = getIDFromURL(link)
     meta = getFileMetadata(file_id)
     nd_name = meta["name"]
@@ -691,17 +690,17 @@ def keyboard():
         [
             [  # First row
                 InlineKeyboardButton(  # Opens a web URL
-                    "BOT REPO 🪲",
+                    "Git Repo 🪲",
                     url="https://github.com/XronTrix10/Telegram-Leecher",
                 ),
             ],
             [
                 InlineKeyboardButton(  # Opens a web URL
-                    "CHANNEL 📣",
+                    "Channel 📣",
                     url="https://t.me/Colab_Leecher",
                 ),
                 InlineKeyboardButton(  # Opens a web URL
-                    "GROUP 💬",
+                    "Group 💬",
                     url="https://t.me/+2n9HLR2F1uJhZGY1",
                 ),
             ],
@@ -740,12 +739,15 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
 
 async def progress_bar(current, total):
     global start_time
-
-    speed_string, eta, percentage = speed_eta(start_time, current, total_down_size)
+    upload_speed = 0
+    if current > 0:
+        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+        upload_speed = current / elapsed_time_seconds
+    eta = (total_down_size - current - sum(up_bytes)) / upload_speed
     percentage = (current + sum(up_bytes)) / total_down_size * 100
     await status_bar(
         down_msg=text_msg,
-        speed=speed_string,
+        speed=f"{size_measure(upload_speed)}/s",
         percentage=percentage,
         eta=convert_seconds(eta),
         done=size_measure(current + sum(up_bytes)),
@@ -844,7 +846,7 @@ async def Leecher(file_path):
             print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
-            text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
+            text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
             msg = await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
@@ -863,7 +865,7 @@ async def Leecher(file_path):
         file_name = os.path.basename(file_path)
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
-        text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
+        text_msg = f"<b>📤 UPLOADING » </b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.id,
@@ -904,7 +906,7 @@ async def Leech(folder_path):
 async def ZipLeech(d_fol_path):
     global msg, down_msg, start_time, d_name, total_down_size, sent
 
-    down_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"<b>🔐 ZIPPING » </b>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
 
     try:
         msg = await bot.edit_message_text(
@@ -915,7 +917,7 @@ async def ZipLeech(d_fol_path):
     except Exception as e2:
         print(f"Problem in ZipLeech !{e2}")
 
-    print("\nNow Zipping the folder...")
+    print("\nNow ZIPPING the folder...")
     current_time[0] = time.time()
     start_time = datetime.datetime.now()
 
@@ -945,7 +947,7 @@ async def ZipLeech(d_fol_path):
 async def UnzipLeech(d_fol_path):
     global msg
 
-    down_msg = f"\n<b>📂 UNZIPPING » </b>\n\n<code>{d_name}</code>\n"
+    down_msg = f"\n<b>📂 EXTRACTING » </b>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
 
     msg = await bot.edit_message_text(
         chat_id=chat_id,
@@ -992,7 +994,7 @@ async def FinalStep(msg):
 
     last_text = (
         f"⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
-        + f"\n<b>{task} COMPLETE 🔥</b>\n\n"
+        + f"\n<b>{(task).upper()} COMPLETE 🔥</b>\n\n"
         + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
         + f"├<b>📦 Size » </b><code>{size_measure(total_down_size)}</code>\n"
         + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>"
@@ -1075,7 +1077,7 @@ while link.lower() != "c":
 d_name = input("Enter the name of the File/Folder: ")
 
 task_start = datetime.datetime.now()
-down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
+down_msg = f"<b>📥 DOWNLOADING » </b><b>🏷️ Name » </b>\n\n<code>{d_name}</code>\n"
 task_msg = f"<b>🦞 TASK MODE »</b> <i>{task} as {leech_type}</i>\n\n<b>🖇️ SOURCES » </b>"
 
 for a in range(len(links)):
