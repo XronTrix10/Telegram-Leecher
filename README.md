@@ -14,7 +14,7 @@
 ![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
 
 ## 🎓 **How To Use**
-[![Watch It](https://img.youtube.com/vi/MretHTXykBY/0.jpg)](https://www.youtube.com/watch?v=MretHTXykBY)
+[![Watch It](https://img.youtube.com/vi/6LvYd-oO3U0/0.jpg)](https://www.youtube.com/watch?v=6LvYd-oO3U0)
 
 ## **💡 Features**
 
@@ -27,6 +27,8 @@
  - Shows operation Status with bar and percentage 
  - Split support for all files > 2000 MB
  - Leech Files from Direct Download Links !
+ - Upload Directly From Colab Container ( Coming ♨️)
+ - Download Directly To Google Drive ( Coming ♨️)
 
 ## **🔥 Benifits**
 

@@ -154,7 +154,9 @@ async def zip_folder(path):
     starting_time = datetime.datetime.now()
     if os.path.isfile(path):
         total_size = os.path.getsize(path)
-        zip_msg = f"<b>🔐 ZIPPING B4 SPLIT » </b>\n\n<b>🏷️ Name » </b><code>{os.path.basename(path)}</code>\n"
+        zip_msg = (
+            f"<b>🔐 ZIPPING B4 SPLIT » </b>\n\n<code>{os.path.basename(path)}</code>\n"
+        )
         with zipfile.ZipFile(
             f"{path}.zip", "w", compression=zipfile.ZIP_STORED
         ) as zipf:
@@ -230,9 +232,7 @@ async def extract_zip(zip_filepath):
             extracted_size += member.file_size
             zf.extract(member, temp_unzip_path)
             # percentage = (extracted_size / total_size) * 100 if total_size else 0
-            unzip_msg = (
-                f"<b>📂 EXTRACTING »</b><b>🏷️ Name » </b>\n\n<code>{os.path.basename(zip_filepath)}</code>\n"
-            )
+            unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{os.path.basename(zip_filepath)}</code>\n"
             speed_string, eta, percentage = speed_eta(
                 starting_time, extracted_size, total_size
             )
@@ -276,7 +276,7 @@ async def split_zipFile(file_path, max_size):
     starting_time = datetime.datetime.now()
     dir_path, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
-    down_msg = f"<b>✂️ SPLITTING » </b>\n\n<b>🏷️ Name » </b><code>{filename}</code>\n"
+    down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     # Get the total size of the file
     total_size = os.path.getsize(file_path)
     with open(file_path, "rb") as f:
@@ -485,25 +485,16 @@ async def g_DownLoad(link, num):
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
     file_id = getIDFromURL(link)
     meta = getFileMetadata(file_id)
-    nd_name = meta["name"]
-    nd_fol_path = f"{d_fol_path}/{nd_name}"
 
     if meta.get("mimeType") == "application/vnd.google-apps.folder":
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
-        current_time[0] = time.time()
-        start_time = datetime.datetime.now()
         await gDownloadFolder(file_id, d_fol_path)
         clear_output()
         print("*" * 40 + "\n Folder Download Complete\n" + "*" * 40)
 
     else:
         print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
-
-        if not ospath.exists(nd_fol_path):
-            makedirs(nd_fol_path)
-        current_time[0] = time.time()
-        start_time = datetime.datetime.now()
-        await gDownloadFile(file_id, nd_fol_path)
+        await gDownloadFile(file_id, d_fol_path)
         clear_output()
         print("*" * 40 + "\n File Download Complete\n" + "*" * 40)
 
@@ -846,7 +837,7 @@ async def Leecher(file_path):
             print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
-            text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
+            text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
             msg = await bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=msg.id,
@@ -865,7 +856,7 @@ async def Leecher(file_path):
         file_name = os.path.basename(file_path)
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
-        text_msg = f"<b>📤 UPLOADING » </b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
+        text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
         msg = await bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.id,
@@ -906,7 +897,7 @@ async def Leech(folder_path):
 async def ZipLeech(d_fol_path):
     global msg, down_msg, start_time, d_name, total_down_size, sent
 
-    down_msg = f"<b>🔐 ZIPPING » </b>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
+    down_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{d_name}</code>\n"
 
     try:
         msg = await bot.edit_message_text(
@@ -947,7 +938,7 @@ async def ZipLeech(d_fol_path):
 async def UnzipLeech(d_fol_path):
     global msg
 
-    down_msg = f"\n<b>📂 EXTRACTING » </b>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
+    down_msg = f"\n<b>📂 EXTRACTING » </b>\n\n<code>{d_name}</code>\n"
 
     msg = await bot.edit_message_text(
         chat_id=chat_id,
@@ -955,21 +946,19 @@ async def UnzipLeech(d_fol_path):
         text=task_msg + down_msg + "\n⏳ __Starting.....__" + system_info(),
     )
 
-    for dirpath, dirnames, filenames in os.walk(d_fol_path):
-        for f in natsorted(filenames):
-            short_path = os.path.join(dirpath, f)
-            name, extension = os.path.splitext(short_path)
+    filenames = [str(p) for p in pathlib.Path(d_fol_path).glob("**/*") if p.is_file()]
+    for f in natsorted(filenames):
+        short_path = os.path.join(d_fol_path, f)
 
-            if extension == ".zip":
-                await extract_zip(short_path)
-                clear_output()
-                os.remove(short_path)
-                await Leech(temp_unzip_path)
+        filename = f.lower()
+        if filename.endswith(".zip"):
+            await extract_zip(short_path)
+            os.remove(short_path)
+            await Leech(temp_unzip_path)
 
-            else:
-                clear_output()
-                print(f"Unable to extract a {extension} file. Starting Leeching !")
-                await Leecher(short_path)
+        else:
+            print(f"Unable to Extract {os.path.basename(f)}. Starting Leeching !")
+            await Leecher(short_path)
 
     shutil.rmtree(d_fol_path)
 
@@ -1077,7 +1066,7 @@ while link.lower() != "c":
 d_name = input("Enter the name of the File/Folder: ")
 
 task_start = datetime.datetime.now()
-down_msg = f"<b>📥 DOWNLOADING » </b><b>🏷️ Name » </b>\n\n<code>{d_name}</code>\n"
+down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
 task_msg = f"<b>🦞 TASK MODE »</b> <i>{task} as {leech_type}</i>\n\n<b>🖇️ SOURCES » </b>"
 
 for a in range(len(links)):
@@ -1112,6 +1101,8 @@ async with Client(
 
         calG_DownSize(links)
         links = natsorted(links)
+        current_time[0] = time.time()
+        start_time = datetime.datetime.now()
         for c in range(len(links)):
             if "drive.google.com" in links[c]:
                 await g_DownLoad(links[c], c + 1)
