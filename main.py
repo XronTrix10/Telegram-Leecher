@@ -102,13 +102,37 @@ def get_file_type(file_path):
         return "document"
 
 
+def shorterFileName(path):
+    if os.path.isfile(path):
+        dir_path, filename = os.path.split(path)
+        if len(filename) > 50:
+            basename, ext = os.path.splitext(filename)
+            basename = basename[: 50 - len(ext)]
+            filename = basename + ext
+            path = os.path.join(dir_path, filename)
+        return path
+    elif os.path.isdir(path):
+        dir_path, dirname = os.path.split(path)
+        if len(dirname) > 50:
+            dirname = dirname[:50]
+            path = os.path.join(dir_path, dirname)
+        return path
+    else:
+        if len(path) > 50:
+            path = path[:50]
+        return path
+
+
 def get_folder_size(folder_path):
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            total_size += os.path.getsize(fp)
-    return total_size
+    if os.path.isfile(folder_path):
+        return os.path.getsize(folder_path)
+    else:
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(folder_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                total_size += os.path.getsize(fp)
+        return total_size
 
 
 def get_file_count(folder_path):
@@ -147,74 +171,37 @@ def system_info():
 
 
 async def zip_folder(path):
-    # Calculate total size of folder to track progress
-    print("Function Triggered")
-    chunk_size = 1024 * 1024 * 80  # 80 megabyte
-    bytes_written = zip_speed = 0
+    
+    zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{os.path.basename(path)}</code>\n"
+    path_ = shorterFileName(path)
+    dir_path, name = os.path.split(path_)
     starting_time = datetime.datetime.now()
+    cmd = f'zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"&'
+    subprocess.Popen(cmd, shell=True)
+    total = size_measure(get_folder_size(path))
+    while True:
+        done = size_measure(get_folder_size(temp_zpath))
+        if done == total:
+            break
+        else:
+            print(f"Done {done} of {total}")
+            speed_string, eta, percentage = speed_eta(
+                starting_time, get_folder_size(temp_zpath), get_folder_size(path)
+            )
+            await status_bar(
+                zip_msg,
+                speed_string,
+                percentage,
+                convert_seconds(eta),
+                done,
+                total,
+                "Xr-Zipp 🔒",
+            )
+        time.sleep(1)
     if os.path.isfile(path):
-        total_size = os.path.getsize(path)
-        zip_msg = (
-            f"<b>🔐 ZIPPING B4 SPLIT » </b>\n\n<code>{os.path.basename(path)}</code>\n"
-        )
-        with zipfile.ZipFile(
-            f"{path}.zip", "w", compression=zipfile.ZIP_STORED
-        ) as zipf:
-            with open(path, "rb") as f:
-                while True:
-                    chunk = f.read(chunk_size)
-                    if not chunk:
-                        break
-                    zipf.writestr(os.path.basename(path), chunk)
-                    bytes_written += len(chunk)
-                    speed_string, eta, percentage = speed_eta(
-                        starting_time, bytes_written, total_size
-                    )
-                    await status_bar(
-                        zip_msg,
-                        speed_string,
-                        percentage,
-                        convert_seconds(eta),
-                        size_measure(bytes_written),
-                        size_measure(total_size),
-                        "Xr-Zipp 🔒",
-                    )
         os.remove(path)
-
-    elif os.path.isdir(path):
-        total_size = get_folder_size(path)
-        with zipfile.ZipFile(
-            f"{path}.zip", "w", compression=zipfile.ZIP_STORED
-        ) as zip_file:
-            for root, dirs, files in os.walk(path):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(file_path, path)
-                    with open(file_path, "rb") as f:
-                        while True:
-                            chunk = f.read(chunk_size)
-                            if not chunk:
-                                break
-                            zip_file.writestr(rel_path, chunk)
-                            bytes_written += len(chunk)
-                            speed_string, eta, percentage = speed_eta(
-                                starting_time, bytes_written, total_size
-                            )
-                            await status_bar(
-                                down_msg,
-                                speed_string,
-                                percentage,
-                                convert_seconds(eta),
-                                size_measure(bytes_written),
-                                size_measure(total_size),
-                                "Xr-Zipp 🔒",
-                            )
-                        # Delete the file after writing it to the zip object.
-                        os.remove(file_path)
     else:
-        raise ValueError("Invalid path")
-    return f"{path}.zip"
-
+        shutil.rmtree(path)
 
 async def extract_zip(zip_filepath):
     starting_time = datetime.datetime.now()
@@ -265,8 +252,8 @@ async def size_checker(file_path):
         ):
             await split_zipFile(file_path, max_size)
         else:
-            new_path = await zip_folder(file_path)
-            await split_zipFile(new_path, max_size)
+            await zip_folder(file_path)
+            time.sleep(2)
         return True
     else:
         return False
@@ -911,28 +898,17 @@ async def ZipLeech(d_fol_path):
     print("\nNow ZIPPING the folder...")
     current_time[0] = time.time()
     start_time = datetime.datetime.now()
-
-    z_file_path = await zip_folder(d_fol_path)
+    if not os.path.exists(temp_zpath):
+        makedirs(temp_zpath)
+    await zip_folder(d_fol_path)
     clear_output()
+    time.sleep(2)
 
-    total_down_size = os.stat(z_file_path).st_size
+    total_down_size = get_folder_size(temp_zpath)
 
-    if total_down_size > 2000 * 1024**2:
-        leech_count = (total_down_size // (2000 * 1024**2)) + 1
-    else:
-        leech_count = 1
-
-    dump_text = (
-        "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
-        + f"\n╭<b>📛 Name » </b>  <code>{d_name}</code>\n├<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
-        + f"\n╰<b>📂 Total Files » </b>  <code>{leech_count}</code>"
-    )
-
-    sent = await bot.send_photo(
-        chat_id=dump_id, photo=thumb_path, caption=dump_text, reply_markup=keyboard()
-    )
-    shutil.rmtree(d_fol_path)
-    await Leecher(z_file_path)
+    if os.path.exists(d_fol_path):
+        shutil.rmtree(d_fol_path)
+    await Leech(temp_zpath)
 
 
 async def UnzipLeech(d_fol_path):
@@ -1013,6 +989,7 @@ link_info = False
 d_fol_path = d_path  # Initial Declaration
 temp_lpath = f"{d_path}/Leeched_Files"
 temp_unzip_path = f"{d_path}/Unzipped_Files"
+temp_zpath = temp_lpath
 sent_file = []
 sent_fileName = []
 down_bytes = []
