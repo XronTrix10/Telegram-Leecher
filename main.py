@@ -422,6 +422,59 @@ async def aria2_Download(link, num):
 
 
 # =================================================================
+#    Telegram Downloader
+# =================================================================
+
+
+async def download_progress(current, total):
+    speed_string, eta, percentage = speed_eta(start_time, current, total)
+
+    await status_bar(
+        down_msg=down_msg,
+        speed=speed_string,
+        percentage=percentage,
+        eta=convert_seconds(eta),
+        done=size_measure(current),
+        left=size_measure(total),
+        engine="Pyrogram 💥",
+    )
+
+
+async def TelegramDownload(link, num):
+    global start_time, down_msg
+    parts = link.split("/")
+    message_id = parts[-1]
+    msg_chat_id = "-100" + parts[4]
+    message_id, msg_chat_id = int(message_id), int(msg_chat_id)
+    message = await bot.get_messages(msg_chat_id, message_id)
+
+    media = (
+        message.document
+        or message.photo
+        or message.video
+        or message.audio
+        or message.voice
+        or message.video_note
+        or message.sticker
+        or message.animation
+        or None
+    )
+    # print(media)
+    if media is not None:
+        name = media.file_name if hasattr(media, "file_name") else "None"
+    else:
+        raise Exception("Couldn't Download Telegram Message")
+
+    down_msg = f"<b>📥 TG DOWNLOAD FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
+    # print(f"{name} and {size_measure(size)}")
+    start_time = datetime.datetime.now()
+    file_path = os.path.join(d_fol_path, name)
+    await message.download(
+        progress=download_progress, in_memory=False, file_name=file_path
+    )
+
+
+# =================================================================
 #    G Drive Functions
 # =================================================================
 
@@ -1083,6 +1136,8 @@ async with Client(
         for c in range(len(links)):
             if "drive.google.com" in links[c]:
                 await g_DownLoad(links[c], c + 1)
+            elif "t.me" in links[c]:
+                await TelegramDownload(links[c], c + 1)
             else:
                 aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{links[c]}</code>"
                 try:
