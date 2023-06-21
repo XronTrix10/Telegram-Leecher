@@ -1,7 +1,7 @@
 ![](https://user-images.githubusercontent.com/125879861/226649977-85a941f5-6ffe-45a2-8e09-d9f2b558cb17.png)
 
 
-### 🐍 A Python code to Download files/folders and upload to Telegram using Google Colab.
+### A Python Project to Transfer Files/Folders to Telegram using Google Colab.
 
 <br>
 
@@ -18,25 +18,33 @@
 
 ## **💡 Features**
 
- - Download Files or Folders From any Direct, Magnet or Google Drive Link
- - Download Multiple Files or Folders with Multiple Links ( New 🔥)
- - Added Custom Name support ( New 🔥)
+ - Download Multiple Files or Folders from Multiple Links ( New 🔥)
+ - Added Support For All Type Archive Extraction ( New 🔥)
+ - Support for Multi-Part Archive Extraction ( New 🔥)
  - Zip Folders/Files
- - Unzip .zip Files
- - Upload files to Telegram
- - Shows operation Status with bar and percentage 
+ - Upload Files to Telegram
+ - Shows Operation Status with bar and percentage 
  - Split support for all files > 2000 MB
- - Leech Files from Direct Download Links !
- - Upload Directly From Colab Container ( Coming ♨️)
- - Download Directly To Google Drive ( Coming ♨️)
+ - Upload Directly From Colab Container ( Coming Soon ♨️)
+ - Download Directly To Google Drive / Mirroring ( Coming Soon ♨️)
+ <!-- - Added Custom Name support ( New 🔥) -->
 
+## **🔗 Supported Links**
+
+ - Direct Download Link ✅
+ - Google Drive Link ( Need token.pickle ) ✅
+ - Telegram File Link ✅
+ - Magnet Link ✅
+ - Torrent Link ✅
+ - Mega.nz Link ❌ ( Coming Soon ♨️)
+ - GDTot, Sharer and Short Links ❌ ( Coming Soon ♨️)
 ## **🔥 Benifits**
 
  - No need of VPS or RDP
  - Immersive Network speed in Google Servers
  - Run Multiple Tasks in Multiple Colab Files at same time
  - Uploading to Telegram is way safer than Google Shared Drives
- - Unlimited storage in Telegram
+ - Unlimited Storage in Telegram
  - Upload Files of size upto 2000 MB
 
 ## **🚀 UPTO 200 MiB/s Download Speed and 30 MiB/s Upload Speed**
@@ -54,11 +62,10 @@
 ## **🪲 Known Bugs**
 
  - Video Splitting is not supported  yet
- - Unzipleech only supports '.zip' files, thus can't extract rar, tar or 7z files till now
  - Links are only taken from Notebook. Bot Commands are not available till now
 
 ## **🚨 NOTE:**
- - Magnet or Torrent Links are supported, But avoid using because `Google Colab Stricly Prohibits Torrents`
+ - Magnet or Torrent Links are supported, But avoid using, because `Google Colab Stricly Prohibits Torrents`
 
 <br>
 
