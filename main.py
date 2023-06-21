@@ -5,13 +5,13 @@ import re
 
 # import sys
 import cv2
+import glob
 import time
 import psutil
 import shutil
 import pickle
 import uvloop
 import pathlib
-import zipfile
 import datetime
 import subprocess
 from PIL import Image
@@ -171,67 +171,90 @@ def system_info():
 
 
 async def zip_folder(path):
-    
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{os.path.basename(path)}</code>\n"
     path_ = shorterFileName(path)
-    dir_path, name = os.path.split(path_)
+    _, name = os.path.split(path_)
     starting_time = datetime.datetime.now()
-    cmd = f'zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"&'
-    subprocess.Popen(cmd, shell=True)
+    cmd = f'zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"'
+    proc = subprocess.Popen(cmd, shell=True)
     total = size_measure(get_folder_size(path))
-    while True:
-        done = size_measure(get_folder_size(temp_zpath))
-        if done == total:
-            break
-        else:
-            print(f"Done {done} of {total}")
-            speed_string, eta, percentage = speed_eta(
-                starting_time, get_folder_size(temp_zpath), get_folder_size(path)
-            )
-            await status_bar(
-                zip_msg,
-                speed_string,
-                percentage,
-                convert_seconds(eta),
-                done,
-                total,
-                "Xr-Zipp 🔒",
-            )
+    while proc.poll() is None:
+        speed_string, eta, percentage = speed_eta(
+            starting_time, get_folder_size(temp_zpath), get_folder_size(path)
+        )
+        await status_bar(
+            zip_msg,
+            speed_string,
+            percentage,
+            convert_seconds(eta),
+            size_measure(get_folder_size(temp_zpath)),
+            total,
+            "Xr-Zipp 🔒",
+        )
         time.sleep(1)
     if os.path.isfile(path):
         os.remove(path)
     else:
         shutil.rmtree(path)
 
+
 async def extract_zip(zip_filepath):
     starting_time = datetime.datetime.now()
-    if not os.path.exists(temp_unzip_path):
-        makedirs(temp_unzip_path)
+    dirname, filename = os.path.split(zip_filepath)
+    unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
+    file_pattern = ""
+    name, ext = os.path.splitext(filename)
+    if ext == ".rar":
+        if "part" in name:
+            name_ = name[:-2]
+            cmd = f"unrar x -kb -idq '{zip_filepath}' {temp_unzip_path}"
+            file_pattern = f"{dirname}/{name_}*.rar"
+        else:
+            cmd = f"unrar x '{zip_filepath}' {temp_unzip_path}"
 
-    with zipfile.ZipFile(zip_filepath) as zf:
-        num_files = len(zf.infolist())
+    elif ext == ".tar":
+        cmd = f"tar -xvf '{zip_filepath}' -C {temp_unzip_path}"
+    elif ext == ".gz":
+        cmd = f"tar -zxvf '{zip_filepath}' -C {temp_unzip_path}"
+    else:
+        cmd = f"7z x '{zip_filepath}' -o{temp_unzip_path}"
+        if ext == ".001":
+            file_pattern = f"{dirname}/{name}.*"
+        elif ext == ".zip":
+            file_pattern = f"{dirname}/{name}.z*"
 
-        total_size = sum(file.file_size for file in zf.infolist())
-        extracted_size = 0
-        print(f"Extracting {num_files} files...")
-        for i, member in enumerate(zf.infolist(), 1):
-            # print(f"Extracting {member.filename} ({member.file_size} bytes)")
-            extracted_size += member.file_size
-            zf.extract(member, temp_unzip_path)
-            # percentage = (extracted_size / total_size) * 100 if total_size else 0
-            unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{os.path.basename(zip_filepath)}</code>\n"
-            speed_string, eta, percentage = speed_eta(
-                starting_time, extracted_size, total_size
-            )
-            await status_bar(
-                unzip_msg,
-                speed_string,
-                percentage,
-                convert_seconds(eta),
-                size_measure(extracted_size),
-                size_measure(os.stat(zip_filepath).st_size),
-                "Xr-Unzip 🔓",
-            )
+    print("Pattern: ", file_pattern)
+
+    print("CMD", cmd)
+
+    proc = subprocess.Popen(cmd, shell=True)
+    total = size_measure(get_folder_size(zip_filepath))
+    while proc.poll() is None:
+        speed_string, eta, percentage = speed_eta(
+            starting_time,
+            get_folder_size(temp_unzip_path),
+            get_folder_size(zip_filepath),
+        )
+        await status_bar(
+            unzip_msg,
+            speed_string,
+            percentage,
+            convert_seconds(eta),
+            size_measure(get_folder_size(temp_unzip_path)),
+            total,
+            "Xr-Unzip 🔓",
+        )
+        time.sleep(1)
+
+    if len(file_pattern) != 0:
+        for file_path in glob.glob(file_pattern):
+            try:
+                os.remove(file_path)
+            except OSError as e:
+                print(f"Error deleting {file_path}: {e.strerror}")
+
+    if os.path.exists(zip_filepath):
+        os.remove(zip_filepath)
 
 
 async def size_checker(file_path):
@@ -327,7 +350,6 @@ async def on_output(output: str):
     total_size = "0B"
     progress_percentage = "0B"
     downloaded_bytes = "0B"
-    chunk_size = "0B"
     eta = "0S"
     try:
         if "ETA:" in output:
@@ -339,11 +361,6 @@ async def on_output(output: str):
             eta = parts[4].split(":")[1][:-1]
     except Exception as do:
         print(f"Could't Get Info Due to: {do}")
-
-    # print("Total download size:", total_size)
-    # print("Progress percentage:", progress_percentage)
-    # print("Downloaded bytes:", downloaded_bytes)
-    # print("Estimated Time:", eta)
 
     percentage = re.findall("\d+\.\d+|\d+", progress_percentage)[0]
     down = re.findall("\d+\.\d+|\d+", downloaded_bytes)[0]
@@ -752,8 +769,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
     )
     sys_text = system_info()
     try:
-        clear_output()
-        print(message)
+        print(f"\r{engine} | {bar} | {percentage:.2f}% | {speed}", end="")
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
@@ -769,7 +785,6 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
 
 
 async def progress_bar(current, total):
-    global start_time
     upload_speed = 0
     if current > 0:
         elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
@@ -892,8 +907,10 @@ async def Leecher(file_path):
         shutil.rmtree(temp_lpath)
 
     else:
-        file_type = "document" if LEECH_DOCUMENT else get_file_type(file_path)
-        file_name = os.path.basename(file_path)
+        new_path = shorterFileName(file_path)  # Trimming filename upto 50 chars
+        os.rename(file_path, new_path)
+        file_type = "document" if LEECH_DOCUMENT else get_file_type(new_path)
+        file_name = os.path.basename(new_path)
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
         text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
@@ -903,10 +920,10 @@ async def Leecher(file_path):
             text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
             reply_markup=keyboard(),
         )
-        await upload_file(file_path, file_type, file_name)
-        up_bytes.append(os.stat(file_path).st_size)
+        await upload_file(new_path, file_type, file_name)
+        up_bytes.append(os.stat(new_path).st_size)
 
-        os.remove(file_path)
+        os.remove(new_path)
 
 
 async def Leech(folder_path):
@@ -974,20 +991,33 @@ async def UnzipLeech(d_fol_path):
         message_id=msg.id,
         text=task_msg + down_msg + "\n⏳ __Starting.....__" + system_info(),
     )
-
+    cant_files = []
     filenames = [str(p) for p in pathlib.Path(d_fol_path).glob("**/*") if p.is_file()]
     for f in natsorted(filenames):
         short_path = os.path.join(d_fol_path, f)
+        if not os.path.exists(temp_unzip_path):
+            makedirs(temp_unzip_path)
+        filename = os.path.basename(f).lower()
+        _, ext = os.path.splitext(filename)
+        try:
+            if os.path.exists(short_path):
+                if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar"]:
+                    await extract_zip(short_path)
+                    await Leech(temp_unzip_path)
+                else:
+                    cant_files.append(short_path)
+                    print(
+                        f"Unable to Extract {os.path.basename(f)} ! Will be Leeching later !"
+                    )
+        except Exception as e5:
+            print(f"UZLeech Launcher Exception: {e5}")
 
-        filename = f.lower()
-        if filename.endswith(".zip"):
-            await extract_zip(short_path)
-            os.remove(short_path)
-            await Leech(temp_unzip_path)
-
-        else:
-            print(f"Unable to Extract {os.path.basename(f)}. Starting Leeching !")
-            await Leecher(short_path)
+        try:
+            for path in cant_files:
+                if os.path.exists(path):
+                    await Leecher(path)
+        except Exception as e5:
+            print(f"UZLeech Launcher Exception: {e5}")
 
     shutil.rmtree(d_fol_path)
 
@@ -1041,7 +1071,7 @@ d_name = ""
 link_info = False
 d_fol_path = d_path  # Initial Declaration
 temp_lpath = f"{d_path}/Leeched_Files"
-temp_unzip_path = f"{d_path}/Unzipped_Files"
+temp_unzip_path = f"{d_path}/Unzipped_Files/"
 temp_zpath = temp_lpath
 sent_file = []
 sent_fileName = []
@@ -1064,7 +1094,11 @@ service = build_service()
 if not os.path.exists(thumb_path):
     thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
     print("Didn't find thumbnail, So switching to default thumbnail")
-if not ospath.exists(d_path):
+
+if ospath.exists(d_path):
+    shutil.rmtree(d_path)
+    makedirs(d_path)
+else:
     makedirs(d_path)
 
 
@@ -1085,6 +1119,8 @@ leech_type = "Document" if LEECH_DOCUMENT else "Media"
 clear_output()
 time.sleep(1)
 print(f"TASK MODE: {task} as {leech_type}")
+if os.path.exists("/content/sample_data"):
+    shutil.rmtree("/content/sample_data")
 
 # Getting Download Links
 while link.lower() != "c":
@@ -1108,7 +1144,7 @@ for a in range(len(links)):
 
 task_msg += "\n\n"
 
-
+clear_output()
 d_fol_path = f"{d_path}/{d_name}"
 if not ospath.exists(d_fol_path):
     makedirs(d_fol_path)
