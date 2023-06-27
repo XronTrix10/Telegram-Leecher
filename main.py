@@ -175,7 +175,7 @@ async def zip_folder(path):
     path_ = shorterFileName(path)
     _, name = os.path.split(path_)
     starting_time = datetime.datetime.now()
-    cmd = f'zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"'
+    cmd = f'cd {dir_p} && zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"'
     proc = subprocess.Popen(cmd, shell=True)
     total = size_measure(get_folder_size(path))
     while proc.poll() is None:
