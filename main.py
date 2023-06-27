@@ -73,8 +73,6 @@ def size_measure(size):
 
 
 def get_file_type(file_path):
-    name, extension = os.path.splitext(file_path)
-
     extensions_dict = {
         ".mp4": "video",
         ".avi": "video",
@@ -93,6 +91,7 @@ def get_file_type(file_path):
         ".png": "photo",
         ".gif": "photo",
     }
+    _, extension = os.path.splitext(file_path)
 
     if extension.lower() in extensions_dict:
         if extensions_dict[extension] == "video":
@@ -105,21 +104,21 @@ def get_file_type(file_path):
 def shorterFileName(path):
     if os.path.isfile(path):
         dir_path, filename = os.path.split(path)
-        if len(filename) > 50:
+        if len(filename) > 60:
             basename, ext = os.path.splitext(filename)
-            basename = basename[: 50 - len(ext)]
+            basename = basename[: 60 - len(ext)]
             filename = basename + ext
             path = os.path.join(dir_path, filename)
         return path
     elif os.path.isdir(path):
         dir_path, dirname = os.path.split(path)
-        if len(dirname) > 50:
-            dirname = dirname[:50]
+        if len(dirname) > 60:
+            dirname = dirname[:60]
             path = os.path.join(dir_path, dirname)
         return path
     else:
-        if len(path) > 50:
-            path = path[:50]
+        if len(path) > 60:
+            path = path[:60]
         return path
 
 
@@ -128,7 +127,7 @@ def get_folder_size(folder_path):
         return os.path.getsize(folder_path)
     else:
         total_size = 0
-        for dirpath, dirnames, filenames in os.walk(folder_path):
+        for dirpath, _, filenames in os.walk(folder_path):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
                 total_size += os.path.getsize(fp)
@@ -137,23 +136,21 @@ def get_folder_size(folder_path):
 
 def get_file_count(folder_path):
     count = 0
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        for f in filenames:
+    for _, __, filenames in os.walk(folder_path):
+        for _f in filenames:
             count += 1
     return count
 
 
 def video_extension_fixer(file_path):
-    dir_path, filename = os.path.split(file_path)
-    if filename.endswith(".mp4") or filename.endswith(".mkv"):
+    dir, f_name = os.path.split(file_path)
+    if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
         pass
     else:
         # rename the video file with .mp4 extension
-        name, ext = os.path.splitext(filename)
-        os.rename(
-            os.path.join(dir_path, filename), os.path.join(dir_path, name + ".mp4")
-        )
-        print(f"{filename} was changed to {name}.mp4")
+        name, _ = os.path.splitext(f_name)
+        os.rename(os.path.join(dir, f_name), os.path.join(dir, name + ".mp4"))
+        print(f"{f_name} was changed to {name}.mp4")
 
 
 def system_info():
@@ -171,9 +168,15 @@ def system_info():
 
 
 async def zip_folder(path):
-    zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{os.path.basename(path)}</code>\n"
-    path_ = shorterFileName(path)
-    _, name = os.path.split(path_)
+    dir_p, _ = os.path.split(path)
+    if len(custom_name) != 0:
+        name = shorterFileName(custom_name)
+    else:
+        if os.path.isfile(path):
+            _, name = os.path.split(shorterFileName(path))
+        else:
+            name = shorterFileName(d_name)
+    zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     starting_time = datetime.datetime.now()
     cmd = f'cd {dir_p} && zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"'
     proc = subprocess.Popen(cmd, shell=True)
@@ -290,7 +293,7 @@ async def size_checker(file_path):
     if file_size > max_size:
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
-        dir_path, filename = os.path.split(file_path)
+        _, filename = os.path.split(file_path)
         filename = filename.lower()
         if (
             filename.endswith(".zip")
@@ -310,7 +313,7 @@ async def size_checker(file_path):
 
 async def split_zipFile(file_path, max_size):
     starting_time = datetime.datetime.now()
-    dir_path, filename = os.path.split(file_path)
+    _, filename = os.path.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
     down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     # Get the total size of the file
@@ -430,7 +433,7 @@ async def aria2_Download(link, num):
     # Create a command to run aria2p with the link
     command = [
         "aria2c",
-        "-x15",
+        "-x16",
         "--seed-time=0",
         "--summary-interval=1",
         "--console-log-level=notice",
@@ -440,15 +443,14 @@ async def aria2_Download(link, num):
     ]
 
     # Run the command using subprocess.Popen
-    process = subprocess.Popen(
+    proc = subprocess.Popen(
         command, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
     # Read and print output in real-time
     while True:
-        output = process.stdout.readline()
-
-        if output == b"" and process.poll() is not None:
+        output = proc.stdout.readline()
+        if output == b"" and proc.poll() is not None:
             break
         if output:
             # sys.stdout.write(output.decode("utf-8"))
@@ -456,8 +458,8 @@ async def aria2_Download(link, num):
             await on_output(output.decode("utf-8"))
 
     # Retrieve exit code and any error output
-    exit_code = process.wait()
-    error_output = process.stderr.read()
+    exit_code = proc.wait()
+    error_output = proc.stderr.read()
     if exit_code != 0:
         raise Exception(
             f"aria2c download failed with return code {exit_code}. Error: {error_output}"
@@ -469,22 +471,7 @@ async def aria2_Download(link, num):
 # =================================================================
 
 
-async def download_progress(current, total):
-    speed_string, eta, percentage = speed_eta(start_time, current, total)
-
-    await status_bar(
-        down_msg=down_msg,
-        speed=speed_string,
-        percentage=percentage,
-        eta=convert_seconds(eta),
-        done=size_measure(current),
-        left=size_measure(total),
-        engine="Pyrogram 💥",
-    )
-
-
-async def TelegramDownload(link, num):
-    global start_time, down_msg
+async def media_Identifier(link):
     parts = link.split("/")
     message_id = parts[-1]
     msg_chat_id = "-100" + parts[4]
@@ -502,42 +489,47 @@ async def TelegramDownload(link, num):
         or message.animation
         or None
     )
-    # print(media)
+    if media is None:
+        raise Exception("Couldn't Download Telegram Message")
+    return media, message
+
+async def download_progress(current, total):
+    speed_string, eta, percentage = speed_eta(start_time, current, total)
+
+    await status_bar(
+        down_msg=down_msg,
+        speed=speed_string,
+        percentage=percentage,
+        eta=convert_seconds(eta),
+        done=size_measure(sum(down_bytes) + current),
+        left=size_measure(folder_info[0]),
+        engine="Pyrogram 💥",
+    )
+
+
+async def TelegramDownload(link, num):
+    global start_time, down_msg
+    media, message = await media_Identifier(link)
     if media is not None:
         name = media.file_name if hasattr(media, "file_name") else "None"
     else:
         raise Exception("Couldn't Download Telegram Message")
 
     down_msg = f"<b>📥 TG DOWNLOAD FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
-    # print(f"{name} and {size_measure(size)}")
     start_time = datetime.datetime.now()
     file_path = os.path.join(d_fol_path, name)
     await message.download(
         progress=download_progress, in_memory=False, file_name=file_path
     )
+    down_bytes.append(media.file_size)
 
 
 # =================================================================
-#    G Drive Functions
+#    Initiator Functions
 # =================================================================
 
 
-def build_service():
-    # create credentials object from token.pickle file
-    creds = None
-    if os.path.exists("/content/token.pickle"):
-        with open("/content/token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    else:
-        exit(1)
-
-    # create drive API client
-    service = build("drive", "v3", credentials=creds)
-
-    return service
-
-
-def calG_DownSize(links):
+async def calG_DownSize(links):
     for link in natsorted(links):
         if "drive.google.com" in link:
             id = getIDFromURL(link)
@@ -822,7 +814,7 @@ def keyboard():
                 ),
                 InlineKeyboardButton(  # Opens a web URL
                     "Group 💬",
-                    url="https://t.me/+2n9HLR2F1uJhZGY1",
+                    url="https://t.me/Colab_Leecher_Discuss",
                 ),
             ],
         ]
@@ -875,8 +867,9 @@ async def progress_bar(current, total):
     )
 
 
-async def upload_file(file_path, type, file_name):
+async def upload_file(file_path, type):
     global sent
+    file_name = os.path.basename(file_path)
     # Upload the file
     try:
         caption = f"<code>{file_name}</code>"
@@ -934,7 +927,6 @@ async def upload_file(file_path, type, file_name):
 
         sent_file.append(sent)
         sent_fileName.append(file_name)
-        print(f"\n{file_name} Sent !")
 
     except Exception as e:
         print(e)
@@ -944,15 +936,12 @@ async def Leecher(file_path):
     global text_msg, start_time, msg, sent
 
     file_type = get_file_type(file_path)
-    file_name = os.path.basename(file_path)
 
     leech = await size_checker(file_path)
 
     if leech:  # File was splitted
         if ospath.exists(file_path):
             os.remove(file_path)  # Delete original Big Zip file
-        print("Big Zip File Deleted !")
-        # print('\nNow uploading multiple splitted zip files..........\n')
 
         dir_list = natsorted(os.listdir(temp_lpath))
 
@@ -962,7 +951,6 @@ async def Leecher(file_path):
             short_path = os.path.join(temp_lpath, dir_path)
             file_type = "document" if LEECH_DOCUMENT else get_file_type(short_path)
             file_name = os.path.basename(short_path)
-            print(f"\nNow uploading {file_name}\n")
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
             text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
@@ -972,7 +960,7 @@ async def Leecher(file_path):
                 text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
                 reply_markup=keyboard(),
             )
-            await upload_file(short_path, file_type, file_name)
+            await upload_file(short_path, file_type)
             up_bytes.append(os.stat(short_path).st_size)
 
             count += 1
@@ -993,7 +981,7 @@ async def Leecher(file_path):
             text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
             reply_markup=keyboard(),
         )
-        await upload_file(new_path, file_type, file_name)
+        await upload_file(new_path, file_type)
         up_bytes.append(os.stat(new_path).st_size)
 
         os.remove(new_path)
@@ -1018,7 +1006,6 @@ async def Leech(folder_path):
     files = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
     for f in natsorted(files):
         file_path = os.path.join(folder_path, f)
-        print(f"\nNow uploading {os.path.basename(file_path)}\n")
         await Leecher(file_path)
 
     shutil.rmtree(folder_path)
@@ -1074,7 +1061,7 @@ async def UnzipLeech(d_fol_path):
         _, ext = os.path.splitext(filename)
         try:
             if os.path.exists(short_path):
-                if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar"]:
+                if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar", ".z01"]:
                     await extract_zip(short_path)
                     await Leech(temp_unzip_path)
                 else:
@@ -1085,12 +1072,12 @@ async def UnzipLeech(d_fol_path):
         except Exception as e5:
             print(f"UZLeech Launcher Exception: {e5}")
 
-        try:
-            for path in cant_files:
-                if os.path.exists(path):
-                    await Leecher(path)
-        except Exception as e5:
-            print(f"UZLeech Launcher Exception: {e5}")
+    try:
+        for path in cant_files:
+            if os.path.exists(path):
+                await Leecher(path)
+    except Exception as e5:
+        print(f"UZLeech Launcher Exception: {e5}")
 
     shutil.rmtree(d_fol_path)
 
@@ -1139,10 +1126,10 @@ async def FinalStep(msg):
 api_id, chat_id, dump_id = int(API_ID), int(CHAT_ID), int(DUMP_ID)
 link_p = str(dump_id)[4:]
 thumb_path = "/content/thmb.jpg"
-d_path = "/content/Downloads"
+d_path = "/content/bot_Folder"
 d_name = ""
 link_info = False
-d_fol_path = d_path  # Initial Declaration
+d_fol_path = f"{d_path}/Downloads"
 temp_lpath = f"{d_path}/Leeched_Files"
 temp_unzip_path = f"{d_path}/Unzipped_Files/"
 temp_zpath = temp_lpath
@@ -1167,7 +1154,8 @@ service = build_service()
 if not os.path.exists(thumb_path):
     thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
     print("Didn't find thumbnail, So switching to default thumbnail")
-
+if os.path.exists("/content/sample_data"):
+    shutil.rmtree("/content/sample_data")
 if ospath.exists(d_path):
     shutil.rmtree(d_path)
     makedirs(d_path)
@@ -1234,14 +1222,13 @@ for a in range(len(links)):
 # Get the current date and time in the specified time zone
 cdt = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
 # Format the date and time as a string
-dt = cdt.strftime("%d/%m/%Y")
+dt = cdt.strftime("%d / %m/ %Y")
 tm = cdt.strftime("%I:%M:%S %p %Z")
 
 dump_task += f"\n\n<b>📆 Date » </b><i>{dt}</i>"
 dump_task += f"\n\n<b>⌚ Time » </b><i>{tm}</i>"
 
 clear_output()
-d_fol_path = f"{d_path}/{d_name}"
 if not ospath.exists(d_fol_path):
     makedirs(d_fol_path)
 
@@ -1249,9 +1236,11 @@ async with Client(
     "my_bot", api_id=api_id, api_hash=API_HASH, bot_token=BOT_TOKEN
 ) as bot:
     try:
+        msg = await bot.send_message(chat_id=chat_id, text=dump_task)
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
+            reply_to_message_id=msg.id,
             caption=task_msg
             + down_msg
             + f"\n📝 __Calculating DOWNLOAD SIZE...__"
@@ -1261,7 +1250,8 @@ async with Client(
 
         sent = msg
 
-        calG_DownSize(links)
+        await calG_DownSize(links)
+        await get_d_name(links[0])
         links = natsorted(links)
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
@@ -1332,7 +1322,7 @@ async with Client(
                         ),
                         InlineKeyboardButton(  # Opens a web URL
                             "Group Discuss 🤔",
-                            url="https://t.me/+2n9HLR2F1uJhZGY1",
+                            url="https://t.me/Colab_Leecher_Discuss",
                         ),
                     ],
                 ]
