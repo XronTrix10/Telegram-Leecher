@@ -570,6 +570,46 @@ def calG_DownSize(links):
             pass
 
 
+async def get_d_name(link):
+    global d_name
+    if custom_name:
+        d_name = custom_name
+        return
+    if "drive.google.com" in link:
+        id = getIDFromURL(link)
+        meta = getFileMetadata(id)
+        d_name = meta["name"]
+    elif "t.me" in link:
+        media, _ = await media_Identifier(link)
+        d_name = media.file_name if hasattr(media, "file_name") else "None"
+    else:
+        cmd = f'aria2c --dry-run --file-allocation=none "{link}"'
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+        stdout_str = result.stdout.decode("utf-8")
+        filename = stdout_str.split("complete: ")[-1].split("\n")[0]
+        d_name = filename.split("/")[-1]
+
+
+# =================================================================
+#    G Drive Functions
+# =================================================================
+
+
+def build_service():
+    # create credentials object from token.pickle file
+    creds = None
+    if os.path.exists("/content/token.pickle"):
+        with open("/content/token.pickle", "rb") as token:
+            creds = pickle.load(token)
+    else:
+        exit(1)
+
+    # create drive API client
+    service = build("drive", "v3", credentials=creds)
+
+    return service
+
+
 async def g_DownLoad(link, num):
     global start_time, down_msg
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
