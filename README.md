@@ -18,16 +18,16 @@
 
 ## **💡 Features**
 
+ - Added Custom Name support ( New 🔥)
  - Download Multiple Files or Folders from Multiple Links ( New 🔥)
  - Added Support For All Type Archive Extraction ( New 🔥)
  - Support for Multi-Part Archive Extraction ( New 🔥)
+ - Upload Directly From Colab Container ( New 🔥)
  - Zip Folders/Files
  - Upload Files to Telegram
  - Shows Operation Status with bar and percentage 
  - Split support for all files > 2000 MB
- - Upload Directly From Colab Container ( Coming Soon ♨️)
  - Download Directly To Google Drive / Mirroring ( Coming Soon ♨️)
- <!-- - Added Custom Name support ( New 🔥) -->
 
 ## **🔗 Supported Links**
 
@@ -36,6 +36,7 @@
  - Telegram File Link ✅
  - Magnet Link ✅
  - Torrent Link ✅
+ - YouTube Link ❌ ( Coming Soon ♨️)
  - Mega.nz Link ❌ ( Coming Soon ♨️)
  - GDTot, Sharer and Short Links ❌ ( Coming Soon ♨️)
 ## **🔥 Benifits**
@@ -45,7 +46,8 @@
  - Run Multiple Tasks in Multiple Colab Files at same time
  - Uploading to Telegram is way safer than Google Shared Drives
  - Unlimited Storage in Telegram
- - Upload Files of size upto 2000 MB
+ - Upload Files of size upto 2000 MB 
+ - Premium Upload upto 4000 MB ( Coming Soon ♨️)
 
 ## **🚀 UPTO 200 MiB/s Download Speed and 30 MiB/s Upload Speed**
 
