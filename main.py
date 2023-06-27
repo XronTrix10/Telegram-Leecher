@@ -1174,17 +1174,19 @@ if ospath.exists(d_path):
 else:
     makedirs(d_path)
 
+if len(LEECH_MODE) == 0:
+    choice = input(
+        "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
+    )
+else:
+    choice = LEECH_MODE.lower()
 
-choice = input(
-    "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
-)
-
-if choice not in ["1", "2", "3"]:
+if choice not in ["1", "2", "3", "l", "z", "u"]:
     raise Exception("No Such Option ! Can't Proceed Further 🦥\n")
 
-if choice == "1":
+if choice == "1" or choice == "l":
     task = "Leech"
-elif choice == "2":
+elif choice == "2" or choice == "z":
     task = "Zipleech"
 else:
     task = "Unzipleech"
@@ -1192,17 +1194,29 @@ leech_type = "Document" if LEECH_DOCUMENT else "Media"
 clear_output()
 time.sleep(1)
 print(f"TASK MODE: {task} as {leech_type}")
-if os.path.exists("/content/sample_data"):
-    shutil.rmtree("/content/sample_data")
 
-# Getting Download Links
-while link.lower() != "c":
-    link = input(f"Download link [ Enter c to Terminate]: ")
-    if link.lower() != "c":
-        links.append(link)
+if len(D_LINK) == 0:
+    # Getting Download Links
+    while link.lower() != "c":
+        link = input(f"Download link [ Enter c to Terminate]: ")
+        if link.lower() != "c":
+            links.append(link)
+else:
+    links.append(D_LINK)
 
-# enter the link for the file or folder that you want to download
-d_name = input("Enter the name of the File/Folder: ")
+d_name, custom_name = "", ""
+
+if choice in ["1", "2", "3"]:
+    if choice in ["2", "z"] or (len(links) == 1 and choice in ["1", "l"]):
+        custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
+    else:
+        print("Custom Name Unavailable")
+else:
+    custom_name = C_NAME
+
+if custom_name.lower() == "d":
+    custom_name = ""
+
 
 task_start = datetime.datetime.now()
 down_msg = f"<b>📥 DOWNLOADING » </b>\n"
@@ -1272,15 +1286,22 @@ async with Client(
 
         total_down_size = get_folder_size(d_fol_path)
 
+        if choice in ["1", "l"] and len(custom_name) != 0:
+            files = os.listdir(d_fol_path)
+            for file_ in files:
+                current_name = os.path.join(d_fol_path, file_)
+                new_name = os.path.join(d_fol_path, custom_name)
+                os.rename(current_name, new_name)
+
         clear_output()
 
-        if choice == "1":
+        if choice == "1" or choice == "l":
             await Leech(d_fol_path)
 
-        elif choice == "2":
+        elif choice == "2" or choice == "z":
             await ZipLeech(d_fol_path)
 
-        elif choice == "3":
+        else:
             await UnzipLeech(d_fol_path)
 
         await FinalStep(msg)
