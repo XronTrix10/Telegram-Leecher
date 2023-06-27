@@ -206,9 +206,8 @@ async def extract_zip(zip_filepath):
     name, ext = os.path.splitext(filename)
     if ext == ".rar":
         if "part" in name:
-            name_ = name[:-2]
             cmd = f"unrar x -kb -idq '{zip_filepath}' {temp_unzip_path}"
-            file_pattern = f"{dirname}/{name_}*.rar"
+            file_pattern = "rar"
         else:
             cmd = f"unrar x '{zip_filepath}' {temp_unzip_path}"
 
@@ -219,13 +218,9 @@ async def extract_zip(zip_filepath):
     else:
         cmd = f"7z x '{zip_filepath}' -o{temp_unzip_path}"
         if ext == ".001":
-            file_pattern = f"{dirname}/{name}.*"
-        elif ext == ".zip":
-            file_pattern = f"{dirname}/{name}.z*"
-
-    print("Pattern: ", file_pattern)
-
-    print("CMD", cmd)
+            file_pattern = "7z"
+        elif ext == ".z01":
+            file_pattern = "zip"
 
     proc = subprocess.Popen(cmd, shell=True)
     total = size_measure(get_folder_size(zip_filepath))
@@ -246,12 +241,43 @@ async def extract_zip(zip_filepath):
         )
         time.sleep(1)
 
-    if len(file_pattern) != 0:
-        for file_path in glob.glob(file_pattern):
-            try:
-                os.remove(file_path)
-            except OSError as e:
-                print(f"Error deleting {file_path}: {e.strerror}")
+    # Deletes all remaining Multi Part Volumes
+    c = 1
+    if file_pattern == "rar":
+        name_, _ = os.path.splitext(name)
+        na_p = name_ + ".part" + str(c) + ".rar"
+        p_ap = os.path.join(dirname, na_p)
+        while os.path.exists(p_ap):
+            print("Deleted: ", p_ap)
+            os.remove(p_ap)
+            c += 1
+            na_p = name_ + ".part" + str(c) + ".rar"
+            p_ap = os.path.join(dirname, na_p)
+
+    elif file_pattern == "7z":
+        na_p = name + "." + str(c).zfill(3)
+        p_ap = os.path.join(dirname, na_p)
+        while os.path.exists(p_ap):
+            print("Deleted: ", p_ap)
+            os.remove(p_ap)
+            c += 1
+            na_p = name + "." + str(c).zfill(3)
+            p_ap = os.path.join(dirname, na_p)
+
+    elif file_pattern == "zip":
+        na_p = name + ".zip"
+        p_ap = os.path.join(dirname, na_p)
+        if os.path.exists(p_ap):
+            print("Deleted: ", p_ap)
+            os.remove(p_ap)
+        na_p = name + ".z" + str(c).zfill(2)
+        p_ap = os.path.join(dirname, na_p)
+        while os.path.exists(p_ap):
+            print("Deleted: ", p_ap)
+            os.remove(p_ap)
+            c += 1
+            na_p = name + ".z" + str(c).zfill(2)
+            p_ap = os.path.join(dirname, na_p)
 
     if os.path.exists(zip_filepath):
         os.remove(zip_filepath)
