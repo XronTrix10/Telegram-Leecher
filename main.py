@@ -5,7 +5,7 @@ import re
 
 # import sys
 import cv2
-import glob
+import pytz
 import time
 import psutil
 import shutil
@@ -1132,17 +1132,26 @@ while link.lower() != "c":
 d_name = input("Enter the name of the File/Folder: ")
 
 task_start = datetime.datetime.now()
-down_msg = f"<b>📥 DOWNLOADING » </b>\n\n<code>{d_name}</code>\n"
-task_msg = f"<b>🦞 TASK MODE »</b> <i>{task} as {leech_type}</i>\n\n<b>🖇️ SOURCES » </b>"
+down_msg = f"<b>📥 DOWNLOADING » </b>\n"
+task_msg = f"<b>🦞 TASK MODE » </b><i>{task} as {leech_type}</i>\n\n"
+
+dump_task = task_msg + "<b>🖇️ SOURCES » </b>\n"
 
 for a in range(len(links)):
     if "magnet" in links[a]:
         proxy_magnet = "https://mag.net/" + links[a]
-        task_msg += f"<a href={proxy_magnet}>🔗{str(a+1).zfill(2)}</a> "
+        dump_task += f"\n<a href={proxy_magnet}>🔗 Link {str(a+1).zfill(2)}</a>"
     else:
-        task_msg += f"<a href={links[a]}>🔗{str(a+1).zfill(2)}</a> "
+        dump_task += f"\n<a href={links[a]}>🔗 Link {str(a+1).zfill(2)}</a>"
 
-task_msg += "\n\n"
+# Get the current date and time in the specified time zone
+cdt = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
+# Format the date and time as a string
+dt = cdt.strftime("%d/%m/%Y")
+tm = cdt.strftime("%I:%M:%S %p %Z")
+
+dump_task += f"\n\n<b>📆 Date » </b><i>{dt}</i>"
+dump_task += f"\n\n<b>⌚ Time » </b><i>{tm}</i>"
 
 clear_output()
 d_fol_path = f"{d_path}/{d_name}"
