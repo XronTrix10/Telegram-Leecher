@@ -559,6 +559,13 @@ def calG_DownSize(links):
                 folder_info[0] += get_Gfolder_size(id)
             else:
                 folder_info[0] += int(meta["size"])
+        elif "t.me" in link:
+            media, _ = await media_Identifier(link)
+            if media is not None:
+                size = media.file_size
+                folder_info[0] += size
+            else:
+                raise Exception("Couldn't Download Telegram Message")
         else:
             pass
 
