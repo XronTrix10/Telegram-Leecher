@@ -581,6 +581,8 @@ async def get_d_name(link):
         stdout_str = result.stdout.decode("utf-8")
         filename = stdout_str.split("complete: ")[-1].split("\n")[0]
         d_name = filename.split("/")[-1]
+        if len(d_name) == 0:
+            d_name = "UNKNOWN DOWNLOAD NAME"
 
 
 # =================================================================
