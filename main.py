@@ -1239,15 +1239,18 @@ async with Client(
             reply_to_message_id=msg.id,
             caption=task_msg
             + down_msg
-            + f"\n📝 __Calculating DOWNLOAD SIZE...__"
+            + f"\n📝 __Starting DOWNLOAD...__"
             + system_info(),
             reply_markup=keyboard(),
         )
 
         sent = msg
-
+        clear_output()
         await calG_DownSize(links)
         await get_d_name(links[0])
+        d_fol_path = os.path.join(d_fol_path,d_name)
+        if os.path.exists(d_fol_path):
+            makedirs(d_fol_path)
         links = natsorted(links)
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
