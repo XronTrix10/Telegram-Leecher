@@ -1190,10 +1190,10 @@ else:
 d_name, custom_name = "", ""
 
 if choice in ["1", "2", "3"]:
-    if choice in ["2", "z"] or (len(links) == 1 and choice in ["1", "l"]):
+    if choice == "2" or (len(links) == 1 and choice == "1"):
         custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
     else:
-        print("Custom Name Unavailable")
+        print("Custom Name Not Applicable")
 else:
     custom_name = C_NAME
 
