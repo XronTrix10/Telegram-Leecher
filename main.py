@@ -168,7 +168,8 @@ def system_info():
 
 
 async def zip_folder(path):
-    dir_p, _ = os.path.split(path)
+    dir_p, p_name = os.path.split(path)
+    r = "-r" if os.path.isdir(path) else ""
     if len(custom_name) != 0:
         name = shorterFileName(custom_name)
     else:
@@ -178,7 +179,7 @@ async def zip_folder(path):
             name = shorterFileName(d_name)
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     starting_time = datetime.datetime.now()
-    cmd = f'cd {dir_p} && zip -r -s 2000m -0 "{temp_zpath}/{name}.zip" "{path}"'
+    cmd = f'cd "{dir_p}" && zip {r} -s 2000m -0 "{temp_zpath}/{name}.zip" "{p_name}"'
     proc = subprocess.Popen(cmd, shell=True)
     total = size_measure(get_folder_size(path))
     while proc.poll() is None:
