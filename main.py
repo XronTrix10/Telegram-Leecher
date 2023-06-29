@@ -95,10 +95,12 @@ def get_file_type(file_path):
 
     if extension.lower() in extensions_dict:
         if extensions_dict[extension] == "video":
-            video_extension_fixer(file_path)
-        return extensions_dict[extension]
+            new_path = video_extension_fixer(file_path)
+        else:
+            new_path = file_path
+        return extensions_dict[extension], new_path
     else:
-        return "document"
+        return "document", file_path
 
 
 def shorterFileName(path):
@@ -143,14 +145,12 @@ def get_file_count(folder_path):
 
 
 def video_extension_fixer(file_path):
-    dir, f_name = os.path.split(file_path)
+    _, f_name = os.path.split(file_path)
     if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
-        pass
+        return file_path
     else:
-        # rename the video file with .mp4 extension
-        name, _ = os.path.splitext(f_name)
-        os.rename(os.path.join(dir, f_name), os.path.join(dir, name + ".mp4"))
-        print(f"{f_name} was changed to {name}.mp4")
+        os.rename(file_path, os.path.join(file_path + ".mp4"))
+        return os.path.join(file_path + ".mp4")
 
 
 def system_info():
