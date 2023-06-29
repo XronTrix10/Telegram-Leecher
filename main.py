@@ -1,19 +1,5 @@
 # @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
-import os
-import io
-import re
-
-# import sys
-import cv2
-import pytz
-import time
-import psutil
-import shutil
-import pickle
-import uvloop
-import pathlib
-import datetime
-import subprocess
+import os, io, re, sys, time, cv2, pytz, psutil, shutil, pickle, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
 from natsort import natsorted
@@ -59,7 +45,9 @@ def convert_seconds(seconds):
 
 
 def size_measure(size):
-    if size > 1024 * 1024 * 1024 * 1024:
+    if size > 1024 * 1024 * 1024 * 1024 * 1024:
+        siz = f"{size/(1024**5):.2f} PiB"
+    elif size > 1024 * 1024 * 1024 * 1024:
         siz = f"{size/(1024**4):.2f} TiB"
     elif size > 1024 * 1024 * 1024:
         siz = f"{size/(1024**3):.2f} GiB"
@@ -139,7 +127,7 @@ def get_folder_size(folder_path):
 def get_file_count(folder_path):
     count = 0
     for _, __, filenames in os.walk(folder_path):
-        for _f in filenames:
+        for f_ in filenames:
             count += 1
     return count
 
@@ -252,7 +240,7 @@ async def extract_zip(zip_filepath):
         na_p = name_ + ".part" + str(c) + ".rar"
         p_ap = os.path.join(dirname, na_p)
         while os.path.exists(p_ap):
-            print("Deleted: ", p_ap)
+            print("\nDeleted: ", p_ap)
             os.remove(p_ap)
             c += 1
             na_p = name_ + ".part" + str(c) + ".rar"
@@ -262,7 +250,7 @@ async def extract_zip(zip_filepath):
         na_p = name + "." + str(c).zfill(3)
         p_ap = os.path.join(dirname, na_p)
         while os.path.exists(p_ap):
-            print("Deleted: ", p_ap)
+            print("\nDeleted: ", p_ap)
             os.remove(p_ap)
             c += 1
             na_p = name + "." + str(c).zfill(3)
@@ -272,7 +260,7 @@ async def extract_zip(zip_filepath):
         na_p = name + ".zip"
         p_ap = os.path.join(dirname, na_p)
         if os.path.exists(p_ap):
-            print("Deleted: ", p_ap)
+            print("\nDeleted: ", p_ap)
             os.remove(p_ap)
         na_p = name + ".z" + str(c).zfill(2)
         p_ap = os.path.join(dirname, na_p)
@@ -516,7 +504,7 @@ async def TelegramDownload(link, num):
     else:
         raise Exception("Couldn't Download Telegram Message")
 
-    down_msg = f"<b>📥 TG DOWNLOAD FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
     start_time = datetime.datetime.now()
     file_path = os.path.join(d_fol_path, name)
     await message.download(
@@ -829,7 +817,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
     )
     sys_text = system_info()
     try:
-        print(f"\r{engine} | {bar} | {percentage:.2f}% | {speed}", end="")
+        print(f"\r{engine} ║ {bar} ║ {percentage:.2f}% ║ {speed} ║ ⏳ {eta}", end="")
         # Edit the message with updated progress information.
         if is_time_over(current_time):
             await bot.edit_message_text(
@@ -930,8 +918,6 @@ async def upload_file(file_path, type):
 async def Leecher(file_path):
     global text_msg, start_time, msg, sent
 
-    file_type = get_file_type(file_path)
-
     leech = await size_checker(file_path)
 
     if leech:  # File was splitted
@@ -944,7 +930,10 @@ async def Leecher(file_path):
 
         for dir_path in dir_list:
             short_path = os.path.join(temp_lpath, dir_path)
-            file_type = "document" if LEECH_DOCUMENT else get_file_type(short_path)
+            if LEECH_DOCUMENT:
+                file_type = "document"
+            else:
+                file_type, short_path = get_file_type(short_path)
             file_name = os.path.basename(short_path)
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
@@ -965,7 +954,10 @@ async def Leecher(file_path):
     else:
         new_path = shorterFileName(file_path)  # Trimming filename upto 50 chars
         os.rename(file_path, new_path)
-        file_type = "document" if LEECH_DOCUMENT else get_file_type(new_path)
+        if LEECH_DOCUMENT:
+            file_type = "document"
+        else:
+            file_type, new_path = get_file_type(new_path)
         file_name = os.path.basename(new_path)
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
@@ -1149,8 +1141,6 @@ service = build_service()
 if not os.path.exists(thumb_path):
     thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
     print("Didn't find thumbnail, So switching to default thumbnail")
-if os.path.exists("/content/sample_data"):
-    shutil.rmtree("/content/sample_data")
 if ospath.exists(d_path):
     shutil.rmtree(d_path)
     makedirs(d_path)
