@@ -612,16 +612,10 @@ async def g_DownLoad(link, num):
     meta = getFileMetadata(file_id)
 
     if meta.get("mimeType") == "application/vnd.google-apps.folder":
-        print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
         await gDownloadFolder(file_id, d_fol_path)
-        clear_output()
-        print("*" * 40 + "\n Folder Download Complete\n" + "*" * 40)
-
     else:
-        print(f"\nTotal Download size is: {size_measure(folder_info[0])}")
         await gDownloadFile(file_id, d_fol_path)
         clear_output()
-        print("*" * 40 + "\n File Download Complete\n" + "*" * 40)
 
 
 def getIDFromURL(link: str):
@@ -763,8 +757,6 @@ async def gDownloadFile(file_id, path):
                         left=size_measure(folder_info[0]),
                         engine="G-API ♻️",
                     )
-
-                print(f"DOWNLOADED  =>   {os.path.basename(file_name)}")
                 down_bytes.append(int(file["size"]))
                 down_count[0] += 1
 
