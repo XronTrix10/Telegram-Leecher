@@ -1,5 +1,5 @@
 # @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
-import os, io, re, sys, time, cv2, pytz, psutil, shutil, pickle, uvloop, pathlib, datetime, subprocess
+import os, io, re, sys, time, math, pytz, psutil, shutil, pickle, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
 from natsort import natsorted
@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlparse
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
+from moviepy.video.io.VideoFileClip import VideoFileClip
 from pyrogram.types import (
     ReplyKeyboardMarkup,
     InlineKeyboardMarkup,
@@ -184,12 +185,11 @@ async def zip_folder(path):
     dir_p, p_name = os.path.split(path)
     r = "-r" if os.path.isdir(path) else ""
     if len(custom_name) != 0:
-        name = shorterFileName(custom_name)
+        name = custom_name
+    elif os.path.isfile(path):
+        name = os.path.basename(path)
     else:
-        if os.path.isfile(path):
-            _, name = os.path.split(shorterFileName(path))
-        else:
-            name = shorterFileName(d_name)
+        name = d_name
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     starting_time = datetime.datetime.now()
     cmd = f'cd "{dir_p}" && zip {r} -s 2000m -0 "{temp_zpath}/{name}.zip" "{p_name}"'
@@ -441,8 +441,9 @@ async def on_output(output: str):
 
 async def aria2_Download(link, num):
     global start_time, down_msg
+    name_d = get_Aria2c_Name(link)
     start_time = datetime.datetime.now()
-    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{d_name}</code>\n"
+    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{name_d}</code>\n"
 
     # Create a command to run aria2p with the link
     command = [
@@ -506,6 +507,7 @@ async def media_Identifier(link):
     if media is None:
         raise Exception("Couldn't Download Telegram Message")
     return media, message
+
 
 async def download_progress(current, total):
     speed_string, eta, percentage = speed_eta(start_time, current, total)
@@ -600,13 +602,7 @@ async def get_d_name(link):
         media, _ = await media_Identifier(link)
         d_name = media.file_name if hasattr(media, "file_name") else "None"
     else:
-        cmd = f'aria2c --dry-run --file-allocation=none "{link}"'
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-        stdout_str = result.stdout.decode("utf-8")
-        filename = stdout_str.split("complete: ")[-1].split("\n")[0]
-        d_name = filename.split("/")[-1]
-        if len(d_name) == 0:
-            d_name = "UNKNOWN DOWNLOAD NAME"
+        d_name = get_Aria2c_Name(link)
 
 
 # =================================================================
@@ -886,7 +882,7 @@ async def progress_bar(current, total):
     )
 
 
-async def upload_file(file_path, type):
+async def upload_file(file_path, real_name):
     global sent
 
     caption = f"<code>{real_name}</code>"
@@ -970,11 +966,9 @@ async def Leecher(file_path):
 
         for dir_path in dir_list:
             short_path = os.path.join(temp_lpath, dir_path)
-            if LEECH_DOCUMENT:
-                file_type = "document"
-            else:
-                file_type, short_path = get_file_type(short_path)
             file_name = os.path.basename(short_path)
+            new_path = shorterFileName(short_path)
+            os.rename(short_path, new_path)
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
             text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
@@ -984,21 +978,17 @@ async def Leecher(file_path):
                 text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
                 reply_markup=keyboard(),
             )
-            await upload_file(short_path, file_type)
-            up_bytes.append(os.stat(short_path).st_size)
+            await upload_file(new_path, file_name)
+            up_bytes.append(os.stat(new_path).st_size)
 
             count += 1
 
         shutil.rmtree(temp_lpath)
 
     else:
+        file_name = os.path.basename(file_path)
         new_path = shorterFileName(file_path)  # Trimming filename upto 50 chars
         os.rename(file_path, new_path)
-        if LEECH_DOCUMENT:
-            file_type = "document"
-        else:
-            file_type, new_path = get_file_type(new_path)
-        file_name = os.path.basename(new_path)
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
         text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
@@ -1008,28 +998,13 @@ async def Leecher(file_path):
             text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
             reply_markup=keyboard(),
         )
-        await upload_file(new_path, file_type)
+        await upload_file(new_path, file_name)
         up_bytes.append(os.stat(new_path).st_size)
 
         os.remove(new_path)
 
 
 async def Leech(folder_path):
-    global sent
-
-    dump_text = (
-        "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
-        + f"\n╭<b>📛 Name » </b>  <code>{d_name}</code>\n├<b>📦 Size » </b> <code>{size_measure(total_down_size)}</code>"
-        + f"\n╰<b>📂 Total Files » </b>  <code>{get_file_count(folder_path)}</code>"
-    )
-
-    sent = await bot.send_photo(
-        chat_id=dump_id,
-        photo=thumb_path,
-        caption=task_msg + dump_text,
-        reply_markup=keyboard(),
-    )
-
     files = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
     for f in natsorted(files):
         file_path = os.path.join(folder_path, f)
@@ -1039,7 +1014,7 @@ async def Leech(folder_path):
 
 
 async def ZipLeech(d_fol_path):
-    global msg, down_msg, start_time, d_name, total_down_size, sent
+    global msg, down_msg, start_time, total_down_size
 
     down_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{d_name}</code>\n"
 
@@ -1163,7 +1138,7 @@ async def FinalStep(msg):
 # ****************************************************************
 api_id, chat_id, dump_id = int(API_ID), int(CHAT_ID), int(DUMP_ID)
 link_p = str(dump_id)[4:]
-thumb_path = "/content/thmb.jpg"
+custom_thumb = "/content/thmb.jpg"
 d_path = "/content/bot_Folder"
 d_name = ""
 link_info = False
@@ -1185,13 +1160,17 @@ down_count.append(1)
 start_time = datetime.datetime.now()
 text_msg = ""
 link = "something"
+choice = "x"
 links = []
 
 service = build_service()
 
-if not os.path.exists(thumb_path):
+if not Thumbnail_Checker("/content"):
     thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
     print("Didn't find thumbnail, So switching to default thumbnail")
+else:
+    thumb_path = custom_thumb
+
 if ospath.exists(d_path):
     shutil.rmtree(d_path)
     makedirs(d_path)
@@ -1199,14 +1178,15 @@ else:
     makedirs(d_path)
 
 if len(LEECH_MODE) == 0:
-    choice = input(
-        "Choose the Operation: \n\t(1) Leech\n\t(2) Zipleech\n\t(3) Unzipleech\n\nEnter: "
-    )
+    while choice not in ["1", "2", "3", "l", "z", "u"]:
+        choice = input(
+            "Choose the Operation:\n\n\t[1 / L] Leech\n\t[2 / Z] Zipleech\n\t[3 / U] Unzipleech\n\nEnter: "
+        ).lower()
+        clear_output()
+        if choice not in ["1", "2", "3", "l", "z", "u"]:
+            print(f"No Such Leech Mode '{choice}' ! Enter Option Correctly 🦥\n")
 else:
     choice = LEECH_MODE.lower()
-
-if choice not in ["1", "2", "3", "l", "z", "u"]:
-    raise Exception("No Such Option ! Can't Proceed Further 🦥\n")
 
 if choice == "1" or choice == "l":
     task = "Leech"
@@ -1215,14 +1195,14 @@ elif choice == "2" or choice == "z":
 else:
     task = "Unzipleech"
 leech_type = "Document" if LEECH_DOCUMENT else "Media"
-clear_output()
+
 time.sleep(1)
 print(f"TASK MODE: {task} as {leech_type}")
 
 if len(D_LINK) == 0:
     # Getting Download Links
     while link.lower() != "c":
-        link = input(f"Download link [ Enter c to Terminate]: ")
+        link = input(f"Download link [ Enter 'C' to Terminate]: ")
         if link.lower() != "c":
             links.append(link)
 else:
@@ -1230,8 +1210,8 @@ else:
 
 d_name, custom_name = "", ""
 
-if choice in ["1", "2", "3"]:
-    if choice == "2" or (len(links) == 1 and choice == "1"):
+if len(LEECH_MODE) + len(D_LINK) + len(C_NAME) == 0:  # Making Sure, he is in Desktop
+    if choice in ["2", "z"] or (len(links) == 1 and choice in ["1", "l"]):
         custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
     else:
         print("Custom Name Not Applicable")
@@ -1281,24 +1261,26 @@ async with Client(
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
-            reply_to_message_id=msg.id,
             caption=task_msg
             + down_msg
             + f"\n📝 __Starting DOWNLOAD...__"
             + system_info(),
             reply_markup=keyboard(),
         )
-
-        sent = msg
         clear_output()
         await calG_DownSize(links)
         await get_d_name(links[0])
-        d_fol_path = os.path.join(d_fol_path,d_name)
-        if os.path.exists(d_fol_path):
-            makedirs(d_fol_path)
+
+        if choice in ["2", "z"]:
+            d_fol_path = os.path.join(d_fol_path, d_name)
+            if os.path.exists(d_fol_path):
+                makedirs(d_fol_path)
+
         links = natsorted(links)
+
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
+
         for c in range(len(links)):
             if "drive.google.com" in links[c]:
                 await g_DownLoad(links[c], c + 1)
@@ -1351,25 +1333,29 @@ async with Client(
             + f"\n<b>TASK FAILED TO COMPLETE 💔</b>\n\n╭<b>📛 Name » </b> <code>{d_name}</code>\n├<b>🍃 Wasted Time » </b>"
             + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n"
             + f"<b>╰🤔 Reason » </b>__{e}__"
+            + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
         )
-        await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
-        await bot.send_photo(
-            chat_id=chat_id,
-            photo=thumb_path,
-            caption=task_msg + Error_Text,
-            reply_markup=InlineKeyboardMarkup(
-                [
+        try:
+            await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
+            await bot.send_photo(
+                chat_id=chat_id,
+                photo=thumb_path,
+                caption=task_msg + Error_Text,
+                reply_markup=InlineKeyboardMarkup(
                     [
-                        InlineKeyboardButton(  # Opens a web URL
-                            "Report Issue 🥺",
-                            url="https://github.com/XronTrix10/Telegram-Leecher/issues",
-                        ),
-                        InlineKeyboardButton(  # Opens a web URL
-                            "Group Discuss 🤔",
-                            url="https://t.me/Colab_Leecher_Discuss",
-                        ),
-                    ],
-                ]
-            ),
-        )
+                        [
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Report Issue 🥺",
+                                url="https://github.com/XronTrix10/Telegram-Leecher/issues",
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Group Discuss 🤔",
+                                url="https://t.me/Colab_Leecher_Discuss",
+                            ),
+                        ],
+                    ]
+                ),
+            )
+        except Exception as d:
+            print(f"Another Error Occured: {d}")
         print(f"Error Occured: {e}")
