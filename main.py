@@ -576,6 +576,17 @@ async def calG_DownSize(links):
             pass
 
 
+def get_Aria2c_Name(link):
+    cmd = f'aria2c -x10 --dry-run --file-allocation=none "{link}"'
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    stdout_str = result.stdout.decode("utf-8")
+    filename = stdout_str.split("complete: ")[-1].split("\n")[0]
+    name = filename.split("/")[-1]
+    if len(name) == 0:
+        name = "UNKNOWN DOWNLOAD NAME"
+    return name
+
+
 async def get_d_name(link):
     global d_name
     if custom_name:
