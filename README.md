@@ -23,6 +23,7 @@
  - Added Support For All Type Archive Extraction ( New 🔥)
  - Support for Multi-Part Archive Extraction ( New 🔥)
  - Upload Directly From Colab Container ( New 🔥)
+ - Auto Generate Thumbnail From Video Files ( New 🔥) 
  - Zip Folders/Files
  - Upload Files to Telegram
  - Shows Operation Status with bar and percentage 
@@ -36,7 +37,6 @@
  - Telegram File Link ✅
  - Magnet Link ✅
  - Torrent Link ✅
- - YouTube Link ❌ ( Coming Soon ♨️)
  - Mega.nz Link ❌ ( Coming Soon ♨️)
  - GDTot, Sharer and Short Links ❌ ( Coming Soon ♨️)
 ## **🔥 Benifits**
