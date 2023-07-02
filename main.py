@@ -1113,38 +1113,49 @@ async def FinalStep(msg):
     final_text = (
         f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
     )
-
-    final_texts = []
-
-    for i in range(len(sent_file)):
-        file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
-        fileName = sent_fileName[i]
-        fileText = f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
-        if len(final_text + fileText) >= 4096:
-            final_texts.append(final_text)
-            final_text = fileText
-        else:
-            final_text += fileText
-    final_texts.append(final_text)
-
+    l_ink = "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟"
     last_text = (
-        f"⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
-        + f"\n<b>{(task).upper()} COMPLETE 🔥</b>\n\n"
+        f"\n\n<b>{(task).upper()} COMPLETE 🔥</b>\n\n"
         + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
-        + f"├<b>📦 Size » </b><code>{size_measure(total_down_size)}</code>\n"
+        + f"├<b>📦 Size » </b><code>{size_measure(sum(up_bytes))}</code>\n"
         + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>"
     )
+    src = f"**SOURCE »** __[Links]({src_link})__"
+    await bot.send_message(
+        chat_id=dump_id,
+        text=src + last_text,
+        reply_to_message_id=sent.id,
+    )
+
     await bot.edit_message_text(
         chat_id=chat_id,
         message_id=msg.id,
-        text=task_msg + last_text,
+        text=task_msg + l_ink + last_text,
         reply_markup=keyboard(),
     )
 
-    for fn_txt in final_texts:
-        msg = await bot.send_message(
-            chat_id=chat_id, reply_to_message_id=msg.id, text=fn_txt
-        )
+    try:
+        final_texts = []
+
+        for i in range(len(sent_file)):
+            file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
+            fileName = sent_fileName[i]
+            fileText = f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
+            if len(final_text + fileText) >= 4096:
+                final_texts.append(final_text)
+                final_text = fileText
+            else:
+                final_text += fileText
+        final_texts.append(final_text)
+
+        for fn_txt in final_texts:
+            msg = await bot.send_message(
+                chat_id=chat_id, reply_to_message_id=msg.id, text=fn_txt
+            )
+    except Exception as e:
+        Err = f"<b>Error Sending logs » </b><i>{e}</i>"
+        Err += f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
+        await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=Err)
 
 
 # ****************************************************************
@@ -1262,7 +1273,11 @@ async with Client(
     "my_bot", api_id=api_id, api_hash=API_HASH, bot_token=BOT_TOKEN
 ) as bot:
     try:
-        msg = await bot.send_message(chat_id=chat_id, text=dump_task)
+        sent = await bot.send_message(chat_id=dump_id, text=dump_task)
+
+        src_link = f"https://t.me/c/{link_p}/{sent.id}"
+        task_msg += "<b>🖇️ SOURCE » </b>" + f"__[Links]({src_link})__\n\n"
+
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
