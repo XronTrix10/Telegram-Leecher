@@ -141,6 +141,31 @@ def video_extension_fixer(file_path):
         return os.path.join(file_path + ".mp4")
 
 
+def Thumbnail_Maintainer(file_path):
+    thmb = f"{d_path}/video_frame.jpg"
+    if os.path.exists(thmb):
+        os.remove(thmb)
+    try:
+        with VideoFileClip(file_path) as video:
+            if os.path.exists(custom_thumb):
+                return custom_thumb, video.duration
+            else:
+                video.save_frame(thmb, t=math.floor(video.duration / 2))
+                return thmb, video.duration
+    except Exception as e:
+        print(f"Thmb Gen ERROR: {e}")
+        return thumb_path, 0
+
+
+def Thumbnail_Checker(dir_path):
+    for filename in os.listdir(dir_path):
+        if filename.endswith(".jpg"):
+            os.rename(os.path.join(dir_path, filename), custom_thumb)
+            return True
+    # No jpg file was found
+    return False
+
+
 def system_info():
     ram_usage = psutil.Process(os.getpid()).memory_info().rss
     disk_usage = psutil.disk_usage("/")
@@ -852,21 +877,17 @@ async def progress_bar(current, total):
 
 async def upload_file(file_path, type):
     global sent
-    file_name = os.path.basename(file_path)
+
+    caption = f"<code>{real_name}</code>"
+    type_, file_path = get_file_type(file_path)
+    f_type = "document" if LEECH_DOCUMENT else type_
+
     # Upload the file
     try:
-        caption = f"<code>{file_name}</code>"
-
-        if type == "video":
-            with Image.open(thumb_path) as img:
+        if f_type == "video":
+            thmb_path, seconds = Thumbnail_Maintainer(file_path)
+            with Image.open(thmb_path) as img:
                 width, height = img.size
-
-            data = cv2.VideoCapture(file_path)
-            frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
-            fps = data.get(cv2.CAP_PROP_FPS)
-            seconds = 0
-            if fps != 0:
-                seconds = round(frames / fps)
 
             sent = await sent.reply_video(
                 video=file_path,
@@ -874,31 +895,39 @@ async def upload_file(file_path, type):
                 width=width,
                 height=height,
                 caption=caption,
-                thumb=thumb_path,
-                duration=seconds,
+                thumb=thmb_path,
+                duration=int(seconds),
                 progress=progress_bar,
                 reply_to_message_id=sent.id,
             )
 
-        elif type == "audio":
+        elif f_type == "audio":
+            thmb_path = None if not os.path.exists(custom_thumb) else custom_thumb
             sent = await sent.reply_audio(
                 audio=file_path,
                 caption=caption,
-                thumb=thumb_path,
+                thumb=thmb_path,
                 progress=progress_bar,
                 reply_to_message_id=sent.id,
             )
 
-        elif type == "document":
+        elif f_type == "document":
+            if os.path.exists(custom_thumb):
+                thmb_path = custom_thumb
+            elif type_ == "video":
+                thmb_path, _ = Thumbnail_Maintainer(file_path)
+            else:
+                thmb_path = None
+
             sent = await sent.reply_document(
                 document=file_path,
                 caption=caption,
-                thumb=thumb_path,
+                thumb=thmb_path,
                 progress=progress_bar,
                 reply_to_message_id=sent.id,
             )
 
-        elif type == "photo":
+        elif f_type == "photo":
             sent = await sent.reply_photo(
                 photo=file_path,
                 caption=caption,
@@ -909,10 +938,10 @@ async def upload_file(file_path, type):
         clear_output()
 
         sent_file.append(sent)
-        sent_fileName.append(file_name)
+        sent_fileName.append(real_name)
 
     except Exception as e:
-        print(e)
+        print(f"Error When Uploading : {e}")
 
 
 async def Leecher(file_path):
