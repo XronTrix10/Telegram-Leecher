@@ -477,9 +477,16 @@ async def aria2_Download(link, num):
     exit_code = proc.wait()
     error_output = proc.stderr.read()
     if exit_code != 0:
+        if exit_code == 3:
+            raise Exception(f"The Resource was Not Found in {link}")
+        elif exit_code == 9:
+            raise Exception(f"Not enough disk space available")
+        elif exit_code == 24:
+            raise Exception(f"HTTP authorization failed.")
+        else:
         raise Exception(
-            f"aria2c download failed with return code {exit_code}. Error: {error_output}"
-        )
+                f"aria2c download failed with return code {exit_code} for {link}.\nError: {error_output}"
+            )
 
 
 # =================================================================
@@ -730,6 +737,7 @@ async def gDownloadFile(file_id, path):
     except HttpError as error:
         print("An error occurred: {0}".format(error))
         file = None
+
     if file is None:
         print(
             "Sorry, the specified file or folder does not exist or is not accessible."
@@ -763,7 +771,7 @@ async def gDownloadFile(file_id, path):
                     # Reset the buffer for the next chunk.
                     file_contents.seek(0)
                     file_contents.truncate()
-                    # The saved bytes till now
+                    # The saved bytes until now
                     file_d_size = int(status.progress() * int(file["size"]))
                     down_done = sum(down_bytes) + file_d_size
                     speed_string, eta, percentage = speed_eta(
@@ -781,6 +789,13 @@ async def gDownloadFile(file_id, path):
                 down_bytes.append(int(file["size"]))
                 down_count[0] += 1
 
+            except HttpError as error:
+                if error.resp.status == 403 and "User Rate Limit Exceeded" in str(
+                    error
+                ):
+                    raise HttpError("Download quota for the file has been exceeded.")
+                else:
+                    print("Error downloading: {0}".format(error))
             except Exception as e:
                 print("Error downloading: {0}".format(e))
 
