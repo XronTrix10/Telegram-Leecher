@@ -220,20 +220,21 @@ async def extract_zip(zip_filepath):
     dirname, filename = os.path.split(zip_filepath)
     unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
     file_pattern = ""
+    p = f"-p{z_pswd}" if len(z_pswd) != 0 else ""
     name, ext = os.path.splitext(filename)
     if ext == ".rar":
         if "part" in name:
-            cmd = f"unrar x -kb -idq '{zip_filepath}' {temp_unzip_path}"
+            cmd = f"unrar x -kb -idq {p} '{zip_filepath}' {temp_unzip_path}"
             file_pattern = "rar"
         else:
-            cmd = f"unrar x '{zip_filepath}' {temp_unzip_path}"
+            cmd = f"unrar x {p} '{zip_filepath}' {temp_unzip_path}"
 
     elif ext == ".tar":
         cmd = f"tar -xvf '{zip_filepath}' -C {temp_unzip_path}"
     elif ext == ".gz":
         cmd = f"tar -zxvf '{zip_filepath}' -C {temp_unzip_path}"
     else:
-        cmd = f"7z x '{zip_filepath}' -o{temp_unzip_path}"
+        cmd = f"7z x {p} '{zip_filepath}' -o{temp_unzip_path}"
         if ext == ".001":
             file_pattern = "7z"
         elif ext == ".z01":
@@ -1160,7 +1161,7 @@ down_count.append(1)
 start_time = datetime.datetime.now()
 text_msg = ""
 link = "something"
-choice = "x"
+choice, z_pswd = "x", ""
 links = []
 
 service = build_service()
@@ -1198,6 +1199,14 @@ leech_type = "Document" if LEECH_DOCUMENT else "Media"
 
 time.sleep(1)
 print(f"TASK MODE: {task} as {leech_type}")
+
+if len(PASSWD) == 0 and choice in ["3", "u", "4", "d"]:
+    z_pswd = input(f"Password For Unzip [ Enter 'E' for Empty ]: ")
+elif len(PASSWD) != 0:
+    z_pswd = PASSWD
+
+if z_pswd.lower() == "e":
+    z_pswd = ""
 
 if len(D_LINK) == 0:
     # Getting Download Links
