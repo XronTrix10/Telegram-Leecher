@@ -167,6 +167,16 @@ def Thumbnail_Checker(dir_path):
     return False
 
 
+def convert_to_jpg(image_path):
+    image = Image.open(image_path)
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    output_path = ospath.splitext(image_path)[0] + ".jpg"
+    image.save(output_path, "JPEG")
+    os.remove(image_path)
+    return output_path
+
+
 def system_info():
     ram_usage = psutil.Process(os.getpid()).memory_info().rss
     disk_usage = psutil.disk_usage("/")
