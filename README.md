@@ -37,6 +37,7 @@
  - Telegram File Link ✅
  - Magnet Link ✅
  - Torrent Link ✅
+ - Video Links ( YouTube ) ✅
  - Mega.nz Link ❌ ( Coming Soon ♨️)
  - GDTot, Sharer and Short Links ❌ ( Coming Soon ♨️)
 ## **🔥 Benifits**
@@ -68,6 +69,7 @@
 
 ## **🚨 NOTE:**
  - Magnet or Torrent Links are supported, But avoid using, because `Google Colab Stricly Prohibits Torrents`
+ - Downloading `YouTube Video without permission of the owner` can lead to copyright issues. Use with Caution
 
 <br>
 
