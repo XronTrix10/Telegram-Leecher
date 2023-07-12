@@ -1,5 +1,5 @@
 # @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
-import os, io, re, sys, time, math, pytz, psutil, shutil, pickle, uvloop, pathlib, datetime, subprocess
+import os, io, re, sys, shutil, time, yt_dlp, math, pytz, psutil, threading, pickle, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
 from natsort import natsorted
@@ -78,9 +78,10 @@ def get_file_type(file_path):
         ".jpg": "photo",
         ".jpeg": "photo",
         ".png": "photo",
+        ".bmp": "photo",
         ".gif": "photo",
     }
-    _, extension = os.path.splitext(file_path)
+    _, extension = ospath.splitext(file_path)
 
     if extension.lower() in extensions_dict:
         if extensions_dict[extension] == "video":
@@ -93,19 +94,19 @@ def get_file_type(file_path):
 
 
 def shorterFileName(path):
-    if os.path.isfile(path):
-        dir_path, filename = os.path.split(path)
+    if ospath.isfile(path):
+        dir_path, filename = ospath.split(path)
         if len(filename) > 60:
-            basename, ext = os.path.splitext(filename)
+            basename, ext = ospath.splitext(filename)
             basename = basename[: 60 - len(ext)]
             filename = basename + ext
-            path = os.path.join(dir_path, filename)
+            path = ospath.join(dir_path, filename)
         return path
-    elif os.path.isdir(path):
-        dir_path, dirname = os.path.split(path)
+    elif ospath.isdir(path):
+        dir_path, dirname = ospath.split(path)
         if len(dirname) > 60:
             dirname = dirname[:60]
-            path = os.path.join(dir_path, dirname)
+            path = ospath.join(dir_path, dirname)
         return path
     else:
         if len(path) > 60:
@@ -114,14 +115,14 @@ def shorterFileName(path):
 
 
 def get_folder_size(folder_path):
-    if os.path.isfile(folder_path):
-        return os.path.getsize(folder_path)
+    if ospath.isfile(folder_path):
+        return ospath.getsize(folder_path)
     else:
         total_size = 0
         for dirpath, _, filenames in os.walk(folder_path):
             for f in filenames:
-                fp = os.path.join(dirpath, f)
-                total_size += os.path.getsize(fp)
+                fp = ospath.join(dirpath, f)
+                total_size += ospath.getsize(fp)
         return total_size
 
 
@@ -134,22 +135,26 @@ def get_file_count(folder_path):
 
 
 def video_extension_fixer(file_path):
-    _, f_name = os.path.split(file_path)
+    _, f_name = ospath.split(file_path)
     if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
         return file_path
     else:
-        os.rename(file_path, os.path.join(file_path + ".mp4"))
-        return os.path.join(file_path + ".mp4")
+        os.rename(file_path, ospath.join(file_path + ".mp4"))
+        return ospath.join(file_path + ".mp4")
 
 
 def Thumbnail_Maintainer(file_path):
     thmb = f"{d_path}/video_frame.jpg"
-    if os.path.exists(thmb):
+    if ospath.exists(thmb):
         os.remove(thmb)
     try:
+        fname, _ = ospath.splitext(ospath.basename(file_path))
+        ytdl_thmb = f"{d_path}/ytdl_thumbnails/{fname}.webp"
         with VideoFileClip(file_path) as video:
-            if os.path.exists(custom_thumb):
+            if ospath.exists(custom_thumb):
                 return custom_thumb, video.duration
+            elif ospath.exists(ytdl_thmb):
+                return convert_to_jpg(ytdl_thmb), video.duration
             else:
                 video.save_frame(thmb, t=math.floor(video.duration / 2))
                 return thmb, video.duration
@@ -160,8 +165,13 @@ def Thumbnail_Maintainer(file_path):
 
 def Thumbnail_Checker(dir_path):
     for filename in os.listdir(dir_path):
-        if filename.endswith(".jpg") or filename.endswith(".jpeg"):
-            os.rename(os.path.join(dir_path, filename), custom_thumb)
+        _, ext = ospath.splitext(filename)
+        if ext in [".png", ".webp", ".bmp"]:
+            n_path = convert_to_jpg(ospath.join(dir_path, filename))
+            os.rename(n_path, custom_thumb)
+            return True
+        elif ext in [".jpeg", ".jpg"]:
+            os.rename(ospath.join(dir_path, filename), custom_thumb)
             return True
     # No jpg file was found
     return False
@@ -192,12 +202,12 @@ def system_info():
 
 
 async def zip_folder(path):
-    dir_p, p_name = os.path.split(path)
-    r = "-r" if os.path.isdir(path) else ""
+    dir_p, p_name = ospath.split(path)
+    r = "-r" if ospath.isdir(path) else ""
     if len(custom_name) != 0:
         name = custom_name
-    elif os.path.isfile(path):
-        name = os.path.basename(path)
+    elif ospath.isfile(path):
+        name = ospath.basename(path)
     else:
         name = d_name
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
@@ -219,7 +229,7 @@ async def zip_folder(path):
             "Xr-Zipp 🔒",
         )
         time.sleep(1)
-    if os.path.isfile(path):
+    if ospath.isfile(path):
         os.remove(path)
     else:
         shutil.rmtree(path)
@@ -227,11 +237,11 @@ async def zip_folder(path):
 
 async def extract_zip(zip_filepath):
     starting_time = datetime.datetime.now()
-    dirname, filename = os.path.split(zip_filepath)
+    dirname, filename = ospath.split(zip_filepath)
     unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
     file_pattern = ""
     p = f"-p{z_pswd}" if len(z_pswd) != 0 else ""
-    name, ext = os.path.splitext(filename)
+    name, ext = ospath.splitext(filename)
     if ext == ".rar":
         if "part" in name:
             cmd = f"unrar x -kb -idq {p} '{zip_filepath}' {temp_unzip_path}"
@@ -272,38 +282,38 @@ async def extract_zip(zip_filepath):
     # Deletes all remaining Multi Part Volumes
     c = 1
     if file_pattern == "rar":
-        name_, _ = os.path.splitext(name)
+        name_, _ = ospath.splitext(name)
         na_p = name_ + ".part" + str(c) + ".rar"
-        p_ap = os.path.join(dirname, na_p)
-        while os.path.exists(p_ap):
+        p_ap = ospath.join(dirname, na_p)
+        while ospath.exists(p_ap):
             os.remove(p_ap)
             c += 1
             na_p = name_ + ".part" + str(c) + ".rar"
-            p_ap = os.path.join(dirname, na_p)
+            p_ap = ospath.join(dirname, na_p)
 
     elif file_pattern == "7z":
         na_p = name + "." + str(c).zfill(3)
-        p_ap = os.path.join(dirname, na_p)
-        while os.path.exists(p_ap):
+        p_ap = ospath.join(dirname, na_p)
+        while ospath.exists(p_ap):
             os.remove(p_ap)
             c += 1
             na_p = name + "." + str(c).zfill(3)
-            p_ap = os.path.join(dirname, na_p)
+            p_ap = ospath.join(dirname, na_p)
 
     elif file_pattern == "zip":
         na_p = name + ".zip"
-        p_ap = os.path.join(dirname, na_p)
-        if os.path.exists(p_ap):
+        p_ap = ospath.join(dirname, na_p)
+        if ospath.exists(p_ap):
             os.remove(p_ap)
         na_p = name + ".z" + str(c).zfill(2)
-        p_ap = os.path.join(dirname, na_p)
-        while os.path.exists(p_ap):
+        p_ap = ospath.join(dirname, na_p)
+        while ospath.exists(p_ap):
             os.remove(p_ap)
             c += 1
             na_p = name + ".z" + str(c).zfill(2)
-            p_ap = os.path.join(dirname, na_p)
+            p_ap = ospath.join(dirname, na_p)
 
-    if os.path.exists(zip_filepath):
+    if ospath.exists(zip_filepath):
         os.remove(zip_filepath)
 
 
@@ -314,7 +324,7 @@ async def size_checker(file_path):
     if file_size > max_size:
         if not ospath.exists(temp_lpath):
             makedirs(temp_lpath)
-        _, filename = os.path.split(file_path)
+        _, filename = ospath.split(file_path)
         filename = filename.lower()
         if (
             filename.endswith(".zip")
@@ -334,11 +344,11 @@ async def size_checker(file_path):
 
 async def split_zipFile(file_path, max_size):
     starting_time = datetime.datetime.now()
-    _, filename = os.path.split(file_path)
+    _, filename = ospath.split(file_path)
     new_path = f"{temp_lpath}/{filename}"
     down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     # Get the total size of the file
-    total_size = os.path.getsize(file_path)
+    total_size = ospath.getsize(file_path)
     with open(file_path, "rb") as f:
         chunk = f.read(max_size)
         i = 1
@@ -548,11 +558,151 @@ async def TelegramDownload(link, num):
 
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
     start_time = datetime.datetime.now()
-    file_path = os.path.join(d_fol_path, name)
+    file_path = ospath.join(d_fol_path, name)
     await message.download(
         progress=download_progress, in_memory=False, file_name=file_path
     )
     down_bytes.append(media.file_size)
+
+
+# =================================================================
+#    Youtube Link Handler Functions
+# =================================================================
+
+
+async def YTDL_Status(link, num):
+    global down_msg
+    name = get_YT_Name(link)
+    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
+
+    YTDL_Thread = threading.Thread(target=YouTubeDL, name="YouTubeDL", args=(link,))
+    YTDL_Thread.start()
+
+    while YTDL_Thread.is_alive():  # Until ytdl is downloading
+        if ytdl_status[0]:
+            sys_text = system_info()
+            message = ytdl_status[0]
+            try:
+                await bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=msg.id,
+                    text=task_msg + down_msg + message + sys_text,
+                    reply_markup=keyboard(),
+                )
+            except Exception as f:
+                pass
+        else:
+            try:
+                message = ytdl_status[1].split("@")
+                await status_bar(
+                    down_msg=down_msg,
+                    speed=message[0],
+                    percentage=float(message[1]),
+                    eta=message[2],
+                    done=message[3],
+                    left=message[4],
+                    engine="Xr-YtDL 🏮",
+                )
+            except Exception as f:
+                pass
+
+        time.sleep(2.5)
+
+
+class MyLogger:
+    def __init__(self):
+        pass
+
+    def debug(self, msg):
+        global ytdl_status
+        if "item" in str(msg):
+            msgs = msg.split(" ")
+            ytdl_status[0] = f"\n⏳ __Getting Video Information {msgs[-3]} of {msgs[-1]}__"
+
+    @staticmethod
+    def warning(msg):
+        pass
+
+    @staticmethod
+    def error(msg):
+        # if msg != "ERROR: Cancelling...":
+        # print(msg)
+        pass
+
+
+def YouTubeDL(url):
+    global ytdl_status
+
+    def my_hook(d):
+        global ytdl_status
+
+        if d["status"] == "downloading":
+            if d.get("total_bytes"):
+                total_bytes = d["total_bytes"]
+            elif d.get("total_bytes_estimate"):
+                total_bytes = d["total_bytes_estimate"]
+            else:
+                total_bytes = 0
+            dl_bytes = d.get("downloaded_bytes", 0)
+            percent = d.get("downloaded_percent", 0)
+            speed = d.get("speed", "N/A")
+            eta = d.get("eta", 0)
+
+            if percent == 0 and total_bytes != 0:
+                percent = round((float(dl_bytes) * 100 / float(total_bytes)), 2)
+
+            # print(
+            #     f"\rDL: {size_measure(dl_bytes)}/{size_measure(total_bytes)} | {percent}% | Speed: {size_measure(speed)}/s | ETA: {eta}",
+            #     end="",
+            # )
+            ytdl_status[0] = False
+            ytdl_status[
+                1
+            ] = f"{size_measure(speed)}/s@{percent}@{convert_seconds(eta)}@{size_measure(dl_bytes)}@{size_measure(total_bytes)}"
+
+        elif d["status"] == "downloading fragment":
+            # log_str = d["message"]
+            # print(log_str, end="")
+            pass
+
+    ydl_opts = {
+        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+        "allow_multiple_video_streams": True,
+        "allow_multiple_audio_streams": True,
+        "writethumbnail": True,
+        "allow_playlist_files": True,
+        "overwrites": True,
+        "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
+        "progress_hooks": [my_hook],
+        "logger": MyLogger(),
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        if not ospath.exists(f"{d_path}/ytdl_thumbnails"):
+            makedirs(f"{d_path}/ytdl_thumbnails")
+        try:
+            info_dict = ydl.extract_info(url, download=False)
+            ytdl_status[0] = "⌛ __Please WAIT a bit...__"
+            if "_type" in info_dict and info_dict["_type"] == "playlist":
+                playlist_name = info_dict["title"]
+                if not ospath.exists(ospath.join(d_fol_path, playlist_name)):
+                    makedirs(ospath.join(d_fol_path, playlist_name))
+                ydl_opts["outtmpl"] = {
+                    "default": f"{d_fol_path}/{playlist_name}/%(title)s.%(ext)s",
+                    "thumbnail": f"{d_path}/ytdl_thumbnails/%(title)s.%(ext)s",
+                }
+                for entry in info_dict["entries"]:
+                    video_url = entry["webpage_url"]
+                    ydl.download([video_url])
+            else:
+                ytdl_status[0] = False
+                ydl_opts["outtmpl"] = {
+                    "default": f"{d_fol_path}/%(title)s.%(ext)s",
+                    "thumbnail": f"{d_path}/ytdl_thumbnails/%(title)s.%(ext)s",
+                }
+                ydl.download([url])
+        except Exception as e:
+            print(f"YTDL ERROR: {e}")
 
 
 # =================================================================
@@ -604,6 +754,15 @@ def get_Aria2c_Name(link):
     return name
 
 
+def get_YT_Name(link):
+    with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
+        info = ydl.extract_info(link, download=False)
+        if "title" in info:
+            return info["title"]
+        else:
+            return "UNKNOWN DOWNLOAD NAME"
+
+
 async def get_d_name(link):
     global d_name
     if custom_name:
@@ -616,6 +775,8 @@ async def get_d_name(link):
     elif "t.me" in link:
         media, _ = await media_Identifier(link)
         d_name = media.file_name if hasattr(media, "file_name") else "None"
+    elif "youtube.com" in link or "youtu.be" in link:
+        d_name = get_YT_Name(link)
     else:
         d_name = get_Aria2c_Name(link)
 
@@ -628,7 +789,7 @@ async def get_d_name(link):
 def build_service():
     # create credentials object from token.pickle file
     creds = None
-    if os.path.exists("/content/token.pickle"):
+    if ospath.exists("/content/token.pickle"):
         with open("/content/token.pickle", "rb") as token:
             creds = pickle.load(token)
     else:
@@ -757,7 +918,7 @@ async def gDownloadFile(file_id, path):
         else:
             try:
                 file_name = file.get("name", f"untitleddrivefile_{file_id}")
-                file_name = os.path.join(path, file_name)
+                file_name = ospath.join(path, file_name)
                 # Create a BytesIO stream to hold the downloaded file data.
                 file_contents = io.BytesIO()
 
@@ -888,9 +1049,9 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
 
 
 async def progress_bar(current, total):
-    upload_speed = 0
-    if current > 0:
-        elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+    upload_speed = 4 * 1024 * 1024
+    elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+    if current > 0 and elapsed_time_seconds > 0:
         upload_speed = current / elapsed_time_seconds
     eta = (total_down_size - current - sum(up_bytes)) / upload_speed
     percentage = (current + sum(up_bytes)) / total_down_size * 100
@@ -931,8 +1092,11 @@ async def upload_file(file_path, real_name):
                 reply_to_message_id=sent.id,
             )
 
+            if thmb_path != custom_thumb:
+                os.remove(thmb_path)
+
         elif f_type == "audio":
-            thmb_path = None if not os.path.exists(custom_thumb) else custom_thumb
+            thmb_path = None if not ospath.exists(custom_thumb) else custom_thumb
             sent = await sent.reply_audio(
                 audio=file_path,
                 caption=caption,
@@ -942,7 +1106,7 @@ async def upload_file(file_path, real_name):
             )
 
         elif f_type == "document":
-            if os.path.exists(custom_thumb):
+            if ospath.exists(custom_thumb):
                 thmb_path = custom_thumb
             elif type_ == "video":
                 thmb_path, _ = Thumbnail_Maintainer(file_path)
@@ -974,6 +1138,13 @@ async def upload_file(file_path, real_name):
         print(f"Error When Uploading : {e}")
 
 
+
+# =================================================================
+#    Leech Mode Handler Functions
+# =================================================================
+
+
+
 async def Leecher(file_path):
     global text_msg, start_time, msg, sent
 
@@ -988,19 +1159,22 @@ async def Leecher(file_path):
         count = 1
 
         for dir_path in dir_list:
-            short_path = os.path.join(temp_lpath, dir_path)
-            file_name = os.path.basename(short_path)
+            short_path = ospath.join(temp_lpath, dir_path)
+            file_name = ospath.basename(short_path)
             new_path = shorterFileName(short_path)
             os.rename(short_path, new_path)
             start_time = datetime.datetime.now()
             current_time[0] = time.time()
             text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
-            msg = await bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.id,
-                text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
-                reply_markup=keyboard(),
-            )
+            try:
+                msg = await bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=msg.id,
+                    text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
+                    reply_markup=keyboard(),
+                )
+            except Exception as d:
+                print(d)
             await upload_file(new_path, file_name)
             up_bytes.append(os.stat(new_path).st_size)
 
@@ -1009,18 +1183,22 @@ async def Leecher(file_path):
         shutil.rmtree(temp_lpath)
 
     else:
-        file_name = os.path.basename(file_path)
-        new_path = shorterFileName(file_path)  # Trimming filename upto 50 chars
+        file_name = ospath.basename(file_path)
+        # Trimming filename upto 50 chars
+        new_path = shorterFileName(file_path)
         os.rename(file_path, new_path)
         start_time = datetime.datetime.now()
         current_time[0] = time.time()
         text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
-        msg = await bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=msg.id,
-            text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
-            reply_markup=keyboard(),
-        )
+        try:
+            msg = await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=msg.id,
+                text=task_msg + text_msg + "\n⏳ __Starting.....__" + system_info(),
+                reply_markup=keyboard(),
+            )
+        except Exception as d:
+            print(d)
         await upload_file(new_path, file_name)
         up_bytes.append(os.stat(new_path).st_size)
 
@@ -1032,10 +1210,12 @@ async def Leech(folder_path):
     total_down_size = get_folder_size(folder_path)
     files = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
     for f in natsorted(files):
-        file_path = os.path.join(folder_path, f)
+        file_path = ospath.join(folder_path, f)
         await Leecher(file_path)
 
     shutil.rmtree(folder_path)
+    if ospath.exists(f"{d_path}/ytdl_thumbnails"):
+        shutil.rmtree(f"{d_path}/ytdl_thumbnails")
 
 
 async def ZipLeech(d_fol_path):
@@ -1055,7 +1235,7 @@ async def ZipLeech(d_fol_path):
     print("\nNow ZIPPING the folder...")
     current_time[0] = time.time()
     start_time = datetime.datetime.now()
-    if not os.path.exists(temp_zpath):
+    if not ospath.exists(temp_zpath):
         makedirs(temp_zpath)
     await zip_folder(d_fol_path)
     clear_output()
@@ -1063,7 +1243,7 @@ async def ZipLeech(d_fol_path):
 
     total_down_size = get_folder_size(temp_zpath)
 
-    if os.path.exists(d_fol_path):
+    if ospath.exists(d_fol_path):
         shutil.rmtree(d_fol_path)
     await Leech(temp_zpath)
 
@@ -1081,27 +1261,27 @@ async def UnzipLeech(d_fol_path):
     cant_files = []
     filenames = [str(p) for p in pathlib.Path(d_fol_path).glob("**/*") if p.is_file()]
     for f in natsorted(filenames):
-        short_path = os.path.join(d_fol_path, f)
-        if not os.path.exists(temp_unzip_path):
+        short_path = ospath.join(d_fol_path, f)
+        if not ospath.exists(temp_unzip_path):
             makedirs(temp_unzip_path)
-        filename = os.path.basename(f).lower()
-        _, ext = os.path.splitext(filename)
+        filename = ospath.basename(f).lower()
+        _, ext = ospath.splitext(filename)
         try:
-            if os.path.exists(short_path):
+            if ospath.exists(short_path):
                 if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar", ".z01"]:
                     await extract_zip(short_path)
                     await Leech(temp_unzip_path)
                 else:
                     cant_files.append(short_path)
                     print(
-                        f"Unable to Extract {os.path.basename(f)} ! Will be Leeching later !"
+                        f"Unable to Extract {ospath.basename(f)} ! Will be Leeching later !"
                     )
         except Exception as e5:
             print(f"UZLeech Launcher Exception: {e5}")
 
     try:
         for path in cant_files:
-            if os.path.exists(path):
+            if ospath.exists(path):
                 await Leecher(path)
     except Exception as e5:
         print(f"UZLeech Launcher Exception: {e5}")
@@ -1122,13 +1302,13 @@ async def UnDZipLeech(folder_path):
 
     filenames = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
     for f in natsorted(filenames):
-        short_path = os.path.join(folder_path, f)
-        if not os.path.exists(temp_unzip_path):
+        short_path = ospath.join(folder_path, f)
+        if not ospath.exists(temp_unzip_path):
             makedirs(temp_unzip_path)
-        filename = os.path.basename(f).lower()
-        _, ext = os.path.splitext(filename)
+        filename = ospath.basename(f).lower()
+        _, ext = ospath.splitext(filename)
         try:
-            if os.path.exists(short_path):
+            if ospath.exists(short_path):
                 if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar", ".z01"]:
                     await extract_zip(short_path)
                 else:
@@ -1207,6 +1387,9 @@ sent_file = []
 sent_fileName = []
 down_bytes = []
 down_bytes.append(0)
+ytdl_status = []
+ytdl_status.append("")
+ytdl_status.append("")
 up_bytes = []
 up_bytes.append(0)
 current_time = []
@@ -1302,6 +1485,8 @@ for link in links:
         ida = "♻️"
     elif "magnet" in link or "torrent" in link:
         ida = "🧲"
+    elif "youtube.com" in link or "youtu.be" in link:
+        ida = "🏮"
     else:
         ida = "🔗"
     dump_task += f"\n\n{ida} <code>{link}</code>"
@@ -1339,8 +1524,8 @@ async with Client(
         await get_d_name(links[0])
 
         if choice in ["2", "z"]:
-            d_fol_path = os.path.join(d_fol_path, d_name)
-            if os.path.exists(d_fol_path):
+            d_fol_path = ospath.join(d_fol_path, d_name)
+            if ospath.exists(d_fol_path):
                 makedirs(d_fol_path)
 
         links = natsorted(links)
@@ -1353,6 +1538,9 @@ async with Client(
                 await g_DownLoad(links[c], c + 1)
             elif "t.me" in links[c]:
                 await TelegramDownload(links[c], c + 1)
+            elif "youtube.com" in links[c] or "youtu.be" in links[c]:
+                await YTDL_Status(links[c], c + 1)
+                time.sleep(4)  # Giving Time to Merge The Last Video
             else:
                 aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{links[c]}</code>"
                 try:
@@ -1372,8 +1560,8 @@ async with Client(
         if choice in ["1", "l"] and len(custom_name) != 0:
             files = os.listdir(d_fol_path)
             for file_ in files:
-                current_name = os.path.join(d_fol_path, file_)
-                new_name = os.path.join(d_fol_path, custom_name)
+                current_name = ospath.join(d_fol_path, file_)
+                new_name = ospath.join(d_fol_path, custom_name)
                 os.rename(current_name, new_name)
 
         clear_output()
