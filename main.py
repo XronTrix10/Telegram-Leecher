@@ -1,8 +1,9 @@
 # @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
-import os, io, re, sys, shutil, time, yt_dlp, math, pytz, psutil, threading, pickle, uvloop, pathlib, datetime, subprocess
+import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, pickle, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
 from natsort import natsorted
+from google.colab import drive
 from urllib.parse import urlparse
 from re import search as re_search
 from os import makedirs, path as ospath
@@ -13,7 +14,6 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pyrogram.types import (
-    ReplyKeyboardMarkup,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
@@ -201,9 +201,10 @@ def system_info():
     return string
 
 
-async def zip_folder(path):
+async def zip_folder(path, is_split, remove):
     dir_p, p_name = ospath.split(path)
     r = "-r" if ospath.isdir(path) else ""
+    split = "-s 2000m" if is_split else ""
     if len(custom_name) != 0:
         name = custom_name
     elif ospath.isfile(path):
@@ -212,7 +213,7 @@ async def zip_folder(path):
         name = d_name
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     starting_time = datetime.datetime.now()
-    cmd = f'cd "{dir_p}" && zip {r} -s 2000m -0 "{temp_zpath}/{name}.zip" "{p_name}"'
+    cmd = f'cd "{dir_p}" && zip {r} {split} -0 "{temp_zpath}/{name}.zip" "{p_name}"'
     proc = subprocess.Popen(cmd, shell=True)
     total = size_measure(get_folder_size(path))
     while proc.poll() is None:
@@ -229,13 +230,15 @@ async def zip_folder(path):
             "Xr-Zipp 🔒",
         )
         time.sleep(1)
-    if ospath.isfile(path):
-        os.remove(path)
-    else:
-        shutil.rmtree(path)
+
+    if remove:
+        if ospath.isfile(path):
+            os.remove(path)
+        else:
+            shutil.rmtree(path)
 
 
-async def extract_zip(zip_filepath):
+async def extract_zip(zip_filepath, remove):
     starting_time = datetime.datetime.now()
     dirname, filename = ospath.split(zip_filepath)
     unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
@@ -279,42 +282,43 @@ async def extract_zip(zip_filepath):
         )
         time.sleep(1)
 
-    # Deletes all remaining Multi Part Volumes
-    c = 1
-    if file_pattern == "rar":
-        name_, _ = ospath.splitext(name)
-        na_p = name_ + ".part" + str(c) + ".rar"
-        p_ap = ospath.join(dirname, na_p)
-        while ospath.exists(p_ap):
-            os.remove(p_ap)
-            c += 1
+    if remove:
+        # Deletes all remaining Multi Part Volumes
+        c = 1
+        if file_pattern == "rar":
+            name_, _ = ospath.splitext(name)
             na_p = name_ + ".part" + str(c) + ".rar"
             p_ap = ospath.join(dirname, na_p)
+            while ospath.exists(p_ap):
+                os.remove(p_ap)
+                c += 1
+                na_p = name_ + ".part" + str(c) + ".rar"
+                p_ap = ospath.join(dirname, na_p)
 
-    elif file_pattern == "7z":
-        na_p = name + "." + str(c).zfill(3)
-        p_ap = ospath.join(dirname, na_p)
-        while ospath.exists(p_ap):
-            os.remove(p_ap)
-            c += 1
+        elif file_pattern == "7z":
             na_p = name + "." + str(c).zfill(3)
             p_ap = ospath.join(dirname, na_p)
+            while ospath.exists(p_ap):
+                os.remove(p_ap)
+                c += 1
+                na_p = name + "." + str(c).zfill(3)
+                p_ap = ospath.join(dirname, na_p)
 
-    elif file_pattern == "zip":
-        na_p = name + ".zip"
-        p_ap = ospath.join(dirname, na_p)
-        if ospath.exists(p_ap):
-            os.remove(p_ap)
-        na_p = name + ".z" + str(c).zfill(2)
-        p_ap = ospath.join(dirname, na_p)
-        while ospath.exists(p_ap):
-            os.remove(p_ap)
-            c += 1
+        elif file_pattern == "zip":
+            na_p = name + ".zip"
+            p_ap = ospath.join(dirname, na_p)
+            if ospath.exists(p_ap):
+                os.remove(p_ap)
             na_p = name + ".z" + str(c).zfill(2)
             p_ap = ospath.join(dirname, na_p)
+            while ospath.exists(p_ap):
+                os.remove(p_ap)
+                c += 1
+                na_p = name + ".z" + str(c).zfill(2)
+                p_ap = ospath.join(dirname, na_p)
 
-    if ospath.exists(zip_filepath):
-        os.remove(zip_filepath)
+        if ospath.exists(zip_filepath):
+            os.remove(zip_filepath)
 
 
 async def size_checker(file_path):
@@ -710,8 +714,8 @@ def YouTubeDL(url):
 # =================================================================
 
 
-async def calG_DownSize(links):
-    for link in natsorted(links):
+async def calG_DownSize(sources):
+    for link in natsorted(sources):
         if "drive.google.com" in link:
             id = getIDFromURL(link)
             try:
@@ -1138,14 +1142,12 @@ async def upload_file(file_path, real_name):
         print(f"Error When Uploading : {e}")
 
 
-
 # =================================================================
-#    Leech Mode Handler Functions
+#    Leech Handler Functions
 # =================================================================
 
 
-
-async def Leecher(file_path):
+async def Leecher(file_path: str, remove: bool):
     global text_msg, start_time, msg, sent
 
     leech = await size_checker(file_path)
@@ -1202,23 +1204,27 @@ async def Leecher(file_path):
         await upload_file(new_path, file_name)
         up_bytes.append(os.stat(new_path).st_size)
 
-        os.remove(new_path)
+        if remove:
+            os.remove(new_path)
 
 
-async def Leech(folder_path):
+async def Leech(folder_path: str, remove: bool):
     global total_down_size
     total_down_size = get_folder_size(folder_path)
     files = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
     for f in natsorted(files):
         file_path = ospath.join(folder_path, f)
-        await Leecher(file_path)
+        await Leecher(file_path, remove)
 
-    shutil.rmtree(folder_path)
+    if remove:
+        if ospath.exists(folder_path):
+            shutil.rmtree(folder_path)
+
     if ospath.exists(f"{d_path}/ytdl_thumbnails"):
         shutil.rmtree(f"{d_path}/ytdl_thumbnails")
 
 
-async def ZipLeech(d_fol_path):
+async def Zip(d_fol_path: str, is_split: bool, remove: bool):
     global msg, down_msg, start_time, total_down_size
 
     down_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{d_name}</code>\n"
@@ -1237,18 +1243,18 @@ async def ZipLeech(d_fol_path):
     start_time = datetime.datetime.now()
     if not ospath.exists(temp_zpath):
         makedirs(temp_zpath)
-    await zip_folder(d_fol_path)
+    await zip_folder(d_fol_path, is_split, remove)
     clear_output()
     time.sleep(2)
 
     total_down_size = get_folder_size(temp_zpath)
 
-    if ospath.exists(d_fol_path):
-        shutil.rmtree(d_fol_path)
-    await Leech(temp_zpath)
+    if remove:
+        if ospath.exists(d_fol_path):
+            shutil.rmtree(d_fol_path)
 
 
-async def UnzipLeech(d_fol_path):
+async def Unzip(d_fol_path: str, remove: bool):
     global msg
 
     down_msg = f"\n<b>📂 EXTRACTING » </b>\n\n<code>{d_name}</code>\n"
@@ -1258,7 +1264,6 @@ async def UnzipLeech(d_fol_path):
         message_id=msg.id,
         text=task_msg + down_msg + "\n⏳ __Starting.....__" + system_info(),
     )
-    cant_files = []
     filenames = [str(p) for p in pathlib.Path(d_fol_path).glob("**/*") if p.is_file()]
     for f in natsorted(filenames):
         short_path = ospath.join(d_fol_path, f)
@@ -1269,70 +1274,189 @@ async def UnzipLeech(d_fol_path):
         try:
             if ospath.exists(short_path):
                 if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar", ".z01"]:
-                    await extract_zip(short_path)
-                    await Leech(temp_unzip_path)
+                    await extract_zip(short_path, remove)
                 else:
-                    cant_files.append(short_path)
-                    print(
-                        f"Unable to Extract {ospath.basename(f)} ! Will be Leeching later !"
-                    )
+                    shutil.copy(short_path, temp_unzip_path)
         except Exception as e5:
             print(f"UZLeech Launcher Exception: {e5}")
 
-    try:
-        for path in cant_files:
-            if ospath.exists(path):
-                await Leecher(path)
-    except Exception as e5:
-        print(f"UZLeech Launcher Exception: {e5}")
-
-    shutil.rmtree(d_fol_path)
+    if remove:
+        shutil.rmtree(d_fol_path)
 
 
-async def UnDZipLeech(folder_path):
-    global msg, down_msg, start_time, total_down_size
+# =================================================================
+#    Mode Handler Functions
+# =================================================================
 
-    down_msg = f"\n<b>📂 EXTRACTING » </b>\n\n<code>{d_name}</code>\n"
 
-    msg = await bot.edit_message_text(
-        chat_id=chat_id,
-        message_id=msg.id,
-        text=task_msg + down_msg + "\n⏳ __Starting.....__" + system_info(),
-    )
+async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_undzip):
+    global d_fol_path, msg, link_info, total_down_size
 
-    filenames = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
-    for f in natsorted(filenames):
-        short_path = ospath.join(folder_path, f)
-        if not ospath.exists(temp_unzip_path):
-            makedirs(temp_unzip_path)
-        filename = ospath.basename(f).lower()
-        _, ext = ospath.splitext(filename)
-        try:
-            if ospath.exists(short_path):
-                if ext in [".7z", ".gz", ".zip", ".rar", ".001", ".tar", ".z01"]:
-                    await extract_zip(short_path)
+    if is_dir:
+        for s in source:
+            if not ospath.exists(s):
+                raise Exception("Provided directory does not exist !")
+            d_fol_path = s
+            if is_zip:
+                await Zip(d_fol_path, True, False)
+                await Leech(temp_zpath, True)
+            elif is_unzip:
+                await Unzip(d_fol_path, False)
+                await Leech(temp_unzip_path, True)
+            elif is_undzip:
+                await Unzip(d_fol_path, False)
+                await Zip(temp_unzip_path, True, True)
+                await Leech(temp_zpath, True)
+            else:
+                await Leech(d_fol_path, False)
+    else:
+        if is_ytdl:
+            for i, link in enumerate(source):
+                await YTDL_Status(link, i)
+            time.sleep(5)  # Giving Time to Merge The Last Video
+        else:
+            # Downloading Files
+            for i, link in enumerate(source):
+                if "drive.google.com" in link:
+                    await g_DownLoad(link, i)
+                elif "t.me" in link:
+                    await TelegramDownload(link, i)
+                elif "youtube.com" in link or "youtu.be" in link:
+                    await YTDL_Status(link, i)
+                    time.sleep(5)  # Giving Time to Merge The Last Video
                 else:
-                    shutil.move(short_path, temp_unzip_path)
-        except Exception as e5:
-            print(f"UnDZLeech Launcher Exception: {e5}")
+                    aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
+                    try:
+                        await bot.edit_message_text(
+                            chat_id=chat_id,
+                            message_id=msg.id,
+                            text=aria2_dn + system_info(),
+                            reply_markup=keyboard(),
+                        )
+                    except Exception as e1:
+                        print(f"Couldn't Update text ! Because: {e1}")
+                    link_info = False
+                    await aria2_Download(link, i)
 
-    shutil.rmtree(folder_path)
-    await ZipLeech(temp_unzip_path)
+        total_down_size = get_folder_size(d_fol_path)
+        clear_output()
+
+        if "l" in l_mode and len(custom_name) != 0:
+            files = os.listdir(d_fol_path)
+            for file_ in files:
+                current_name = ospath.join(d_fol_path, file_)
+                new_name = ospath.join(d_fol_path, custom_name)
+                os.rename(current_name, new_name)
+        # Preparing To Upload
+        if is_zip:
+            await Zip(d_fol_path, True, True)
+            await Leech(temp_zpath, True)
+        elif is_unzip:
+            await Unzip(d_fol_path, True)
+            await Leech(temp_unzip_path, True)
+        elif is_undzip:
+            print("Got into un doubled zip")
+            await Unzip(d_fol_path, True)
+            await Zip(temp_unzip_path, True, True)
+            await Leech(temp_zpath, True)
+        else:
+            await Leech(d_fol_path, True)
+
+    await FinalStep(msg, True)
 
 
-async def FinalStep(msg):
+async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_undzip):
+    global d_fol_path, msg, link_info, total_down_size, temp_zpath, temp_unzip_path
+
+    try:
+        if not ospath.exists("/content/drive"):
+            drive.mount("/content/drive")
+    except Exception as e:
+        raise Exception(f"Failed to Mount Drive ! Because: {e}")
+
+    if not ospath.exists(mirror_dir):
+        makedirs(mirror_dir)
+
+    if is_ytdl:
+        for i, link in enumerate(source):
+            await YTDL_Status(link, i)
+        time.sleep(4)  # Giving Time to Merge The Last Video
+    else:
+        # Downloading Files
+        for i, link in enumerate(source):
+            if "drive.google.com" in link:
+                await g_DownLoad(link, i)
+            elif "t.me" in link:
+                await TelegramDownload(link, i)
+            elif "youtube.com" in link or "youtu.be" in link:
+                await YTDL_Status(link, i)
+                time.sleep(4)  # Giving Time to Merge The Last Video
+            else:
+                aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
+                try:
+                    await bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=msg.id,
+                        text=aria2_dn + system_info(),
+                        reply_markup=keyboard(),
+                    )
+                except Exception as e1:
+                    print(f"Couldn't Update text ! Because: {e1}")
+                link_info = False
+                await aria2_Download(link, i)
+
+    total_down_size = get_folder_size(d_fol_path)
+    clear_output()
+
+    if "l" in l_mode and len(custom_name) != 0:
+        files = os.listdir(d_fol_path)
+        for file_ in files:
+            current_name = ospath.join(d_fol_path, file_)
+            new_name = ospath.join(d_fol_path, custom_name)
+            os.rename(current_name, new_name)
+    cdt = datetime.datetime.now()
+    cdt_ = cdt.strftime("Uploaded » %Y-%m-%d %H:%M:%S")
+
+    if is_zip:
+        await Zip(d_fol_path, True, True)
+        shutil.copytree(temp_zpath, ospath.join(mirror_dir, cdt_))
+    elif is_unzip:
+        await Unzip(d_fol_path, True)
+        shutil.copytree(temp_unzip_path, ospath.join(mirror_dir, cdt_))
+    elif is_undzip:
+        await Unzip(d_fol_path, True)
+        await Zip(temp_unzip_path, True, True)
+        shutil.copytree(temp_zpath, ospath.join(mirror_dir, cdt_))
+    else:
+        shutil.copytree(d_fol_path, ospath.join(mirror_dir, cdt_))
+
+    await FinalStep(msg, False)
+
+
+async def FinalStep(msg, is_leech: bool):
     final_text = (
         f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
     )
     l_ink = "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟"
+
+    file_count = (
+        f"├<b>☘️ File Count » </b><code>{len(sent_file)} Files</code>\n"
+        if is_leech
+        else ""
+    )
+
+    size = size_measure(sum(up_bytes)) if is_leech else size_measure(total_down_size)
+
     last_text = (
         f"\n\n<b>{(task).upper()} COMPLETE 🔥</b>\n\n"
         + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
-        + f"├<b>📦 Size » </b><code>{size_measure(sum(up_bytes))}</code>\n"
-        + f"├<b>☘️ File Count » </b><code>{len(sent_file)} Files</code>\n"
+        + f"├<b>📦 Size » </b><code>{size}</code>\n"
+        + file_count
         + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>"
     )
-    src = f"**SOURCE »** __[Links]({src_link})__"
+
+    src = f"**SOURCE »** __[sources]({src_link})__"
+
     await bot.send_message(
         chat_id=dump_id,
         text=src + last_text,
@@ -1346,38 +1470,40 @@ async def FinalStep(msg):
         reply_markup=keyboard(),
     )
 
-    try:
-        final_texts = []
+    if is_leech:
+        try:
+            final_texts = []
+            for i in range(len(sent_file)):
+                file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
+                fileName = sent_fileName[i]
+                fileText = f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
+                if len(final_text + fileText) >= 4096:
+                    final_texts.append(final_text)
+                    final_text = fileText
+                else:
+                    final_text += fileText
+            final_texts.append(final_text)
 
-        for i in range(len(sent_file)):
-            file_link = f"https://t.me/c/{link_p}/{sent_file[i].id}"
-            fileName = sent_fileName[i]
-            fileText = f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
-            if len(final_text + fileText) >= 4096:
-                final_texts.append(final_text)
-                final_text = fileText
-            else:
-                final_text += fileText
-        final_texts.append(final_text)
-
-        for fn_txt in final_texts:
-            msg = await bot.send_message(
-                chat_id=chat_id, reply_to_message_id=msg.id, text=fn_txt
+            for fn_txt in final_texts:
+                msg = await bot.send_message(
+                    chat_id=chat_id, reply_to_message_id=msg.id, text=fn_txt
+                )
+        except Exception as e:
+            Err = f"<b>Error Sending logs » </b><i>{e}</i>"
+            Err += f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
+            await bot.send_message(
+                chat_id=chat_id, reply_to_message_id=msg.id, text=Err
             )
-    except Exception as e:
-        Err = f"<b>Error Sending logs » </b><i>{e}</i>"
-        Err += f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
-        await bot.send_message(chat_id=chat_id, reply_to_message_id=msg.id, text=Err)
 
 
 # ****************************************************************
 #    Main Functions, function calls and variable declarations
 # ****************************************************************
-api_id, chat_id, dump_id = int(API_ID), int(CHAT_ID), int(DUMP_ID)
-link_p = str(dump_id)[4:]
+
 custom_thumb = "/content/Thumbnail.jpg"
 d_path = "/content/bot_Folder"
 d_name = ""
+mirror_dir = "/content/drive/MyDrive/Colab Leecher Uploads"
 link_info = False
 d_fol_path = f"{d_path}/Downloads"
 temp_lpath = f"{d_path}/Leeched_Files"
@@ -1401,216 +1527,188 @@ start_time = datetime.datetime.now()
 text_msg = ""
 link = "something"
 choice, z_pswd = "x", ""
-links = []
+sources = []
+is_undzip, is_unzip, is_zip, is_ytdl = False, False, False, False
 
-service = build_service()
+try:
+    service = build_service()
+    if not Thumbnail_Checker("/content"):
+        thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
+        print("Didn't find thumbnail, So switching to default thumbnail")
+    else:
+        thumb_path = custom_thumb
+    if ospath.exists(d_path):
+        shutil.rmtree(d_path)
+        makedirs(d_path)
+    else:
+        makedirs(d_path)
+    lm_n = """
+    'L' for Leech                   Add -Z    for Zip
+    'M' for Mirror                  Add -U    for Unzip
+    'D' for Directory Leech         Add -U-Z  for Undoublezip
+                                    Add -Y    for YTDL
+    Example:
+            'L'     Mode will do a Normal Leech
+            'M-U'   Mode will do a Unzipmirror
+            'L-Y-Z' Mode will do a ytdl zip leech
 
-if not Thumbnail_Checker("/content"):
-    thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
-    print("Didn't find thumbnail, So switching to default thumbnail")
-else:
-    thumb_path = custom_thumb
-
-if ospath.exists(d_path):
-    shutil.rmtree(d_path)
-    makedirs(d_path)
-else:
-    makedirs(d_path)
-
-if len(LEECH_MODE) == 0:
-    while choice not in ["1", "2", "3", "l", "z", "u", "4", "d"]:
-        choice = input(
-            "Choose the Operation:\n\n\t[1 / L] Leech\n\t[2 / Z] Zipleech\n\t[3 / U] Unzipleech\n\t[4 / D] UnDoubleZipLeech\n\nEnter: "
-        ).lower()
+    Enter MODE: """
+    if len(LEECH_MODE) == 0:
+        choice = input(lm_n).lower()
         clear_output()
-        if choice not in ["1", "2", "3", "l", "z", "u", "4", "d"]:
-            print(f"No Such Leech Mode '{choice}' ! Enter Option Correctly 🦥\n")
-else:
-    choice = LEECH_MODE.lower()
-
-if choice == "1" or choice == "l":
-    task = "Leech"
-elif choice == "2" or choice == "z":
-    task = "Zipleech"
-elif choice == "3" or choice == "u":
-    task = "Unzipleech"
-else:
-    task = "UnDoubleZipleech"
-leech_type = "Document" if LEECH_DOCUMENT else "Media"
-
-time.sleep(1)
-print(f"TASK MODE: {task} as {leech_type}")
-
-if len(PASSWD) == 0 and choice in ["3", "u", "4", "d"]:
-    z_pswd = input(f"Password For Unzip [ Enter 'E' for Empty ]: ")
-elif len(PASSWD) != 0:
-    z_pswd = PASSWD
-
-if z_pswd.lower() == "e":
-    z_pswd = ""
-
-if len(D_LINK) == 0:
-    # Getting Download Links
-    while link.lower() != "c":
-        link = input(f"Download link [ Enter 'C' to Terminate]: ")
-        if link.lower() != "c":
-            links.append(link)
-else:
-    links.append(D_LINK)
-
-d_name, custom_name = "", ""
-
-if len(LEECH_MODE) + len(D_LINK) + len(C_NAME) == 0:  # Making Sure, he is in Desktop
-    if choice in ["2", "z", "4", "d"] or (len(links) == 1 and choice in ["1", "l"]):
-        custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
     else:
-        print("Custom Name Not Applicable")
-else:
-    custom_name = C_NAME
-
-if custom_name.lower() == "d":
-    custom_name = ""
-
-
-task_start = datetime.datetime.now()
-down_msg = f"<b>📥 DOWNLOADING » </b>\n"
-task_msg = f"<b>🦞 TASK MODE » </b><i>{task} as {leech_type}</i>\n\n"
-
-dump_task = task_msg + "<b>🖇️ SOURCES » </b>"
-
-for link in links:
-    if "t.me" in link:
-        ida = "💬"
-    elif "drive.google.com" in link:
-        ida = "♻️"
-    elif "magnet" in link or "torrent" in link:
-        ida = "🧲"
-    elif "youtube.com" in link or "youtu.be" in link:
-        ida = "🏮"
+        choice = LEECH_MODE.lower()
+    l_mode = choice.split("-")
+    l_mode.sort()
+    if l_mode[0] == "l" or l_mode[0] == "d":
+        task = "Leech"
+    elif l_mode[0] == "m":
+        task = "Mirror"
     else:
-        ida = "🔗"
-    dump_task += f"\n\n{ida} <code>{link}</code>"
-
-# Get the current date and time in the specified time zone
-cdt = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
-# Format the date and time as a string
-dt = cdt.strftime(" %d/%m/%Y")
-
-dump_task += f"\n\n<b>📆 Task Date » </b><i>{dt}</i>"
-
-if not ospath.exists(d_fol_path):
-    makedirs(d_fol_path)
-
-async with Client(
-    "my_bot", api_id=api_id, api_hash=API_HASH, bot_token=BOT_TOKEN
-) as bot:
-    try:
+        raise Exception("Invalid leech Mode !! Read again !!")
+    if "u" in l_mode and "z" in l_mode:
+        task_ = "Undoublezip"
+        is_undzip = True
+    elif "z" in l_mode:
+        task_ = "Zip"
+        is_zip = True
+    elif "u" in l_mode:
+        task_ = "Unzip"
+        is_unzip = True
+    else:
+        task_ = ""
+    if "y" in l_mode:
+        is_ytdl = True
+    leech_type = "Document" if LEECH_DOCUMENT else "Media"
+    time.sleep(1)
+    print(f"TASK MODE: {task_}{task} as {leech_type}")
+    if len(PASSWD) == 0 and "u" in l_mode:
+        z_pswd = input(f"Password For Unzip [ Enter 'E' for Empty ]: ")
+    elif len(PASSWD) != 0:
+        z_pswd = PASSWD
+    if z_pswd.lower() == "e":
+        z_pswd = ""
+    if len(SOURCE) == 0:
+        # Getting Download sources
+        while link.lower() != "c":
+            link = input(f"Download Source [ Enter 'C' to Terminate]: ")
+            if link.lower() != "c":
+                sources.append(link)
+    else:
+        sources.append(SOURCE)
+    d_name, custom_name = "", ""
+    # Making Sure, he is in Desktop
+    if len(LEECH_MODE) + len(SOURCE) == 0:
+        if "z" in l_mode or (len(sources) == 1 and "u" not in l_mode):
+            custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
+        else:
+            print("Custom Name Not Applicable")
+    else:
+        custom_name = C_NAME
+    if custom_name.lower() == "d":
+        custom_name = ""
+    task_start = datetime.datetime.now()
+    down_msg = f"<b>📥 DOWNLOADING » </b>\n"
+    task_msg = f"<b>🦞 TASK MODE » </b><i>{task} as {leech_type}</i>\n\n"
+    dump_task = task_msg + "<b>🖇️ SOURCES » </b>"
+    if "d" in l_mode:
+        down_msg = f"<b>📤 UPLOADING » </b>\n"
+        ida = "📂"
+        dump_task += f"\n\n{ida} <code>{sources[0]}</code>"
+    else:
+        for link in sources:
+            if "t.me" in link:
+                ida = "💬"
+            elif "drive.google.com" in link:
+                ida = "♻️"
+            elif "magnet" in link or "torrent" in link:
+                ida = "🧲"
+            elif "youtube.com" in link or "youtu.be" in link:
+                ida = "🏮"
+            else:
+                ida = "🔗"
+            dump_task += f"\n\n{ida} <code>{link}</code>"
+    # Get the current date and time in the specified time zone
+    cdt = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
+    # Format the date and time as a string
+    dt = cdt.strftime(" %d-%m-%Y")
+    dump_task += f"\n\n<b>📆 Task Date » </b><i>{dt}</i>"
+    if not ospath.exists(d_fol_path):
+        makedirs(d_fol_path)
+    api_id, chat_id, dump_id = int(API_ID), int(CHAT_ID), int(DUMP_ID)
+    link_p = str(dump_id)[4:]
+    async with Client(
+        "my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN
+    ) as bot:
         sent = await bot.send_message(chat_id=dump_id, text=dump_task)
-
         src_link = f"https://t.me/c/{link_p}/{sent.id}"
-        task_msg += "<b>🖇️ SOURCE » </b>" + f"__[Links]({src_link})__\n\n"
-
+        task_msg += "<b>🖇️ SOURCE » </b>" + f"__[Here]({src_link})__\n\n"
         msg = await bot.send_photo(
             chat_id=chat_id,
             photo=thumb_path,
-            caption=task_msg
-            + down_msg
-            + f"\n📝 __Starting DOWNLOAD...__"
-            + system_info(),
+            caption=task_msg + down_msg + f"\n📝 __Starting DOWNLOAD...__" + system_info(),
             reply_markup=keyboard(),
         )
         clear_output()
-        await calG_DownSize(links)
-        await get_d_name(links[0])
-
-        if choice in ["2", "z"]:
+        if "d" in l_mode:
+            folder_info[0] = get_folder_size(sources[0])
+            d_name = ospath.basename(sources[0])
+        else:
+            await calG_DownSize(sources)
+            await get_d_name(sources[0])
+        if "z" in l_mode:
             d_fol_path = ospath.join(d_fol_path, d_name)
             if ospath.exists(d_fol_path):
                 makedirs(d_fol_path)
-
-        links = natsorted(links)
-
+        sources = natsorted(sources)
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
-
-        for c in range(len(links)):
-            if "drive.google.com" in links[c]:
-                await g_DownLoad(links[c], c + 1)
-            elif "t.me" in links[c]:
-                await TelegramDownload(links[c], c + 1)
-            elif "youtube.com" in links[c] or "youtu.be" in links[c]:
-                await YTDL_Status(links[c], c + 1)
-                time.sleep(4)  # Giving Time to Merge The Last Video
-            else:
-                aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{links[c]}</code>"
-                try:
-                    await bot.edit_message_text(
-                        chat_id=chat_id,
-                        message_id=msg.id,
-                        text=aria2_dn + system_info(),
-                        reply_markup=keyboard(),
-                    )
-                except Exception as e1:
-                    print(f"Couldn't Update text ! Because: {e1}")
-                link_info = False
-                await aria2_Download(links[c], c + 1)
-
-        total_down_size = get_folder_size(d_fol_path)
-
-        if choice in ["1", "l"] and len(custom_name) != 0:
-            files = os.listdir(d_fol_path)
-            for file_ in files:
-                current_name = ospath.join(d_fol_path, file_)
-                new_name = ospath.join(d_fol_path, custom_name)
-                os.rename(current_name, new_name)
-
-        clear_output()
-
-        if choice == "1" or choice == "l":
-            await Leech(d_fol_path)
-        elif choice == "2" or choice == "z":
-            await ZipLeech(d_fol_path)
-        elif choice == "3" or choice == "u":
-            await UnzipLeech(d_fol_path)
+        if "l" in l_mode:
+            await Do_Leech(sources, False, is_ytdl, is_zip, is_unzip, is_undzip)
+        elif "d" in l_mode:
+            await Do_Leech(sources, True, is_ytdl, is_zip, is_unzip, is_undzip)
         else:
-            await UnDZipLeech(d_fol_path)
+            await Do_Mirror(sources, is_ytdl, is_zip, is_unzip, is_undzip)
 
-        await FinalStep(msg)
+except NameError as e:
+    clear_output()
+    print("🤌🏻 Fill The Config Cell Correctly And Run that Before Coming Here !!!")
 
-    except Exception as e:
-        clear_output()
-        if ospath.exists(d_path):
-            shutil.rmtree(d_path)
-            print("Download Folder was DELETED 💀!")
 
-        Error_Text = (
-            "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
-            + f"\n<b>TASK FAILED TO COMPLETE 💔</b>\n\n╭<b>📛 Name » </b> <code>{d_name}</code>\n├<b>🍃 Wasted Time » </b>"
-            + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n"
-            + f"<b>╰🤔 Reason » </b>__{e}__"
-            + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
-        )
-        try:
-            await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
-            await bot.send_photo(
-                chat_id=chat_id,
-                photo=thumb_path,
-                caption=task_msg + Error_Text,
-                reply_markup=InlineKeyboardMarkup(
+except Exception as e:
+    clear_output()
+    if ospath.exists(d_path):
+        shutil.rmtree(d_path)
+        print("Download Folder was DELETED 💀!")
+
+    Error_Text = (
+        "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+        + f"\n<b>TASK FAILED TO COMPLETE 💔</b>\n\n╭<b>📛 Name » </b> <code>{d_name}</code>\n├<b>🍃 Wasted Time » </b>"
+        + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n"
+        + f"<b>╰🤔 Reason » </b>__{e}__"
+        + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
+    )
+    try:
+        await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)
+        await bot.send_photo(
+            chat_id=chat_id,
+            photo=thumb_path,
+            caption=task_msg + Error_Text,
+            reply_markup=InlineKeyboardMarkup(
+                [
                     [
-                        [
-                            InlineKeyboardButton(  # Opens a web URL
-                                "Report Issue 🥺",
-                                url="https://github.com/XronTrix10/Telegram-Leecher/issues",
-                            ),
-                            InlineKeyboardButton(  # Opens a web URL
-                                "Group Discuss 🤔",
-                                url="https://t.me/Colab_Leecher_Discuss",
-                            ),
-                        ],
-                    ]
-                ),
-            )
-        except Exception as d:
-            print(f"Another Error Occured: {d}")
-        print(f"Error Occured: {e}")
+                        InlineKeyboardButton(  # Opens a web URL
+                            "Report Issue 🥺",
+                            url="https://github.com/XronTrix10/Telegram-Leecher/issues",
+                        ),
+                        InlineKeyboardButton(  # Opens a web URL
+                            "Group Discuss 🤔",
+                            url="https://t.me/Colab_Leecher_Discuss",
+                        ),
+                    ],
+                ]
+            ),
+        )
+    except Exception as d:
+        print(f"Another Error Occured: {d}")
+    print(f"Error Occured: {e}")
