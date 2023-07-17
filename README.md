@@ -24,11 +24,11 @@
  - Support for Multi-Part Archive Extraction ( New 🔥)
  - Upload Directly From Colab Container ( New 🔥)
  - Auto Generate Thumbnail From Video Files ( New 🔥) 
+ - Download Directly To Google Drive / Mirroring ( New 🔥)
  - Zip Folders/Files
  - Upload Files to Telegram
  - Shows Operation Status with bar and percentage 
  - Split support for all files > 2000 MB
- - Download Directly To Google Drive / Mirroring ( Coming Soon ♨️)
 
 ## **🔗 Supported Links**
 
@@ -37,7 +37,7 @@
  - Telegram File Link ✅
  - Magnet Link ✅
  - Torrent Link ✅
- - Video Links ( YouTube ) ✅
+ - Video Links ( YouTube and 2000 More Sites 😉 ) ✅
  - Mega.nz Link ❌ ( Coming Soon ♨️)
  - GDTot, Sharer and Short Links ❌ ( Coming Soon ♨️)
 ## **🔥 Benifits**
