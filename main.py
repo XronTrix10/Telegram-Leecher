@@ -1,4 +1,20 @@
 # @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
+
+# @title Main Code
+# @markdown <div><img src="https://user-images.githubusercontent.com/125879861/254280998-ee994ee1-183d-489f-b8ba-8bbf8998133b.png" height=40 align=left></img><h1><b>Colab Leecher Cell</b></h1></div>
+
+MODE = "Leech"  # @param ["Leech", "Mirror", "Dir-Leech"]
+TYPE = "Normal"  # @param ["Normal", "Zip", "Unzip", "UnDoubleZip"]
+UPLOAD_MODE = "Media"  # @param ["Media", "Document"]
+# @markdown <i>✅ Tick The Below Checkbox If You Use `YouTube` or Other `Video Site Links`</i>
+YTDL_DOWNLOAD_MODE = False  # @param {type:"boolean"}
+
+# @markdown <h3><b>💢 Enter Below Fields 👇🏻 Only If You Are Mobile User 📱</b>
+SOURCE_LINK = "https://drive.google.com/file/d/14FU25CdY7-xa2kBLvFfmiYsgFdFxaIk-/view?usp=drive_link"  # @param {type: "string"}
+CUSTOM_NAME = "DEFAULT"  # @param ["DEFAULT"] {allow-input: true}
+UNZIP_PASSWORD = "NO PASSWORD"  # @param ["NO PASSWORD"] {allow-input: true}
+
+
 import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, pickle, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
@@ -1077,7 +1093,8 @@ async def upload_file(file_path, real_name):
 
     caption = f"<code>{real_name}</code>"
     type_, file_path = get_file_type(file_path)
-    f_type = "document" if LEECH_DOCUMENT else type_  # type: ignore
+
+    f_type = type_ if UPLOAD_MODE == "Media" else "document"
 
     # Upload the file
     try:
@@ -1340,7 +1357,7 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
         total_down_size = get_folder_size(d_fol_path)
         clear_output()
 
-        if "l" in l_mode and len(custom_name) != 0:
+        if MODE == "Leech" and len(custom_name) != 0:
             files = os.listdir(d_fol_path)
             for file_ in files:
                 current_name = ospath.join(d_fol_path, file_)
@@ -1407,12 +1424,13 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
     total_down_size = get_folder_size(d_fol_path)
     clear_output()
 
-    if "l" in l_mode and len(custom_name) != 0:
+    if MODE == "Leech" and len(custom_name) != 0:
         files = os.listdir(d_fol_path)
         for file_ in files:
             current_name = ospath.join(d_fol_path, file_)
             new_name = ospath.join(d_fol_path, custom_name)
             os.rename(current_name, new_name)
+
     cdt = datetime.datetime.now()
     cdt_ = cdt.strftime("Uploaded » %Y-%m-%d %H:%M:%S")
 
@@ -1447,7 +1465,7 @@ async def FinalStep(msg, is_leech: bool):
     size = size_measure(sum(up_bytes)) if is_leech else size_measure(total_down_size)
 
     last_text = (
-        f"\n\n<b>{(task).upper()} COMPLETE 🔥</b>\n\n"
+        f"\n\n<b>{(MODE).upper()} COMPLETE 🔥</b>\n\n"
         + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
@@ -1520,11 +1538,9 @@ folder_info = [0, 1]
 down_count = []
 down_count.append(1)
 start_time = datetime.datetime.now()
-text_msg = ""
-link = "something"
-choice, z_pswd = "x", ""
+link, z_pswd, text_msg = "something", "", ""
 sources = []
-is_dualzip, is_unzip, is_zip, is_ytdl = False, False, False, False
+is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = False, False, False, False, False
 
 try:
     service = build_service()
@@ -1538,78 +1554,56 @@ try:
         makedirs(d_path)
     else:
         makedirs(d_path)
-    lm_n = """
-    'L' for Leech                   Add -Z    for Zip
-    'M' for Mirror                  Add -U    for Unzip
-    'D' for Directory Leech         Add -U-Z  for Undoublezip
-                                    Add -Y    for YTDL
-    Example:
-            'L'     Mode will do a Normal Leech
-            'M-U'   Mode will do a Unzipmirror
-            'L-Y-Z' Mode will do a ytdl zip leech
 
-    Enter MODE: """
-    if len(LEECH_MODE) == 0:  # type: ignore
-        choice = input(lm_n).lower()
-        clear_output()
-    else:
-        choice = LEECH_MODE.lower()  # type: ignore
-    l_mode = choice.split("-")
-    l_mode.sort()
-    if l_mode[0] == "l" or l_mode[0] == "d":
-        task = "Leech"
-    elif l_mode[0] == "m":
-        task = "Mirror"
-    else:
-        raise Exception("Invalid leech Mode !! Read again !!")
-    if "u" in l_mode and "z" in l_mode:
-        task_ = "Undoublezip"
+    if TYPE == "UnDoubleZip":
         is_dualzip = True
-    elif "z" in l_mode:
-        task_ = "Zip"
+    elif TYPE == "Zip":
         is_zip = True
-    elif "u" in l_mode:
-        task_ = "Unzip"
+    elif TYPE == "Unzip":
         is_unzip = True
-    else:
-        task_ = ""
-    if "y" in l_mode:
-        is_ytdl = True
-    leech_type = "Document" if LEECH_DOCUMENT else "Media"  # type: ignore
-    time.sleep(1)
-    print(f"TASK MODE: {task_}{task} as {leech_type}")
-    if len(PASSWD) == 0 and "u" in l_mode:  # type: ignore
-        z_pswd = input(f"Password For Unzip [ Enter 'E' for Empty ]: ")
-    elif len(PASSWD) != 0:  # type: ignore
-        z_pswd = PASSWD  # type: ignore
+
+    is_ytdl = YTDL_DOWNLOAD_MODE
+
+    print(f"TASK MODE: {TYPE} {MODE} as {UPLOAD_MODE}")
+
+    if UNZIP_PASSWORD != "NO PASSWORD":
+        z_pswd = UNZIP_PASSWORD
+    elif len(SOURCE_LINK) == 0 and (TYPE == "Unzip" or TYPE == "UnDoubleZip"):
+        z_pswd = input("Password For Unzip [ Enter 'E' for Empty ]: ")
+
     if z_pswd.lower() == "e":
         z_pswd = ""
-    if len(SOURCE) == 0:  # type: ignore
+
+    if len(SOURCE_LINK) == 0:
         # Getting Download sources
         while link.lower() != "c":
             link = input(f"Download Source [ Enter 'C' to Terminate]: ")
             if link.lower() != "c":
                 sources.append(link)
     else:
-        sources.append(SOURCE)  # type: ignore
+        sources.append(SOURCE_LINK)  # type: ignore
     d_name, custom_name = "", ""
     # Making Sure, he is in Desktop
-    if len(LEECH_MODE) + len(SOURCE) == 0:  # type: ignore
-        if "z" in l_mode or (len(sources) == 1 and "u" not in l_mode):
+    if len(SOURCE_LINK) == 0 and CUSTOM_NAME == "DEFAULT":
+        if TYPE == "Zip" or (len(sources) == 1 and (MODE == "Mirror" or MODE == "Leech")):
             custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
         else:
             print("Custom Name Not Applicable")
     else:
-        custom_name = C_NAME  # type: ignore
-    if custom_name.lower() == "d":
+        custom_name = CUSTOM_NAME
+    if custom_name.lower() == "d" or custom_name == "DEFAULT":
         custom_name = ""
+
     task_start = datetime.datetime.now()
     down_msg = f"<b>📥 DOWNLOADING » </b>\n"
-    task_msg = f"<b>🦞 TASK MODE » </b><i>{task} as {leech_type}</i>\n\n"
+    task_msg = f"<b>🦞 TASK MODE » </b><i>{TYPE} {MODE} as {UPLOAD_MODE}</i>\n\n"
     dump_task = task_msg + "<b>🖇️ SOURCES » </b>"
-    if "d" in l_mode:
+    if MODE == "Dir-Leech":
+        if not ospath.exists(sources[0]):
+            raise ValueError(f"Directory Path is Invalid ! Provided: {sources[0]}")
         down_msg = f"<b>📤 UPLOADING » </b>\n"
         ida = "📂"
+        is_dir = True
         dump_task += f"\n\n{ida} <code>{sources[0]}</code>"
     else:
         for link in sources:
@@ -1632,7 +1626,7 @@ try:
     dump_task += f"\n\n<b>📆 Task Date » </b><i>{dt}</i>"
     if not ospath.exists(d_fol_path):
         makedirs(d_fol_path)
-    api_id, chat_id, dump_id = int(API_ID), int(CHAT_ID), int(DUMP_ID)  # type: ignore
+    api_id, chat_id, dump_id = int(API_ID), int(USER_ID), int(DUMP_ID)  # type: ignore
     link_p = str(dump_id)[4:]
     async with Client(  # type: ignore
         "my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN  # type: ignore
@@ -1650,36 +1644,37 @@ try:
             reply_markup=keyboard(),
         )
         clear_output()
-        if "d" in l_mode:
+        if MODE == "Dir-Leech":
             folder_info[0] = get_folder_size(sources[0])
             d_name = ospath.basename(sources[0])
         else:
             await calG_DownSize(sources)  # type: ignore
             await get_d_name(sources[0])  # type: ignore
-        if "z" in l_mode:
+
+        if TYPE == "Zip":
             d_fol_path = ospath.join(d_fol_path, d_name)
             if ospath.exists(d_fol_path):
                 makedirs(d_fol_path)
+
         sources = natsorted(sources)
         current_time[0] = time.time()
         start_time = datetime.datetime.now()
-        if "l" in l_mode:
-            await Do_Leech(sources, False, is_ytdl, is_zip, is_unzip, is_dualzip)  # type: ignore
-        elif "d" in l_mode:
-            await Do_Leech(sources, True, is_ytdl, is_zip, is_unzip, is_dualzip)  # type: ignore
-        else:
-            await Do_Mirror(sources, is_ytdl, is_zip, is_unzip, is_dualzip)  # type: ignore
 
-except NameError as e:
-    clear_output()
-    print("🤌🏻 Fill The Config Cell Correctly And Run that Before Coming Here !!!")
+        if MODE == "Mirror":
+            await Do_Mirror(sources, is_ytdl, is_zip, is_unzip, is_dualzip)  # type: ignore
+        else:
+            await Do_Leech(sources, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip)  # type: ignore
 
 
 except Exception as e:
     clear_output()
     if ospath.exists(d_path):
         shutil.rmtree(d_path)
-        print("Download Folder was DELETED 💀!")
+
+    if "400 PEER_ID_INVALID" in str(e):
+        e = "Invalid USER_ID ! Enter your own Telegram USER ID in The Config Cell Correctly, Then Try Again"
+    elif "Peer id invalid" in str(e):
+        e = "Invalid DUMP_ID ! Enter CHAT ID of CHANNEL or GROUP starting with '-100' in The Config Cell Correctly, Then Try Again. Make sure you added the Bot in The Channel !"
 
     Error_Text = (
         "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
