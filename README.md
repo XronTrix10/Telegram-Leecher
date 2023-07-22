@@ -1,4 +1,4 @@
-![](https://user-images.githubusercontent.com/125879861/226649977-85a941f5-6ffe-45a2-8e09-d9f2b558cb17.png)
+![](https://user-images.githubusercontent.com/125879861/254596202-e8f0ad54-a52c-413f-b448-c2c88f9cf602.png)
 
 
 ### A Python Project to Transfer Files/Folders to Telegram using Google Colab.
