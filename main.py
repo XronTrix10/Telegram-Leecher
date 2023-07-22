@@ -78,7 +78,7 @@ def size_measure(size):
     return siz
 
 
-def get_file_type(file_path):
+def get_file_type(file_path: str):
     extensions_dict = {
         ".mp4": "video",
         ".avi": "video",
@@ -101,13 +101,9 @@ def get_file_type(file_path):
     _, extension = ospath.splitext(file_path)
 
     if extension.lower() in extensions_dict:
-        if extensions_dict[extension] == "video":
-            new_path = video_extension_fixer(file_path)
-        else:
-            new_path = file_path
-        return extensions_dict[extension], new_path
+        return extensions_dict[extension]
     else:
-        return "document", file_path
+        return "document"
 
 
 def shorterFileName(path):
@@ -151,9 +147,10 @@ def get_file_count(folder_path):
     return count
 
 
-def video_extension_fixer(file_path):
+def video_extension_fixer(file_path: str):
     _, f_name = ospath.split(file_path)
-    if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
+    # if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
+    if f_name.endswith(".mp4"):
         return file_path
     else:
         os.rename(file_path, ospath.join(file_path + ".mp4"))
@@ -1093,13 +1090,16 @@ async def upload_file(file_path, real_name):
     global sent
 
     caption = f"<code>{real_name}</code>"
-    type_, file_path = get_file_type(file_path)
+    type_ = get_file_type(file_path)
 
     f_type = type_ if UPLOAD_MODE == "Media" else "document"
 
     # Upload the file
     try:
         if f_type == "video":
+            # For Renaming to mp4
+            file_path = video_extension_fixer(file_path)
+            # Generate Thumbnail and Get Duration
             thmb_path, seconds = Thumbnail_Maintainer(file_path)
             with Image.open(thmb_path) as img:
                 width, height = img.size
@@ -1228,10 +1228,11 @@ async def Leech(folder_path: str, remove: bool):
                 )
             except Exception as d:
                 print(d)
+            file_size = os.stat(new_path).st_size
             await upload_file(new_path, file_name)
-            up_bytes.append(os.stat(new_path).st_size)
+            up_bytes.append(file_size)
 
-            if remove:
+            if remove and ospath.exists(new_path):
                 os.remove(new_path)
 
     if remove and ospath.exists(folder_path):
