@@ -3,14 +3,15 @@
 # @title Main Code
 # @markdown <div><img src="https://user-images.githubusercontent.com/125879861/254280998-ee994ee1-183d-489f-b8ba-8bbf8998133b.png" height=40 align=left></img><h1><b>Colab Leecher Cell</b></h1></div>
 
+# @markdown <br>🖱️<i> Select The `Bot Mode` You want</i>
 MODE = "Leech"  # @param ["Leech", "Mirror", "Dir-Leech"]
 TYPE = "Normal"  # @param ["Normal", "Zip", "Unzip", "UnDoubleZip"]
 UPLOAD_MODE = "Media"  # @param ["Media", "Document"]
-# @markdown <i>✅ Tick The Below Checkbox If You Use `YouTube` or Other `Video Site Links`</i>
+# @markdown ✅<i> Tick The Below Checkbox If You Use `YouTube` or Other `Video Site Links`</i>
 YTDL_DOWNLOAD_MODE = False  # @param {type:"boolean"}
 
-# @markdown <h3><b>💢 Enter Below Fields 👇🏻 Only If You Are Mobile User 📱</b>
-SOURCE_LINK = "https://drive.google.com/file/d/14FU25CdY7-xa2kBLvFfmiYsgFdFxaIk-/view?usp=drive_link"  # @param {type: "string"}
+# @markdown <br>⌨️ <i>Enter Below Fields 👇🏻 Only If You Are `Mobile User` 📱</i>
+SOURCE_LINK = ""  # @param {type: "string"}
 CUSTOM_NAME = "DEFAULT"  # @param ["DEFAULT"] {allow-input: true}
 UNZIP_PASSWORD = "NO PASSWORD"  # @param ["NO PASSWORD"] {allow-input: true}
 
