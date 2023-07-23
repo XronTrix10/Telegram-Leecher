@@ -1,11 +1,10 @@
 ![](https://user-images.githubusercontent.com/125879861/255391401-371f3a64-732d-4954-ac0f-4f093a6605e1.png)
 
-
-<center> <h3>A Python Project to Transfer Files/Folders to Telegram and Google Drive using Google Colab</h3></center>
-
 <br>
 
-## **🫱🏼‍🫲🏼 Connect With Us**
+<center> <p>A Python Project to Transfer Files / Folders to Telegram and Google Drive with the help of Google Colab</p></center>
+
+## **🤙🏼 Connect With Us**
 
 <a href="https://t.me/Colab_Leecher" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255390865-bce545dd-37a5-4bd5-a10b-441389c8e0fa.png" alt="Colab Leecher" height=36px/></a>
 
