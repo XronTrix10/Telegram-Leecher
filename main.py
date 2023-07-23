@@ -1,7 +1,7 @@
-# @title 🖥️ Main Colab Leech Code [ Click on RUN for Magic ✨ ]
+# @title 🖥️ Main Colab Leech Code
 
 # @title Main Code
-# @markdown <div><img src="https://user-images.githubusercontent.com/125879861/254280998-ee994ee1-183d-489f-b8ba-8bbf8998133b.png" height=40 align=left></img><h1><b>Colab Leecher Cell</b></h1></div>
+# @markdown <div><center><img src="https://user-images.githubusercontent.com/125879861/255391401-371f3a64-732d-4954-ac0f-4f093a6605e1.png" height=80></center></div>
 
 # @markdown <br>🖱️<i> Select The `Bot Mode` You want</i>
 MODE = "Leech"  # @param ["Leech", "Mirror", "Dir-Leech"]
@@ -844,7 +844,7 @@ def getFilesByFolderID(folder_id):
     files = []
     while True:
         response = (
-            service.files()
+            service.files()  # type: ignore
             .list(
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
@@ -866,7 +866,7 @@ def getFilesByFolderID(folder_id):
 
 def getFileMetadata(file_id):
     return (
-        service.files()
+        service.files()  # type: ignore
         .get(fileId=file_id, supportsAllDrives=True, fields="name, id, mimeType, size")
         .execute()
     )
@@ -876,7 +876,7 @@ def get_Gfolder_size(folder_id):
     try:
         query = "trashed = false and '{0}' in parents".format(folder_id)
         results = (
-            service.files()
+            service.files()  # type: ignore
             .list(
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
@@ -937,7 +937,7 @@ async def gDownloadFile(file_id, path):
                 file_contents = io.BytesIO()
 
                 # Download the file or folder contents to the BytesIO stream.
-                request = service.files().get_media(
+                request = service.files().get_media(  # type: ignore
                     fileId=file_id, supportsAllDrives=True
                 )
                 file_downloader = MediaIoBaseDownload(
@@ -1520,8 +1520,7 @@ async def FinalStep(msg, is_leech: bool):
 # ****************************************************************
 
 custom_thumb = "/content/Thumbnail.jpg"
-d_path = "/content/bot_Folder"
-d_name = ""
+d_path, d_name = "/content/bot_Folder", ""
 mirror_dir = "/content/drive/MyDrive/Colab Leecher Uploads"
 link_info = False
 d_fol_path = f"{d_path}/Downloads"
@@ -1529,9 +1528,7 @@ temp_zpath = f"{d_path}/Leeched_Files"
 temp_unzip_path = f"{d_path}/Unzipped_Files"
 temp_files_dir = f"{d_path}/dir_leech_temp"
 thumbnail_ytdl = f"{d_path}/ytdl_thumbnails"
-sent_file = []
-sent_fileName = []
-down_bytes = []
+sent_file, sent_fileName, down_bytes = [], [], []
 down_bytes.append(0)
 ytdl_status = []
 ytdl_status.append("")
@@ -1545,11 +1542,16 @@ down_count = []
 down_count.append(1)
 start_time = datetime.datetime.now()
 link, z_pswd, text_msg = "something", "", ""
-sources = []
-is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = False, False, False, False, False
+sources, service = [], None
+is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = (
+    (TYPE == "UnDoubleZip"),
+    (TYPE == "Unzip"),
+    (TYPE == "Zip"),
+    YTDL_DOWNLOAD_MODE,
+    False,
+)
 
 try:
-    service = build_service()
     if not Thumbnail_Checker("/content"):
         thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
         print("Didn't find thumbnail, So switching to default thumbnail")
@@ -1560,13 +1562,6 @@ try:
         makedirs(d_path)
     else:
         makedirs(d_path)
-
-    if TYPE == "UnDoubleZip":
-        is_dualzip = True
-    elif TYPE == "Zip":
-        is_zip = True
-    elif TYPE == "Unzip":
-        is_unzip = True
 
     is_ytdl = YTDL_DOWNLOAD_MODE
 
@@ -1620,6 +1615,7 @@ try:
             if "t.me" in link:
                 ida = "💬"
             elif "drive.google.com" in link:
+                service = build_service()
                 ida = "♻️"
             elif "magnet" in link or "torrent" in link:
                 ida = "🧲"
