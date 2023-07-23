@@ -16,17 +16,18 @@ CUSTOM_NAME = "DEFAULT"  # @param ["DEFAULT"] {allow-input: true}
 UNZIP_PASSWORD = "NO PASSWORD"  # @param ["NO PASSWORD"] {allow-input: true}
 
 
-import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, pickle, uvloop, pathlib, datetime, subprocess
+import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
 from natsort import natsorted
+from google.colab import auth
 from google.colab import drive
 from urllib.parse import urlparse
 from re import search as re_search
 from os import makedirs, path as ospath
 from IPython.display import clear_output
-from urllib.parse import parse_qs, urlparse
 from googleapiclient.discovery import build
+from urllib.parse import parse_qs, urlparse
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -698,8 +699,8 @@ def YouTubeDL(url):
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        if not ospath.exists(f"{d_path}/ytdl_thumbnails"):
-            makedirs(f"{d_path}/ytdl_thumbnails")
+        if not ospath.exists(thumbnail_ytdl):
+            makedirs(thumbnail_ytdl)
         try:
             info_dict = ydl.extract_info(url, download=False)
             ytdl_status[0] = "⌛ __Please WAIT a bit...__"
@@ -709,7 +710,7 @@ def YouTubeDL(url):
                     makedirs(ospath.join(d_fol_path, playlist_name))
                 ydl_opts["outtmpl"] = {
                     "default": f"{d_fol_path}/{playlist_name}/%(title)s.%(ext)s",
-                    "thumbnail": f"{d_path}/ytdl_thumbnails/%(title)s.%(ext)s",
+                    "thumbnail": f"{thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
@@ -718,7 +719,7 @@ def YouTubeDL(url):
                 ytdl_status[0] = False
                 ydl_opts["outtmpl"] = {
                     "default": f"{d_fol_path}/%(title)s.%(ext)s",
-                    "thumbnail": f"{d_path}/ytdl_thumbnails/%(title)s.%(ext)s",
+                    "thumbnail": f"{thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
                 ydl.download([url])
         except Exception as e:
@@ -807,16 +808,9 @@ async def get_d_name(link):
 
 
 def build_service():
-    # create credentials object from token.pickle file
-    creds = None
-    if ospath.exists("/content/token.pickle"):
-        with open("/content/token.pickle", "rb") as token:
-            creds = pickle.load(token)
-    else:
-        exit(1)
-
-    # create drive API client
-    service = build("drive", "v3", credentials=creds)
+    # create credentials object using colab auth
+    auth.authenticate_user()
+    service = build("drive", "v3")
 
     return service
 
@@ -1597,7 +1591,9 @@ try:
     d_name, custom_name = "", ""
     # Making Sure, he is in Desktop
     if len(SOURCE_LINK) == 0 and CUSTOM_NAME == "DEFAULT":
-        if TYPE == "Zip" or (len(sources) == 1 and (MODE == "Mirror" or MODE == "Leech")):
+        if TYPE == "Zip" or (
+            len(sources) == 1 and (MODE == "Mirror" or MODE == "Leech")
+        ):
             custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
         else:
             print("Custom Name Not Applicable")
