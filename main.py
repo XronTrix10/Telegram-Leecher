@@ -1212,6 +1212,8 @@ async def Leech(folder_path: str, remove: bool):
             shutil.rmtree(temp_zpath)
 
         else:
+            if not remove:  # Copy To Temp Dir for Renaming Purposes
+                file_path = shutil.copy(file_path, temp_files_dir)
             file_name = ospath.basename(file_path)
             # Trimming filename upto 50 chars
             new_path = shorterFileName(file_path)
@@ -1232,14 +1234,19 @@ async def Leech(folder_path: str, remove: bool):
             await upload_file(new_path, file_name)
             up_bytes.append(file_size)
 
-            if remove and ospath.exists(new_path):
-                os.remove(new_path)
+            if remove:
+                if ospath.exists(new_path):
+                    os.remove(new_path)
+            else:
+                for file in os.listdir(temp_files_dir):
+                    os.remove(ospath.join(temp_files_dir, file))
 
     if remove and ospath.exists(folder_path):
         shutil.rmtree(folder_path)
-
-    if ospath.exists(f"{d_path}/ytdl_thumbnails"):
-        shutil.rmtree(f"{d_path}/ytdl_thumbnails")
+    if ospath.exists(thumbnail_ytdl):
+        shutil.rmtree(thumbnail_ytdl)
+    if ospath.exists(temp_files_dir):
+        shutil.rmtree(temp_files_dir)
 
 
 async def Zip_Handler(d_fol_path: str, is_split: bool, remove: bool):
@@ -1384,7 +1391,7 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
 
 
 async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
-    global d_fol_path, msg, link_info, total_down_size, temp_zpath, temp_unzip_path
+    global d_fol_path, msg, link_info, total_down_size, temp_zpath, temp_unzip_path, mirror_dir
 
     try:
         if not ospath.exists("/content/drive"):
@@ -1435,19 +1442,20 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
 
     cdt = datetime.datetime.now()
     cdt_ = cdt.strftime("Uploaded » %Y-%m-%d %H:%M:%S")
+    mirror_dir_ = ospath.join(mirror_dir, cdt_)
 
     if is_zip:
         await Zip_Handler(d_fol_path, True, True)
-        shutil.copytree(temp_zpath, ospath.join(mirror_dir, cdt_))
+        shutil.copytree(temp_zpath, mirror_dir_)
     elif is_unzip:
         await Unzip_Handler(d_fol_path, True)
-        shutil.copytree(temp_unzip_path, ospath.join(mirror_dir, cdt_))
+        shutil.copytree(temp_unzip_path, mirror_dir_)
     elif is_dualzip:
         await Unzip_Handler(d_fol_path, True)
         await Zip_Handler(temp_unzip_path, True, True)
-        shutil.copytree(temp_zpath, ospath.join(mirror_dir, cdt_))
+        shutil.copytree(temp_zpath, mirror_dir_)
     else:
-        shutil.copytree(d_fol_path, ospath.join(mirror_dir, cdt_))
+        shutil.copytree(d_fol_path, mirror_dir_)
 
     await FinalStep(msg, False)
 
@@ -1525,6 +1533,8 @@ link_info = False
 d_fol_path = f"{d_path}/Downloads"
 temp_zpath = f"{d_path}/Leeched_Files"
 temp_unzip_path = f"{d_path}/Unzipped_Files"
+temp_files_dir = f"{d_path}/dir_leech_temp"
+thumbnail_ytdl = f"{d_path}/ytdl_thumbnails"
 sent_file = []
 sent_fileName = []
 down_bytes = []
@@ -1603,6 +1613,8 @@ try:
     if MODE == "Dir-Leech":
         if not ospath.exists(sources[0]):
             raise ValueError(f"Directory Path is Invalid ! Provided: {sources[0]}")
+        if not os.path.exists(temp_files_dir):
+            makedirs(temp_files_dir)
         down_msg = f"<b>📤 UPLOADING » </b>\n"
         ida = "📂"
         is_dir = True
