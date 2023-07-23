@@ -1,13 +1,19 @@
-![](https://user-images.githubusercontent.com/125879861/254596202-e8f0ad54-a52c-413f-b448-c2c88f9cf602.png)
+![](https://user-images.githubusercontent.com/125879861/255389718-1d83fd90-886b-437b-a17d-71779b17c7f5.png)
 
 
-### A Python Project to Transfer Files/Folders to Telegram using Google Colab.
+### A Python Project to Transfer Files/Folders to Telegram and Google Drive using Google Colab.
 
 <br>
 
+## **🫱🏼‍🫲🏼 Connect With Us**
+
+<a href="https://t.me/Colab_Leecher" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255390865-bce545dd-37a5-4bd5-a10b-441389c8e0fa.png" alt="Colab Leecher" height=36px/></a>
+
+<a href="https://t.me/Colab_Leecher_Discuss" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255390785-d9f2218f-9c68-4566-a924-6870ebb645bb.png" alt="Colab Leecher Discussion" height=36px/></a>
+
 ## **📖 CLICK TO OPEN THE NOTEBOOK**
 
- <a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/245568025-59b05175-35a7-4c0f-8c15-5e38516bbc4b.png" alt="Open In Colab" height=70px/></a>
+ <a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255389999-a0d261cf-893a-46a7-9a3d-2bb52811b997.png" alt="Open In Colab" height=60px/></a>
 
 
 ## **🔖 Based on**
