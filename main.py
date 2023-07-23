@@ -1110,7 +1110,7 @@ async def upload_file(file_path, real_name):
                 reply_to_message_id=sent.id,
             )
 
-            if thmb_path != custom_thumb:
+            if thmb_path != "/home/Telegram-Leecher/custom_thmb.jpg":
                 os.remove(thmb_path)
 
         elif f_type == "audio":
