@@ -1,7 +1,7 @@
-![](https://user-images.githubusercontent.com/125879861/255389718-1d83fd90-886b-437b-a17d-71779b17c7f5.png)
+![](https://user-images.githubusercontent.com/125879861/255391401-371f3a64-732d-4954-ac0f-4f093a6605e1.png)
 
 
-### A Python Project to Transfer Files/Folders to Telegram and Google Drive using Google Colab.
+<center> <h3>A Python Project to Transfer Files/Folders to Telegram and Google Drive using Google Colab</h3></center>
 
 <br>
 
