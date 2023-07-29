@@ -178,15 +178,15 @@ def Thumbnail_Maintainer(file_path):
         return thumb_path, 0
 
 
-def Thumbnail_Checker(dir_path):
-    for filename in os.listdir(dir_path):
+def Thumbnail_Checker():
+    for filename in os.listdir("/content"):
         _, ext = ospath.splitext(filename)
         if ext in [".png", ".webp", ".bmp"]:
-            n_path = convert_to_jpg(ospath.join(dir_path, filename))
+            n_path = convert_to_jpg(ospath.join("/content", filename))
             os.rename(n_path, custom_thumb)
             return True
         elif ext in [".jpeg", ".jpg"]:
-            os.rename(ospath.join(dir_path, filename), custom_thumb)
+            os.rename(ospath.join("/content", filename), custom_thumb)
             return True
     # No jpg file was found
     return False
@@ -1110,7 +1110,7 @@ async def upload_file(file_path, real_name):
                 reply_to_message_id=sent.id,
             )
 
-            if thmb_path != "/home/Telegram-Leecher/custom_thmb.jpg":
+            if thmb_path != default_thumb or thmb_path != custom_thumb:
                 os.remove(thmb_path)
 
         elif f_type == "audio":
@@ -1327,7 +1327,12 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
                 await Zip_Handler(temp_unzip_path, True, True)
                 await Leech(temp_zpath, True)
             else:
-                await Leech(d_fol_path, False)
+                if ospath.isdir(s):
+                    await Leech(d_fol_path, False)
+                else:
+                    total_down_size = ospath.getsize(s)
+                    name = ospath.basename(s)
+                    await upload_file(s, name)
     else:
         if is_ytdl:
             for i, link in enumerate(source):
@@ -1520,6 +1525,7 @@ async def FinalStep(msg, is_leech: bool):
 # ****************************************************************
 
 custom_thumb = "/content/Thumbnail.jpg"
+default_thumb = "/content/Telegram-Leecher/custom_thmb.jpg"
 d_path, d_name = "/content/bot_Folder", ""
 mirror_dir = "/content/drive/MyDrive/Colab Leecher Uploads"
 link_info = False
@@ -1550,10 +1556,11 @@ is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = (
     YTDL_DOWNLOAD_MODE,
     False,
 )
+msg, sent = None, None
 
 try:
-    if not Thumbnail_Checker("/content"):
-        thumb_path = "/content/Telegram-Leecher/custom_thmb.jpg"
+    if not Thumbnail_Checker():
+        thumb_path = default_thumb
         print("Didn't find thumbnail, So switching to default thumbnail")
     else:
         thumb_path = custom_thumb
@@ -1689,7 +1696,8 @@ except Exception as e:
         + f"<b>╰🤔 Reason » </b>__{e}__"
         + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
     )
-    try:
+
+    if msg: # Ensuring That message was sent to Telegram
         await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)  # type: ignore
         await bot.send_photo(  # type: ignore
             chat_id=chat_id,  # type: ignore
@@ -1710,6 +1718,5 @@ except Exception as e:
                 ]
             ),
         )
-    except Exception as d:
-        pass
+
     print(f"Error Occured: {e}")
