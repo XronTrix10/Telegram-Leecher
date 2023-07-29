@@ -151,7 +151,7 @@ def get_file_count(folder_path):
 def video_extension_fixer(file_path: str):
     _, f_name = ospath.split(file_path)
     # if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
-    if f_name.endswith(".mp4"):
+    if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
         return file_path
     else:
         os.rename(file_path, ospath.join(file_path + ".mp4"))
