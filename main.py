@@ -220,7 +220,10 @@ def system_info():
 async def archive(path, is_split, remove):
     dir_p, p_name = ospath.split(path)
     r = "-r" if ospath.isdir(path) else ""
-    split = "-s 2000m" if is_split else ""
+    if is_split:
+        split = "-s 2000m" if len(z_pswd) == 0 else "-v2000m"
+    else:
+        split = ""
     if len(custom_name) != 0:
         name = custom_name
     elif ospath.isfile(path):
@@ -229,7 +232,9 @@ async def archive(path, is_split, remove):
         name = d_name
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     starting_time = datetime.datetime.now()
-    cmd = f'cd "{dir_p}" && zip {r} {split} -0 "{temp_zpath}/{name}.zip" "{p_name}"'
+        cmd = f'cd "{dir_p}" && zip {r} {split} -0 "{temp_zpath}/{name}.zip" "{p_name}"'
+    else:
+        cmd = f'7z a -mx=0 -tzip -p{z_pswd} {split} "{temp_zpath}/{name}.zip" {path}'
     proc = subprocess.Popen(cmd, shell=True)
     total = size_measure(get_folder_size(path))
     while proc.poll() is None:
@@ -1597,6 +1602,12 @@ try:
             sources.append(link)
     d_name, custom_name = "", ""
 
+    if TYPE == "Unzip" or TYPE == "UnDoubleZip":
+        uz_pswd = input("Password For Unzip [ Enter 'E' for Empty ]: ")
+
+    if TYPE == "Zip" or TYPE == "UnDoubleZip":
+        z_pswd = input("Password For Zip [ Enter 'E' for Empty ]: ")
+
     # Making Sure, he is in Desktop
     if (
         TYPE == "Zip"
@@ -1607,8 +1618,9 @@ try:
     else:
         print("Custom Name Not Applicable")
 
-    if custom_name.lower() == "d":
-        custom_name = ""
+    uz_pswd = "" if uz_pswd.lower() == "e" else uz_pswd
+    z_pswd = "" if z_pswd.lower() == "e" else z_pswd
+    custom_name = "" if custom_name.lower() == "d" else custom_name
 
     task_start = datetime.datetime.now()
     down_msg = f"<b>📥 DOWNLOADING » </b>\n"
