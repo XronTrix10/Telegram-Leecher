@@ -211,7 +211,7 @@ def system_info():
     string += f"\n╭🖥️ **CPU Usage »**  __{cpu_usage_percent}%__"
     string += f"\n├💽 **RAM Usage »**  __{size_measure(ram_usage)}__"
     string += f"\n╰💾 **DISK Free »**  __{size_measure(disk_usage.free)}__"
-    string += f"\n\n<i>💖 When I'm Doin This, Do Something Else ! **Because, Time Is Precious ✨**</i>"
+    string += caution_msg
 
     return string
 
@@ -1528,7 +1528,7 @@ custom_thumb = "/content/Thumbnail.jpg"
 default_thumb = "/content/Telegram-Leecher/custom_thmb.jpg"
 d_path, d_name = "/content/bot_Folder", ""
 mirror_dir = "/content/drive/MyDrive/Colab Leecher Uploads"
-link_info = False
+link_info, msg = False, None
 d_fol_path = f"{d_path}/Downloads"
 temp_zpath = f"{d_path}/Leeched_Files"
 temp_unzip_path = f"{d_path}/Unzipped_Files"
@@ -1556,7 +1556,7 @@ is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = (
     YTDL_DOWNLOAD_MODE,
     False,
 )
-msg, sent = None, None
+caution_msg = "\n\n<i>💖 When I'm Doin This, Do Something Else ! <b>Because, Time Is Precious ✨</b></i>"
 
 try:
     if not Thumbnail_Checker():
@@ -1626,7 +1626,7 @@ try:
                 ida = "♻️"
             elif "magnet" in link or "torrent" in link:
                 ida = "🧲"
-                task_msg += "⚠️<i> Torrents Are Strictly Prohibited in Google Colab, Use With Caution !</i>\n\n"
+                caution_msg = "\n\n⚠️<i><b> Torrents Are Strictly Prohibited in Google Colab</b>, Try to avoid Magnets !</i>"
             elif "youtube.com" in link or "youtu.be" in link:
                 ida = "🏮"
             else:
@@ -1697,7 +1697,7 @@ except Exception as e:
         + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
     )
 
-    if msg: # Ensuring That message was sent to Telegram
+    if msg:  # Ensuring That message was sent to Telegram
         await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)  # type: ignore
         await bot.send_photo(  # type: ignore
             chat_id=chat_id,  # type: ignore
