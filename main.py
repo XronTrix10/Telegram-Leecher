@@ -11,6 +11,12 @@ UPLOAD_MODE = "Media"  # @param ["Media", "Document"]
 YTDL_DOWNLOAD_MODE = False  # @param {type:"boolean"}
 
 
+# @markdown <br>🖱️<i> Select The File `Caption Mode` You want</i>
+
+CAPTION = "Regular" # @param ["Regular", "Bold", "Italic", "Monospace", "Underlined"]
+PREFIX = "" #@param {type: "string"}
+
+
 import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, uvloop, pathlib, datetime, subprocess
 from PIL import Image
 from pyrogram import Client
@@ -1078,7 +1084,7 @@ async def progress_bar(current, total):
 async def upload_file(file_path, real_name):
     global sent
 
-    caption = f"<code>{real_name}</code>"
+    caption = f"<{cap}>{PREFIX} {real_name}</{cap}>"
     type_ = get_file_type(file_path)
 
     f_type = type_ if UPLOAD_MODE == "Media" else "document"
@@ -1469,7 +1475,7 @@ async def FinalStep(msg, is_leech: bool):
     size = size_measure(sum(up_bytes)) if is_leech else size_measure(total_down_size)
 
     last_text = (
-        f"\n\n<b>{(MODE).upper()} COMPLETE 🔥</b>\n\n"
+        f"\n\n<b>#{(MODE).upper()}_COMPLETE 🔥</b>\n\n"
         + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
@@ -1552,6 +1558,16 @@ is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = (
     False,
 )
 caution_msg = "\n\n<i>💖 When I'm Doin This, Do Something Else ! <b>Because, Time Is Precious ✨</b></i>"
+if CAPTION == "Regular":
+    cap = "p"
+elif CAPTION == "Bold":
+    cap = "b"
+elif CAPTION == "Italic":
+    cap = "i"
+elif CAPTION == "Monospace":
+    cap = "code"
+else:
+    cap = "u"
 
 try:
     if not Thumbnail_Checker():
