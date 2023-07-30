@@ -2,21 +2,14 @@
 
 <br>
 
-<center> <p>A Python Project to Transfer Files / Folders to Telegram and Google Drive with the help of Google Colab</p></center>
+<p align="center"><b>「 A Python Project to Transfer Files / Folders to Telegram and Google Drive with the help of Google Colab With Multi-Functionality 」</b></p>
 
-## **🤙🏼 Connect With Us**
-
-<a href="https://t.me/Colab_Leecher" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255390865-bce545dd-37a5-4bd5-a10b-441389c8e0fa.png" alt="Colab Leecher" height=36px/></a>
-
-<a href="https://t.me/Colab_Leecher_Discuss" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255390785-d9f2218f-9c68-4566-a924-6870ebb645bb.png" alt="Colab Leecher Discussion" height=36px/></a>
+<br>
 
 ## **📖 Click To Open The Notebook**
 
-<a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255389999-a0d261cf-893a-46a7-9a3d-2bb52811b997.png" alt="Open In Colab" height=60px/></a>
+<a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255389999-a0d261cf-893a-46a7-9a3d-2bb52811b997.png" alt="Open In Colab" height=50px/></a>
 
-## **🔖 Based on**
-
-![Python minimum version](https://img.shields.io/badge/Python-3.0%2B-brightgreen)
 
 ## 🎓 **How To Use**
 
@@ -74,6 +67,12 @@
 
 - Magnet or Torrent Links are supported, But avoid using, because `Google Colab Stricly Prohibits Torrents`
 - Downloading `YouTube Video without permission of the owner` can lead to copyright issues. Use with Caution
+
+## **🤙🏼 Connect With Us**
+
+<a href="https://t.me/Colab_Leecher" target="_parent"><img src="https://img.shields.io/badge/-Channel-blue?color=white&logo=telegram&logoColor=vlue"></a>
+
+<a href="https://t.me/Colab_Leecher_Discuss" target="_parent"><img src="https://img.shields.io/badge/-Group-blue?color=white&logo=telegram&logoColor=vlue"></a>
 
 <br>
 
