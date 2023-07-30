@@ -10,11 +10,6 @@ UPLOAD_MODE = "Media"  # @param ["Media", "Document"]
 # @markdown ✅<i> Tick The Below Checkbox If You Use `YouTube` or Other `Video Site Links`</i>
 YTDL_DOWNLOAD_MODE = False  # @param {type:"boolean"}
 
-# @markdown <br>⌨️ <i>Enter Below Fields 👇🏻 Only If You Are `Mobile User` 📱</i>
-SOURCE_LINK = ""  # @param {type: "string"}
-CUSTOM_NAME = "DEFAULT"  # @param ["DEFAULT"] {allow-input: true}
-UNZIP_PASSWORD = "NO PASSWORD"  # @param ["NO PASSWORD"] {allow-input: true}
-
 
 import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, uvloop, pathlib, datetime, subprocess
 from PIL import Image
@@ -258,7 +253,7 @@ async def extract(zip_filepath, remove):
     dirname, filename = ospath.split(zip_filepath)
     unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
     file_pattern = ""
-    p = f"-p{z_pswd}" if len(z_pswd) != 0 else ""
+    p = f"-p{uz_pswd}" if len(uz_pswd) != 0 else ""
     name, ext = ospath.splitext(filename)
     if ext == ".rar":
         if "part" in name:
@@ -1547,7 +1542,7 @@ folder_info = [0, 1]
 down_count = []
 down_count.append(1)
 start_time = datetime.datetime.now()
-link, z_pswd, text_msg = "something", "", ""
+link, uz_pswd, z_pswd, text_msg = "something", "", "", ""
 sources, service = [], None
 is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = (
     (TYPE == "UnDoubleZip"),
@@ -1574,34 +1569,29 @@ try:
 
     print(f"TASK MODE: {TYPE} {MODE} as {UPLOAD_MODE}")
 
-    if UNZIP_PASSWORD != "NO PASSWORD":
-        z_pswd = UNZIP_PASSWORD
-    elif len(SOURCE_LINK) == 0 and (TYPE == "Unzip" or TYPE == "UnDoubleZip"):
-        z_pswd = input("Password For Unzip [ Enter 'E' for Empty ]: ")
+    if TYPE == "Unzip" or TYPE == "UnDoubleZip":
+        uz_pswd = input("Password For Unzip [ Enter 'E' for Empty ]: ")
 
-    if z_pswd.lower() == "e":
-        z_pswd = ""
+    if uz_pswd.lower() == "e":
+        uz_pswd = ""
 
-    if len(SOURCE_LINK) == 0:
-        # Getting Download sources
-        while link.lower() != "c":
-            link = input(f"Download Source [ Enter 'C' to Terminate]: ")
-            if link.lower() != "c":
-                sources.append(link)
-    else:
-        sources.append(SOURCE_LINK)  # type: ignore
+    while link.lower() != "c":
+        link = input(f"Download Source [ Enter 'C' to Terminate]: ")
+        if link.lower() != "c":
+            sources.append(link)
     d_name, custom_name = "", ""
+
     # Making Sure, he is in Desktop
-    if len(SOURCE_LINK) == 0 and CUSTOM_NAME == "DEFAULT":
-        if TYPE == "Zip" or (
-            len(sources) == 1 and (MODE == "Mirror" or MODE == "Leech")
-        ):
-            custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
-        else:
-            print("Custom Name Not Applicable")
+    if (
+        TYPE == "Zip"
+        or TYPE == "UnDoubleZip"
+        or (len(sources) == 1 and (MODE == "Mirror" or MODE == "Leech"))
+    ):
+        custom_name = input("Enter Custom File name [ 'D' to set Default ]: ")
     else:
-        custom_name = CUSTOM_NAME
-    if custom_name.lower() == "d" or custom_name == "DEFAULT":
+        print("Custom Name Not Applicable")
+
+    if custom_name.lower() == "d":
         custom_name = ""
 
     task_start = datetime.datetime.now()
@@ -1688,6 +1678,8 @@ except Exception as e:
         e = "Invalid USER_ID ! Enter your own Telegram USER ID in The Config Cell Correctly, Then Try Again"
     elif "Peer id invalid" in str(e):
         e = "Invalid DUMP_ID ! Enter CHAT ID of CHANNEL or GROUP starting with '-100' in The Config Cell Correctly, Then Try Again. Make sure you added the Bot in The Channel !"
+    elif "Requested format is not available" in str(e):
+        e = "Probably The Given Link is Not Supported by YTDL. Try Again Without YTDL !"
 
     Error_Text = (
         "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
