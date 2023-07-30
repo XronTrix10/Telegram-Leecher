@@ -13,8 +13,8 @@ YTDL_DOWNLOAD_MODE = False  # @param {type:"boolean"}
 
 # @markdown <br>🖱️<i> Select The File `Caption Mode` You want</i>
 
-CAPTION = "Regular" # @param ["Regular", "Bold", "Italic", "Monospace", "Underlined"]
-PREFIX = "" #@param {type: "string"}
+CAPTION = "Regular"  # @param ["Regular", "Bold", "Italic", "Monospace", "Underlined"]
+PREFIX = ""  # @param {type: "string"}
 
 
 import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, uvloop, pathlib, datetime, subprocess
@@ -129,12 +129,12 @@ def shorterFileName(path):
         return path
 
 
-def get_folder_size(folder_path):
-    if ospath.isfile(folder_path):
-        return ospath.getsize(folder_path)
+def get_size(path):
+    if ospath.isfile(path):
+        return ospath.getsize(path)
     else:
         total_size = 0
-        for dirpath, _, filenames in os.walk(folder_path):
+        for dirpath, _, filenames in os.walk(path):
             for f in filenames:
                 fp = ospath.join(dirpath, f)
                 total_size += ospath.getsize(fp)
@@ -217,7 +217,57 @@ def system_info():
     return string
 
 
+def multipartArchive(path: str, type: str, remove: bool):
+    dirname, filename = ospath.split(path)
+    name, _ = ospath.splitext(filename)
+
+    c, size, rname = 1, 0, name
+    if type == "rar":
+        name_, _ = ospath.splitext(name)
+        rname = name_
+        na_p = name_ + ".part" + str(c) + ".rar"
+        p_ap = ospath.join(dirname, na_p)
+        while ospath.exists(p_ap):
+            if remove:
+                os.remove(p_ap)
+            size += get_size(p_ap)
+            c += 1
+            na_p = name_ + ".part" + str(c) + ".rar"
+            p_ap = ospath.join(dirname, na_p)
+
+    elif type == "7z":
+        na_p = name + "." + str(c).zfill(3)
+        p_ap = ospath.join(dirname, na_p)
+        while ospath.exists(p_ap):
+            if remove:
+                os.remove(p_ap)
+            size += get_size(p_ap)
+            c += 1
+            na_p = name + "." + str(c).zfill(3)
+            p_ap = ospath.join(dirname, na_p)
+
+    elif type == "zip":
+        na_p = name + ".zip"
+        p_ap = ospath.join(dirname, na_p)
+        if ospath.exists(p_ap):
+            if remove:
+                os.remove(p_ap)
+            size += get_size(p_ap)
+        na_p = name + ".z" + str(c).zfill(2)
+        p_ap = ospath.join(dirname, na_p)
+        while ospath.exists(p_ap):
+            if remove:
+                os.remove(p_ap)
+            size += get_size(p_ap)
+            c += 1
+            na_p = name + ".z" + str(c).zfill(2)
+            p_ap = ospath.join(dirname, na_p)
+
+    return rname, size
+
+
 async def archive(path, is_split, remove):
+    global d_name
     dir_p, p_name = ospath.split(path)
     r = "-r" if ospath.isdir(path) else ""
     if is_split:
@@ -231,22 +281,24 @@ async def archive(path, is_split, remove):
     else:
         name = d_name
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
+    d_name = f"{name}.zip"
     starting_time = datetime.datetime.now()
+    if len(z_pswd) == 0:
         cmd = f'cd "{dir_p}" && zip {r} {split} -0 "{temp_zpath}/{name}.zip" "{p_name}"'
     else:
         cmd = f'7z a -mx=0 -tzip -p{z_pswd} {split} "{temp_zpath}/{name}.zip" {path}'
     proc = subprocess.Popen(cmd, shell=True)
-    total = size_measure(get_folder_size(path))
+    total = size_measure(get_size(path))
     while proc.poll() is None:
         speed_string, eta, percentage = speed_eta(
-            starting_time, get_folder_size(temp_zpath), get_folder_size(path)
+            starting_time, get_size(temp_zpath), get_size(path)
         )
         await status_bar(
             zip_msg,
             speed_string,
             percentage,
             convert_seconds(eta),
-            size_measure(get_folder_size(temp_zpath)),
+            size_measure(get_size(temp_zpath)),
             total,
             "Xr-Zipp 🔒",
         )
@@ -260,12 +312,13 @@ async def archive(path, is_split, remove):
 
 
 async def extract(zip_filepath, remove):
+    global d_name
     starting_time = datetime.datetime.now()
-    dirname, filename = ospath.split(zip_filepath)
+    _, filename = ospath.split(zip_filepath)
     unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
-    file_pattern = ""
     p = f"-p{uz_pswd}" if len(uz_pswd) != 0 else ""
     name, ext = ospath.splitext(filename)
+    file_pattern, rname, total_ = "", name, 0
     if ext == ".rar":
         if "part" in name:
             cmd = f"unrar x -kb -idq {p} '{zip_filepath}' {temp_unzip_path}"
@@ -284,62 +337,39 @@ async def extract(zip_filepath, remove):
         elif ext == ".z01":
             file_pattern = "zip"
 
+    if file_pattern == "":
+        total_ = get_size(zip_filepath)
+        total = size_measure(total_)
+    else:
+        rname, total_ = multipartArchive(zip_filepath, file_pattern, False)
+        total = size_measure(total_)
+
     proc = subprocess.Popen(cmd, shell=True)
-    total = size_measure(get_folder_size(zip_filepath))
+
     while proc.poll() is None:
         speed_string, eta, percentage = speed_eta(
             starting_time,
-            get_folder_size(temp_unzip_path),
-            get_folder_size(zip_filepath),
+            get_size(temp_unzip_path),
+            total_,
         )
         await status_bar(
             unzip_msg,
             speed_string,
             percentage,
             convert_seconds(eta),
-            size_measure(get_folder_size(temp_unzip_path)),
+            size_measure(get_size(temp_unzip_path)),
             total,
             "Xr-Unzip 🔓",
         )
         time.sleep(1)
 
     if remove:
-        # Deletes all remaining Multi Part Volumes
-        c = 1
-        if file_pattern == "rar":
-            name_, _ = ospath.splitext(name)
-            na_p = name_ + ".part" + str(c) + ".rar"
-            p_ap = ospath.join(dirname, na_p)
-            while ospath.exists(p_ap):
-                os.remove(p_ap)
-                c += 1
-                na_p = name_ + ".part" + str(c) + ".rar"
-                p_ap = ospath.join(dirname, na_p)
-
-        elif file_pattern == "7z":
-            na_p = name + "." + str(c).zfill(3)
-            p_ap = ospath.join(dirname, na_p)
-            while ospath.exists(p_ap):
-                os.remove(p_ap)
-                c += 1
-                na_p = name + "." + str(c).zfill(3)
-                p_ap = ospath.join(dirname, na_p)
-
-        elif file_pattern == "zip":
-            na_p = name + ".zip"
-            p_ap = ospath.join(dirname, na_p)
-            if ospath.exists(p_ap):
-                os.remove(p_ap)
-            na_p = name + ".z" + str(c).zfill(2)
-            p_ap = ospath.join(dirname, na_p)
-            while ospath.exists(p_ap):
-                os.remove(p_ap)
-                c += 1
-                na_p = name + ".z" + str(c).zfill(2)
-                p_ap = ospath.join(dirname, na_p)
+        multipartArchive(zip_filepath, file_pattern, True)
 
         if ospath.exists(zip_filepath):
             os.remove(zip_filepath)
+
+    d_name = rname
 
 
 async def size_checker(file_path, remove):
@@ -414,6 +444,7 @@ def is_time_over(current_time):
 
 def speed_eta(start, done, total):
     percentage = (done / total) * 100
+    percentage = 100 if percentage > 100 else percentage
     elapsed_time = (datetime.datetime.now() - start).seconds
     if done > 0 and elapsed_time != 0:
         raw_speed = done / elapsed_time
@@ -1169,7 +1200,7 @@ async def upload_file(file_path, real_name):
 
 async def Leech(folder_path: str, remove: bool):
     global total_down_size, text_msg, start_time, msg, sent
-    total_down_size = get_folder_size(folder_path)
+    total_down_size = get_size(folder_path)
     files = [str(p) for p in pathlib.Path(folder_path).glob("**/*") if p.is_file()]
     for f in natsorted(files):
         file_path = ospath.join(folder_path, f)
@@ -1272,7 +1303,7 @@ async def Zip_Handler(d_fol_path: str, is_split: bool, remove: bool):
     clear_output()
     time.sleep(2)
 
-    total_down_size = get_folder_size(temp_zpath)
+    total_down_size = get_size(temp_zpath)
 
     if remove:
         if ospath.exists(d_fol_path):
@@ -1368,7 +1399,7 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
                     link_info = False
                     await aria2_Download(link, i + 1)
 
-        total_down_size = get_folder_size(d_fol_path)
+        total_down_size = get_size(d_fol_path)
         clear_output()
 
         if MODE == "Leech" and len(custom_name) != 0:
@@ -1435,7 +1466,7 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
                 link_info = False
                 await aria2_Download(link, i + 1)
 
-    total_down_size = get_folder_size(d_fol_path)
+    total_down_size = get_size(d_fol_path)
     clear_output()
 
     if MODE == "Leech" and len(custom_name) != 0:
@@ -1467,7 +1498,7 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
 
 async def FinalStep(msg, is_leech: bool):
     final_text = (
-        f"<b>📂 Total Files:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 LOG:</b>\n"
+        f"<b>☘️ File Count:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 Logs:</b>\n"
     )
     l_ink = "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟"
 
@@ -1590,12 +1621,6 @@ try:
 
     print(f"TASK MODE: {TYPE} {MODE} as {UPLOAD_MODE}")
 
-    if TYPE == "Unzip" or TYPE == "UnDoubleZip":
-        uz_pswd = input("Password For Unzip [ Enter 'E' for Empty ]: ")
-
-    if uz_pswd.lower() == "e":
-        uz_pswd = ""
-
     while link.lower() != "c":
         link = input(f"Download Source [ Enter 'C' to Terminate]: ")
         if link.lower() != "c":
@@ -1676,7 +1701,7 @@ try:
         )
         clear_output()
         if MODE == "Dir-Leech":
-            folder_info[0] = get_folder_size(sources[0])
+            folder_info[0] = get_size(sources[0])
             d_name = ospath.basename(sources[0])
         else:
             await calG_DownSize(sources)  # type: ignore
