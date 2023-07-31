@@ -208,7 +208,7 @@ def system_info():
     disk_usage = psutil.disk_usage("/")
     cpu_usage_percent = psutil.cpu_percent()
 
-    string = "\n\n⍟───── [Colab Usage](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
+    string = "\n\n⌬─────「 Colab Usage 」─────⌬\n"
     string += f"\n╭🖥️ **CPU Usage »**  __{cpu_usage_percent}%__"
     string += f"\n├💽 **RAM Usage »**  __{size_measure(ram_usage)}__"
     string += f"\n╰💾 **DISK Free »**  __{size_measure(disk_usage.free)}__"
@@ -1077,7 +1077,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
     # bar = "⬢" * filled_length + "⬡" * (bar_length - filled_length)
     bar = "█" * filled_length + "░" * (bar_length - filled_length)
     message = (
-        f"\n╭|{bar}| » __{percentage:.2f}%__\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** __{engine}__"
+        f"\n╭「{bar}」 » __{percentage:.2f}%__\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** __{engine}__"
         + f"\n├⏳ **Time Left »** __{eta}__"
         + f"\n├🍃 **Time Spent »** __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
         + f"\n├✅ **Processed »** __{done}__\n╰📦 **Total Size »** __{left}__"
@@ -1500,7 +1500,7 @@ async def FinalStep(msg, is_leech: bool):
     final_text = (
         f"<b>☘️ File Count:</b>  <code>{len(sent_file)}</code>\n\n<b>📜 Logs:</b>\n"
     )
-    l_ink = "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟"
+    l_ink = "⌬─────[「 Colab Usage 」](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp)─────⌬"
 
     file_count = (
         f"├<b>☘️ File Count » </b><code>{len(sent_file)} Files</code>\n"
@@ -1512,7 +1512,7 @@ async def FinalStep(msg, is_leech: bool):
 
     last_text = (
         f"\n\n<b>#{(MODE).upper()}_COMPLETE 🔥</b>\n\n"
-        + f"╭<b>📛 Name » </b>  <code>{d_name}</code>\n"
+        + f"╭<b>📛 Name » </b><code>{d_name}</code>\n"
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
         + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>"
@@ -1649,8 +1649,8 @@ try:
 
     task_start = datetime.datetime.now()
     down_msg = f"<b>📥 DOWNLOADING » </b>\n"
-    task_msg = f"<b>🦞 TASK MODE » </b><i>{TYPE} {MODE} as {UPLOAD_MODE}</i>\n\n"
-    dump_task = task_msg + "<b>🖇️ SOURCES » </b>"
+    task_msg = f"<b>🦞 TASK MODE » </b>"
+    dump_task = task_msg + f"<i>{TYPE} {MODE} as {UPLOAD_MODE}</i>\n\n<b>🖇️ SOURCES » </b>"
     if MODE == "Dir-Leech":
         if not ospath.exists(sources[0]):
             raise ValueError(f"Directory Path is Invalid ! Provided: {sources[0]}")
@@ -1689,16 +1689,22 @@ try:
     ) as bot:
         sent = await bot.send_message(chat_id=dump_id, text=dump_task)  # type: ignore
         src_link = f"https://t.me/c/{link_p}/{sent.id}"
-        task_msg += "<b>🖇️ SOURCE » </b>" + f"__[Here]({src_link})__\n\n"
-        msg = await bot.send_photo(  # type: ignore
-            chat_id=chat_id,
-            photo=thumb_path,
-            caption=task_msg
-            + down_msg
-            + f"\n📝 __Starting DOWNLOAD...__"
-            + system_info(),
-            reply_markup=keyboard(),
-        )
+        task_msg += f"__[{TYPE} {MODE} as {UPLOAD_MODE}]({src_link})__\n\n"
+        while True:
+            try:
+                msg = await bot.send_photo(  # type: ignore
+                    chat_id=chat_id,
+                    photo=thumb_path,
+                    caption=task_msg
+                    + down_msg
+                    + f"\n📝 __Starting DOWNLOAD...__"
+                    + system_info(),
+                    reply_markup=keyboard(),
+                )
+            except Exception as e:
+                pass
+            else:
+                break
         clear_output()
         if MODE == "Dir-Leech":
             folder_info[0] = get_size(sources[0])
