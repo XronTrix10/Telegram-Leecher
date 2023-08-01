@@ -9,7 +9,8 @@ TYPE = "Normal"  # @param ["Normal", "Zip", "Unzip", "UnDoubleZip"]
 UPLOAD_MODE = "Media"  # @param ["Media", "Document"]
 # @markdown ✅<i> Tick The Below Checkbox If You Use `YouTube` or Other `Video Site Links`</i>
 YTDL_DOWNLOAD_MODE = False  # @param {type:"boolean"}
-
+# @markdown ✅<i> Tick The Below Checkbox `To Convert Videos to mp4 Format` ( For Media Upload Only )</i>
+CONVERT_VIDEOS = True  # @param {type:"boolean"}
 
 # @markdown <br>🖱️<i> Select The File `Caption Mode` You want</i>
 
@@ -17,12 +18,14 @@ CAPTION = "Regular"  # @param ["Regular", "Bold", "Italic", "Monospace", "Underl
 PREFIX = ""  # @param {type: "string"}
 
 
-import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, threading, uvloop, pathlib, datetime, subprocess
+import os, io, re, shutil, time, yt_dlp, math, pytz, psutil, uvloop, pathlib, subprocess
 from PIL import Image
 from pyrogram import Client
 from natsort import natsorted
 from google.colab import auth
 from google.colab import drive
+from datetime import datetime
+from threading import Thread
 from urllib.parse import urlparse
 from re import search as re_search
 from os import makedirs, path as ospath
@@ -31,6 +34,7 @@ from googleapiclient.discovery import build
 from urllib.parse import parse_qs, urlparse
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
+from moviepy.editor import VideoFileClip as VideoClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pyrogram.types import (
     InlineKeyboardMarkup,
@@ -85,6 +89,7 @@ def get_file_type(file_path: str):
         ".mp4": "video",
         ".avi": "video",
         ".mkv": "video",
+        ".m2ts": "video",
         ".mov": "video",
         ".webm": "video",
         ".vob": "video",
@@ -149,14 +154,89 @@ def get_file_count(folder_path):
     return count
 
 
-def video_extension_fixer(file_path: str):
+async def video_extension_fixer(file_path: str):
     _, f_name = ospath.split(file_path)
     # if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
     if f_name.endswith(".mp4") or f_name.endswith(".mkv"):
         return file_path
     else:
-        os.rename(file_path, ospath.join(file_path + ".mp4"))
-        return ospath.join(file_path + ".mp4")
+        if CONVERT_VIDEOS:
+            new_name = await videoConverter(file_path)
+            return new_name
+        else:
+            os.rename(file_path, ospath.join(file_path + ".mp4"))
+            return ospath.join(file_path + ".mp4")
+
+
+async def videoConverter(file: str):
+    def convert_to_mp4(input_file, out_file):
+        clip = VideoClip(input_file)
+        clip.write_videofile(out_file, codec="libx264", audio_codec="aac")
+
+    async def msg_updater(c: int, tr, engine: str):
+        messg =  f"╭「" + "░" * c + "█" + "░" * (11 - c) + "」"
+        messg += f"\n├⏳ **Status »** __Running 🏃🏼‍♂️__\n├🕹 **Attempt »** __{tr}__"
+        messg += f"\n├⚙️ **Engine »** __{engine}__\n├💪🏼 **Handler »** __{core}__"
+        messg += f"\n╰🍃 **Time Spent »** __{convert_seconds((datetime.now() - task_start).seconds)}__"
+        try:
+            await bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=msg.id,  # type: ignore
+                text=task_msg + mtext + messg + system_info(),
+                reply_markup=keyboard(),
+            )
+        except Exception:
+            pass
+
+    gpu = !nvidia-smi --query-gpu=gpu_name --format=csv # type: ignore
+    name, _ = ospath.splitext(file)
+    c, out_file, Err = 0, f"{name}.mp4", False
+
+    if len(gpu) != 0:
+        cmd = f"ffmpeg -y -hwaccel cuvid -c:v h264_cuvid -i '{file}' -c:v h264_nvenc '{out_file}'"
+        core = "GPU"
+    else:
+        cmd = f"ffmpeg -y -i '{file}' '{out_file}'"
+        core = "CPU"
+
+    mtext = f"<b>🎥 Converting Video »</b>\n\n{ospath.basename(file)}\n\n"
+
+    proc = subprocess.Popen(cmd, shell=True)
+
+    while proc.poll() is None:
+        await msg_updater(c, "1st", "FFmpeg 🏍")
+        c = (c + 1) % 12
+        time.sleep(3)
+
+    if ospath.exists(out_file) and get_size(out_file) == 0:
+        os.remove(out_file)
+        Err = True
+    elif not ospath.exists(out_file):
+        Err = True
+
+    if Err:
+        proc = Thread(target=convert_to_mp4, name="Moviepy", args=(file, out_file))
+        proc.start()
+        core = "CPU"
+        while proc.is_alive():  # Until ytdl is downloading
+            await msg_updater(c, "2nd", "Moviepy 🛵")
+            c = (c + 1) % 12
+            time.sleep(3)
+
+    if ospath.exists(out_file) and get_size(out_file) == 0:
+        os.remove(out_file)
+        Err = True
+    elif not ospath.exists(out_file):
+        Err = True
+    else:
+        Err = False
+
+    if Err:
+        print("This Video Can't Be Converted !")
+        return file
+    else:
+        os.remove(file)
+        return out_file
 
 
 def Thumbnail_Maintainer(file_path):
@@ -282,7 +362,7 @@ async def archive(path, is_split, remove):
         name = d_name
     zip_msg = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     d_name = f"{name}.zip"
-    starting_time = datetime.datetime.now()
+    starting_time = datetime.now()
     if len(z_pswd) == 0:
         cmd = f'cd "{dir_p}" && zip {r} {split} -0 "{temp_zpath}/{name}.zip" "{p_name}"'
     else:
@@ -313,7 +393,7 @@ async def archive(path, is_split, remove):
 
 async def extract(zip_filepath, remove):
     global d_name
-    starting_time = datetime.datetime.now()
+    starting_time = datetime.now()
     _, filename = ospath.split(zip_filepath)
     unzip_msg = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
     p = f"-p{uz_pswd}" if len(uz_pswd) != 0 else ""
@@ -398,7 +478,7 @@ async def size_checker(file_path, remove):
 
 
 async def split_archive(file_path, max_size):
-    starting_time = datetime.datetime.now()
+    starting_time = datetime.now()
     _, filename = ospath.split(file_path)
     new_path = f"{temp_zpath}/{filename}"
     down_msg = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
@@ -445,7 +525,7 @@ def is_time_over(current_time):
 def speed_eta(start, done, total):
     percentage = (done / total) * 100
     percentage = 100 if percentage > 100 else percentage
-    elapsed_time = (datetime.datetime.now() - start).seconds
+    elapsed_time = (datetime.now() - start).seconds
     if done > 0 and elapsed_time != 0:
         raw_speed = done / elapsed_time
         speed = f"{size_measure(raw_speed)}/s"
@@ -490,7 +570,7 @@ async def on_output(output: str):
     else:
         spd = 0
 
-    elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+    elapsed_time_seconds = (datetime.now() - start_time).seconds
 
     if elapsed_time_seconds >= 270 and not link_info:
         raise Exception("Failed to get download information ! Probably dead link 💀")
@@ -515,7 +595,7 @@ async def on_output(output: str):
 async def aria2_Download(link, num):
     global start_time, down_msg
     name_d = get_Aria2c_Name(link)
-    start_time = datetime.datetime.now()
+    start_time = datetime.now()
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{name_d}</code>\n"
 
     # Create a command to run aria2p with the link
@@ -613,7 +693,7 @@ async def TelegramDownload(link, num):
         raise Exception("Couldn't Download Telegram Message")
 
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
-    start_time = datetime.datetime.now()
+    start_time = datetime.now()
     file_path = ospath.join(d_fol_path, name)
     await message.download(  # type: ignore
         progress=download_progress, in_memory=False, file_name=file_path
@@ -631,7 +711,7 @@ async def YTDL_Status(link, num):
     name = get_YT_Name(link)
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
 
-    YTDL_Thread = threading.Thread(target=YouTubeDL, name="YouTubeDL", args=(link,))
+    YTDL_Thread = Thread(target=YouTubeDL, name="YouTubeDL", args=(link,))
     YTDL_Thread.start()
 
     while YTDL_Thread.is_alive():  # Until ytdl is downloading
@@ -1079,7 +1159,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
     message = (
         f"\n╭「{bar}」 » __{percentage:.2f}%__\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** __{engine}__"
         + f"\n├⏳ **Time Left »** __{eta}__"
-        + f"\n├🍃 **Time Spent »** __{convert_seconds((datetime.datetime.now() - task_start).seconds)}__"
+        + f"\n├🍃 **Time Spent »** __{convert_seconds((datetime.now() - task_start).seconds)}__"
         + f"\n├✅ **Processed »** __{done}__\n╰📦 **Total Size »** __{left}__"
     )
     sys_text = system_info()
@@ -1101,7 +1181,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
 
 async def progress_bar(current, total):
     upload_speed = 4 * 1024 * 1024
-    elapsed_time_seconds = (datetime.datetime.now() - start_time).seconds
+    elapsed_time_seconds = (datetime.now() - start_time).seconds
     if current > 0 and elapsed_time_seconds > 0:
         upload_speed = current / elapsed_time_seconds
     eta = (total_down_size - current - sum(up_bytes)) / upload_speed
@@ -1129,7 +1209,7 @@ async def upload_file(file_path, real_name):
     try:
         if f_type == "video":
             # For Renaming to mp4
-            file_path = video_extension_fixer(file_path)
+            # file_path = await video_extension_fixer(file_path)
             # Generate Thumbnail and Get Duration
             thmb_path, seconds = Thumbnail_Maintainer(file_path)
             with Image.open(thmb_path) as img:
@@ -1146,9 +1226,6 @@ async def upload_file(file_path, real_name):
                 progress=progress_bar,
                 reply_to_message_id=sent.id,
             )
-
-            if thmb_path != default_thumb or thmb_path != custom_thumb:
-                os.remove(thmb_path)
 
         elif f_type == "audio":
             thmb_path = None if not ospath.exists(custom_thumb) else custom_thumb
@@ -1205,6 +1282,9 @@ async def Leech(folder_path: str, remove: bool):
     for f in natsorted(files):
         file_path = ospath.join(folder_path, f)
 
+        if get_file_type(file_path) == "video":
+            file_path = await video_extension_fixer(file_path)
+
         leech = await size_checker(file_path, remove)
 
         if leech:  # File was splitted
@@ -1220,7 +1300,7 @@ async def Leech(folder_path: str, remove: bool):
                 file_name = ospath.basename(short_path)
                 new_path = shorterFileName(short_path)
                 os.rename(short_path, new_path)
-                start_time = datetime.datetime.now()
+                start_time = datetime.now()
                 current_time[0] = time.time()
                 text_msg = f"<b>📤 UPLOADING SPLIT » {count} OF {len(dir_list)} Files</b>\n\n<code>{file_name}</code>\n"
                 try:
@@ -1249,7 +1329,7 @@ async def Leech(folder_path: str, remove: bool):
             # Trimming filename upto 50 chars
             new_path = shorterFileName(file_path)
             os.rename(file_path, new_path)
-            start_time = datetime.datetime.now()
+            start_time = datetime.now()
             current_time[0] = time.time()
             text_msg = f"<b>📤 UPLOADING » </b>\n\n<code>{file_name}</code>\n"
             try:
@@ -1296,7 +1376,7 @@ async def Zip_Handler(d_fol_path: str, is_split: bool, remove: bool):
 
     print("\nNow ZIPPING the folder...")
     current_time[0] = time.time()
-    start_time = datetime.datetime.now()
+    start_time = datetime.now()
     if not ospath.exists(temp_zpath):
         makedirs(temp_zpath)
     await archive(d_fol_path, is_split, remove)
@@ -1476,7 +1556,7 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
             new_name = ospath.join(d_fol_path, custom_name)
             os.rename(current_name, new_name)
 
-    cdt = datetime.datetime.now()
+    cdt = datetime.now()
     cdt_ = cdt.strftime("Uploaded » %Y-%m-%d %H:%M:%S")
     mirror_dir_ = ospath.join(mirror_dir, cdt_)
 
@@ -1515,7 +1595,7 @@ async def FinalStep(msg, is_leech: bool):
         + f"╭<b>📛 Name » </b><code>{d_name}</code>\n"
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
-        + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.datetime.now() - task_start).seconds)}</code>"
+        + f"╰<b>🍃 Saved Time »</b> <code>{convert_seconds((datetime.now() - task_start).seconds)}</code>"
     )
 
     await bot.send_message(
@@ -1583,7 +1663,7 @@ current_time.append(time.time())
 folder_info = [0, 1]
 down_count = []
 down_count.append(1)
-start_time = datetime.datetime.now()
+start_time = datetime.now()
 link, uz_pswd, z_pswd, text_msg = "something", "", "", ""
 sources, service = [], None
 is_dualzip, is_unzip, is_zip, is_ytdl, is_dir = (
@@ -1647,10 +1727,12 @@ try:
     z_pswd = "" if z_pswd.lower() == "e" else z_pswd
     custom_name = "" if custom_name.lower() == "d" else custom_name
 
-    task_start = datetime.datetime.now()
+    task_start = datetime.now()
     down_msg = f"<b>📥 DOWNLOADING » </b>\n"
     task_msg = f"<b>🦞 TASK MODE » </b>"
-    dump_task = task_msg + f"<i>{TYPE} {MODE} as {UPLOAD_MODE}</i>\n\n<b>🖇️ SOURCES » </b>"
+    dump_task = (
+        task_msg + f"<i>{TYPE} {MODE} as {UPLOAD_MODE}</i>\n\n<b>🖇️ SOURCES » </b>"
+    )
     if MODE == "Dir-Leech":
         if not ospath.exists(sources[0]):
             raise ValueError(f"Directory Path is Invalid ! Provided: {sources[0]}")
@@ -1676,7 +1758,7 @@ try:
                 ida = "🔗"
             dump_task += f"\n\n{ida} <code>{link}</code>"
     # Get the current date and time in the specified time zone
-    cdt = datetime.datetime.now(pytz.timezone("Asia/Kolkata"))
+    cdt = datetime.now(pytz.timezone("Asia/Kolkata"))
     # Format the date and time as a string
     dt = cdt.strftime(" %d-%m-%Y")
     dump_task += f"\n\n<b>📆 Task Date » </b><i>{dt}</i>"
@@ -1720,7 +1802,7 @@ try:
 
         sources = natsorted(sources)
         current_time[0] = time.time()
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
 
         if MODE == "Mirror":
             await Do_Mirror(sources, is_ytdl, is_zip, is_unzip, is_dualzip)  # type: ignore
@@ -1743,7 +1825,7 @@ except Exception as e:
     Error_Text = (
         "⍟───── [Colab Leech](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp) ─────⍟\n"
         + f"\n<b>TASK FAILED TO COMPLETE 💔</b>\n\n╭<b>📛 Name » </b> <code>{d_name}</code>\n├<b>🍃 Wasted Time » </b>"
-        + f"__{convert_seconds((datetime.datetime.now() - task_start).seconds)}__\n"  # type: ignore
+        + f"__{convert_seconds((datetime.now() - task_start).seconds)}__\n"  # type: ignore
         + f"<b>╰🤔 Reason » </b>__{e}__"
         + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
     )
