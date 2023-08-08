@@ -1810,26 +1810,31 @@ except Exception as e:
         + f"\n\n<i>⚠️ If You are Unknown with this **ERROR**, Then Forward This Message in [Colab Leecher Discussion](https://t.me/Colab_Leecher_Discuss) Where [Xron Trix](https://t.me/XronTrix) may fix it</i>"
     )
 
-    if msg:  # Ensuring That message was sent to Telegram
-        await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)  # type: ignore
-        await bot.send_photo(  # type: ignore
-            chat_id=chat_id,  # type: ignore
-            photo=thumb_path,  # type: ignore
-            caption=task_msg + Error_Text,  # type: ignore
-            reply_markup=InlineKeyboardMarkup(
-                [
+    async with Client(  # type: ignore
+        "my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN  # type: ignore
+    ) as bot:
+        try:
+            await bot.delete_messages(chat_id=chat_id, message_ids=msg.id)  # type: ignore
+            await bot.send_photo(  # type: ignore
+                chat_id=chat_id,  # type: ignore
+                photo=thumb_path,  # type: ignore
+                caption=task_msg + Error_Text,  # type: ignore
+                reply_markup=InlineKeyboardMarkup(
                     [
-                        InlineKeyboardButton(  # Opens a web URL
-                            "Report Issue 🥺",
-                            url="https://github.com/XronTrix10/Telegram-Leecher/issues",
-                        ),
-                        InlineKeyboardButton(  # Opens a web URL
-                            "Group Discuss 🤔",
-                            url="https://t.me/Colab_Leecher_Discuss",
-                        ),
-                    ],
-                ]
-            ),
-        )
+                        [
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Report Issue 🥺",
+                                url="https://github.com/XronTrix10/Telegram-Leecher/issues",
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Group Discuss 🤔",
+                                url="https://t.me/Colab_Leecher_Discuss",
+                            ),
+                        ],
+                    ]
+                ),
+            )
+        except Exception:
+            pass
 
     print(f"Error Occured: {e}")
