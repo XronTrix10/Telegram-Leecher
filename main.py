@@ -281,6 +281,15 @@ def thumbChecker():
     return False
 
 
+def isYtdlComplete():
+    for _d, _, filenames in os.walk(d_fol_path):
+        for f in filenames:
+            __, ext = ospath.splitext(f)
+            if ext in [".part", ".ytdl"]:
+                return False
+    return True
+
+
 def convertIMG(image_path):
     image = Image.open(image_path)
     if image.mode != "RGB":
@@ -1286,12 +1295,22 @@ async def upload_file(file_path, real_name):
 
 async def downloadManager(source, is_ytdl: bool):
     global link_info, msg
+    message = "\n<b>Please Wait...</b> ⏳\n<i>Merging YTDL Video...</i> 🐬"
     if is_ytdl:
         for i, link in enumerate(source):
             await YTDL_Status(link, i + 1)
-        time.sleep(5)  # Giving Time to Merge The Last Video
+        try:
+            await bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=msg.id,  # type: ignore
+                    text=task_msg + down_msg + message + sysINFO(),
+                    reply_markup=keyboard(),
+            )
+        except Exception:
+            pass
+        while not isYtdlComplete():
+            time.sleep(2)
     else:
-        # Downloading Files
         for i, link in enumerate(source):
             if "drive.google.com" in link:
                 await g_DownLoad(link, i + 1)
@@ -1299,7 +1318,17 @@ async def downloadManager(source, is_ytdl: bool):
                 await TelegramDownload(link, i + 1)
             elif "youtube.com" in link or "youtu.be" in link:
                 await YTDL_Status(link, i + 1)
-                time.sleep(5)  # Giving Time to Merge The Last Video
+                try:
+                    await bot.edit_message_text(
+                            chat_id=chat_id,
+                            message_id=msg.id,  # type: ignore
+                            text=task_msg + down_msg + message + sysINFO(),
+                            reply_markup=keyboard(),
+                    )
+                except Exception:
+                    pass
+                while not isYtdlComplete():
+                    time.sleep(2)
             else:
                 aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
                 try:
