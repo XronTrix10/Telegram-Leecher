@@ -17,13 +17,15 @@
 
 ## **💡 Features**
 
-- Added Custom Name support ( New 🔥)
-- Download Multiple Files or Folders from Multiple Links ( New 🔥)
-- Added Support For All Type Archive Extraction ( New 🔥)
-- Support for Multi-Part Archive Extraction ( New 🔥)
-- Upload Directly From Colab Container ( New 🔥)
-- Auto Generate Thumbnail From Video Files ( New 🔥)
-- Download Directly To Google Drive / Mirroring ( New 🔥)
+- Powerful Video Converter, Convert Videos to mp4 / mkv ( New 🔥)
+- Get Restrricted Content From Telegram ( New 🔥)
+- Added Custom Name support 
+- Download Multiple Files or Folders from Multiple Links 
+- Added Support For All Type Archive Extraction 
+- Support for Multi-Part Archive Extraction
+- Upload Directly From Colab Container
+- Auto Generate Thumbnail From Video Files 
+- Download Directly To Google Drive / Mirroring
 - Zip Folders/Files
 - Upload Files to Telegram
 - Shows Operation Status with bar and percentage
