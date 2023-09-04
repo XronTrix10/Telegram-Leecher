@@ -8,17 +8,23 @@
 
 ## **📖 Click To Open The Notebook**
 
-<a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255389999-a0d261cf-893a-46a7-9a3d-2bb52811b997.png" alt="Open In Colab" height=50px/></a>
+<a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255389999-a0d261cf-893a-46a7-9a3d-2bb52811b997.png" alt="Open In Colab" width=200px/></a>
 
 
 ## 🎓 **How To Use**
+
+<h3>Read <a href="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS">INSTRUCTIONS</a></h3>
+
+<br>
+
+<h3>Watch YouTube Tutorial</h3>
 
 [![Watch It](https://img.youtube.com/vi/6LvYd-oO3U0/0.jpg)](https://www.youtube.com/watch?v=6LvYd-oO3U0)
 
 ## **💡 Features**
 
 - Powerful Video Converter, Convert Videos to mp4 / mkv ( New 🔥)
-- Get Restrricted Content From Telegram ( New 🔥)
+- Get Restrricted Content From Telegram ( Beta Stage )
 - Added Custom Name support 
 - Download Multiple Files or Folders from Multiple Links 
 - Added Support For All Type Archive Extraction 
