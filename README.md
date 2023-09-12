@@ -2,7 +2,7 @@
 
 <br>
 
-<p align="center"><b>「 A Python Project to Transfer Files / Folders to Telegram and Google Drive with the help of Google Colab With Multi-Functionality 」</b></p>
+<p align="center"><strong>「 A Pyrogram based Telegram Bot to Transfer Files / Folders to Telegram and Google Drive with the help of Google Colab With Multi-Functionality 」</strong></p>
 
 <br>
 
@@ -11,7 +11,7 @@
 <a href="https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp?usp=sharing" target="_parent"><img src="https://user-images.githubusercontent.com/125879861/255389999-a0d261cf-893a-46a7-9a3d-2bb52811b997.png" alt="Open In Colab" width=200px/></a>
 
 
-## 🎓 **How To Use**
+## 🎓 **How To Deploy**
 
 <h3>Read <a href="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS">INSTRUCTIONS</a></h3>
 
@@ -23,6 +23,7 @@
 
 ## **💡 Features**
 
+- Easy To Use With Bot Commands ( Update 🔥 )
 - Powerful Video Converter, Convert Videos to mp4 / mkv ( New 🔥)
 - Get Restrricted Content From Telegram ( Beta Stage )
 - Added Custom Name support 
@@ -66,13 +67,10 @@
 
 - You need to be aware of Runtime Disconnections
 - Limited Disk Storage in Free Colab Account ~84 GB
-- Video Splitting is not supported yet
-- Links are only taken from Notebook. Bot Commands are not available till now
-<!-- - Which Limits the zip process of files size to ~41 GB
-- Have to manually upload config files ( token.pickle, thmb.jpg, etc ) -->
 
 ## **🚨 NOTE:**
 
+- Video Splitting is intentionally disabled to avoid video curruptions. Instead, they are zipped if they exceed MAX_UPLOAD_SIZE
 - Magnet or Torrent Links are supported, But avoid using, because `Google Colab Stricly Prohibits Torrents`
 - Downloading `YouTube Video without permission of the owner` can lead to copyright issues. Use with Caution
 
@@ -81,6 +79,11 @@
 <a href="https://t.me/Colab_Leecher" target="_parent"><img src="https://img.shields.io/badge/-Channel-blue?color=white&logo=telegram&logoColor=vlue"></a>
 
 <a href="https://t.me/Colab_Leecher_Discuss" target="_parent"><img src="https://img.shields.io/badge/-Group-blue?color=white&logo=telegram&logoColor=vlue"></a>
+
+
+## **⚖️ License**
+
+<h4><a href="https://github.com/XronTrix10/Telegram-Leecher/blob/main/LICENSE">GPL-3.0 license</a></h4>
 
 <br>
 
@@ -98,6 +101,8 @@
 
 <sub>Source: <a href="https://research.google.com/colaboratory/faq.html">Colab FAQ</a></sub>
 
-## _Please Leave a 🌟 If this repo helped you_
+<br>
 
-#### Pull Requests are welcome 💗
+<h3 align="center">Please Leave a 🌟 If this repo Helped you</h4>
+
+<h4 align="center">Pull Requests are welcome 💗</h4>

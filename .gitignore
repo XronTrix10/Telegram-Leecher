@@ -1,6 +1,11 @@
+.vscode/
 
 test*.*
 
 testing_purpose/
 
 *.bak
+
+__pycache__/
+
+*.session
