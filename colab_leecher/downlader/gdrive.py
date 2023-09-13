@@ -18,8 +18,8 @@ from colab_leecher.utility.variables import Gdrive, Messages, Paths, BotTimes, T
 
 async def build_service():
     global Gdrive
-    if ospath.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
+    if ospath.exists(Paths.access_token):
+        with open(Paths.access_token, "rb") as token:
             creds = pickle.load(token)
         # Build the service
         Gdrive.service = build("drive", "v3", credentials=creds)

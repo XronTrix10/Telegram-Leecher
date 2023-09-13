@@ -71,6 +71,7 @@ class Paths:
     temp_unzip_path = f"{WORK_PATH}/Unzipped_Files"
     temp_files_dir = f"{WORK_PATH}/dir_leech_temp"
     thumbnail_ytdl = f"{WORK_PATH}/ytdl_thumbnails"
+    access_token = "/content/token.pickle"
 
 
 class Messages:
