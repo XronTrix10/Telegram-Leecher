@@ -1,8 +1,13 @@
+# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
+
+
 # @title 🖥️ Main Colab Leech Code
 
 # @title Main Code
 # @markdown <div><center><img src="https://user-images.githubusercontent.com/125879861/255391401-371f3a64-732d-4954-ac0f-4f093a6605e1.png" height=80></center></div>
+# @markdown <center><h4><a href="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS">READ</a> How to use</h4></center>
 
+# @markdown <br>
 
 API_ID = 0  # @param {type: "integer"}
 API_HASH = ""  # @param {type: "string"}
@@ -12,18 +17,42 @@ DUMP_ID = 0  # @param {type: "integer"}
 
 
 import subprocess, time, json, shutil, os
+from IPython.display import clear_output
 from threading import Thread
 
 Working = True
 
+banner = '''
+
+ ____   ____.______  ._______  .______       _____._.______  .___  ____   ____
+ \\   \\_/   /: __   \\ : .___  \\ :      \\      \\__ _:|: __   \\ : __| \\   \\_/   /
+  \\___ ___/ |  \\____|| :   |  ||       |       |  :||  \\____|| : |  \\___ ___/ 
+  /   _   \\ |   :  \\ |     :  ||   |   |       |   ||   :  \\ |   |  /   _   \\ 
+ /___/ \\___\\|   |___\\ \\_. ___/ |___|   |       |   ||   |___\\|   | /___/ \\___\\
+            |___|       :/         |___|       |___||___|    |___|            
+                        :                                                     
+                                                                              
+ 
+              _____     __     __     __              __          
+             / ___/__  / /__ _/ /    / / ___ ___ ____/ /  ___ ____
+            / /__/ _ \\/ / _ `/ _ \\  / /_/ -_) -_) __/ _ \\/ -_) __/
+            \\___/\\___/_/\\_,_/_.__/ /____|__/\\__/\\__/_//_/\\__/_/   
+
+                                                
+
+'''
+
+print(banner)
+
 def Loading():
-    load = ["▁", "▃", "▄", "▅", "▆", "▇", "▆", "▅", "▄", "▃"]
-    a, c = 0, 0
+    white = 37
+    black = 0
     while Working:
-        print(f"\r{load[a]}  Preparing Colab Leecher" + "." * (c + 1), end="")
-        a = (a + 1) % 10
-        c = (c + 1) % 4
-        time.sleep(0.5)
+        print("\r" + "░"*white + "▒▒"+ "▓"*black + "▒▒" + "░"*white, end="")
+        black = (black + 2) % 75
+        white = (white -1) if white != 0 else 37
+        time.sleep(2)
+    clear_output()
 
 
 _Thread = Thread(target=Loading, name="Prepare", args=())

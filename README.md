@@ -26,17 +26,14 @@
 - Easy To Use With Bot Commands ( Update 🔥 )
 - Powerful Video Converter, Convert Videos to mp4 / mkv ( New 🔥)
 - Get Restrricted Content From Telegram ( Beta Stage )
-- Added Custom Name support 
+- Added Custom File Name Support 
 - Download Multiple Files or Folders from Multiple Links 
-- Added Support For All Type Archive Extraction 
-- Support for Multi-Part Archive Extraction
+- Support for Multi-Part Archive Extraction of all Type Extensions
 - Upload Directly From Colab Container
 - Auto Generate Thumbnail From Video Files 
 - Download Directly To Google Drive / Mirroring
 - Zip Folders/Files
-- Upload Files to Telegram
-- Shows Operation Status with bar and percentage
-- Split support for all files > 2000 MB
+- Split support for all files > 2GB/4GB
 
 ## **🔗 Supported Links**
 
@@ -53,8 +50,6 @@
 
 - No need of VPS or RDP
 - Immersive Network speed in Google Servers
-- Run Multiple Tasks in Multiple Colab Files at same time
-- Uploading to Telegram is way safer than Google Shared Drives
 - Unlimited Storage in Telegram
 - Upload Files of size upto 2000 MB
 - Premium Upload upto 4000 MB ( Coming Soon ♨️)
