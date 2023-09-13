@@ -150,3 +150,4 @@ async def get_YT_Name(link):
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
+            return "UNKNOWN DOWNLOAD NAME"

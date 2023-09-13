@@ -1,26 +1,32 @@
 # copyright 2023 © Xron Trix | https://github.com/Xrontrix10
 
-import os
+
 import pytz
 import shutil
 import logging
 from time import time
 from datetime import datetime
-from os import makedirs, path as ospath
+from os import makedirs, path as ospath, system
 from colab_leecher import OWNER, colab_bot, DUMP_ID
 from colab_leecher.downlader.manager import calDownSize, get_d_name, downloadManager
 from colab_leecher.utility.helper import getSize, applyCustomName, keyboard, sysINFO
-from colab_leecher.utility.handler import Leech, Unzip_Handler, Zip_Handler, SendLogs, cancelTask
+from colab_leecher.utility.handler import (
+    Leech,
+    Unzip_Handler,
+    Zip_Handler,
+    SendLogs,
+    cancelTask,
+)
 from colab_leecher.utility.variables import (
     BOT,
     MSG,
     BotTimes,
     Messages,
     Paths,
+    Aria2c,
     Transfer,
     TaskError,
 )
-
 
 
 async def taskScheduler():
@@ -136,7 +142,9 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
     if is_dir:
         for s in source:
             if not ospath.exists(s):
-                raise Exception("Provided directory does not exist !")
+                logging.error("Provided directory does not exist !")
+                await cancelTask("Provided directory does not exist !")
+                return
             Paths.down_path = s
             if is_zip:
                 await Zip_Handler(Paths.down_path, True, False)
@@ -184,10 +192,12 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
 
 
 async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
-    
-    if not ospath.exists("/content/drive"):
-        await cancelTask("Google Drive is NOT MOUNTED ! Stop the Bot and Run the Google Drive Cell to Mount, then Try again !")
-    
+    if not ospath.exists(Paths.MOUNTED_DRIVE):
+        await cancelTask(
+            "Google Drive is NOT MOUNTED ! Stop the Bot and Run the Google Drive Cell to Mount, then Try again !"
+        )
+        return
+
     if not ospath.exists(Paths.mirror_dir):
         makedirs(Paths.mirror_dir)
 

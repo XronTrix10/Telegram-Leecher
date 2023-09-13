@@ -34,6 +34,7 @@ async def media_Identifier(link):
     if media is None:
         logging.error("Couldn't Download Telegram Message")
         await cancelTask("Couldn't Download Telegram Message")
+        return
     return media, message
 
 

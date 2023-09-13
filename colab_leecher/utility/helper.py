@@ -12,7 +12,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 from asyncio import get_event_loop
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from colab_leecher.utility.variables import (
     BOT,
     MSG,
@@ -174,6 +174,10 @@ async def setThumbnail(message):
         th_set = event_loop.create_task(message.download(file_name=Paths.THMB_PATH)) 
         await th_set
         BOT.Setting.thumbnail = True
+        if BOT.State.task_going and MSG.status_msg:
+            await MSG.status_msg.edit_media(
+                InputMediaPhoto(Paths.THMB_PATH), reply_markup=keyboard()
+            )
         return True
     except Exception as e:
         BOT.Setting.thumbnail = True
@@ -326,7 +330,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
 
 def keyboard():
     return InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
-            ]
-        )
+        [
+            [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
+        ]
+    )

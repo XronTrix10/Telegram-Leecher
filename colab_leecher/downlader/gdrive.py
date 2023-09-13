@@ -21,8 +21,8 @@ async def build_service():
     if ospath.exists(Paths.access_token):
         with open(Paths.access_token, "rb") as token:
             creds = pickle.load(token)
-        # Build the service
-        Gdrive.service = build("drive", "v3", credentials=creds)
+            # Build the service
+            Gdrive.service = build("drive", "v3", credentials=creds)
     else:
         await cancelTask(
             "token.pickle NOT FOUND ! Stop the Bot and Run the Google Drive Cell to Generate, then Try again !"
@@ -32,7 +32,7 @@ async def build_service():
 async def g_DownLoad(link, num):
     global start_time, down_msg
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{Messages.download_name}</code>\n"
-    file_id = getIDFromURL(link)
+    file_id = await getIDFromURL(link)
     meta = getFileMetadata(file_id)
 
     if meta.get("mimeType") == "application/vnd.google-apps.folder":
@@ -48,6 +48,7 @@ async def getIDFromURL(link: str):
         if res is None:
             await cancelTask("G-Drive ID not found in Link.")
             logging.error("G-Drive ID not found.")
+            return
         else:
             return res.group(3)
     parsed = urlparse(link)
@@ -136,11 +137,13 @@ async def gDownloadFile(file_id, path):
         err = "Sorry, the specified file or folder does not exist or is not accessible."
         logging.info(err)
         await cancelTask(err)
+        return
     else:
         if file["mimeType"].startswith("application/vnd.google-apps"):
             err = "Sorry, the specified ID is for a Google Docs, Sheets, Slides, or Forms document. You can only download these types of files in specific formats."
             logging.info(err)
             await cancelTask(err)
+            return
         else:
             try:
                 file_name = file.get("name", f"untitleddrivefile_{file_id}")
@@ -180,7 +183,7 @@ async def gDownloadFile(file_id, path):
                         eta=getTime(eta),
                         done=sizeUnit(down_done),
                         left=sizeUnit(Transfer.total_down_size),
-                        engine="G-API ♻️",
+                        engine="G-Api ♻️",
                     )
                 Transfer.down_bytes.append(int(file["size"]))
 
@@ -190,13 +193,16 @@ async def gDownloadFile(file_id, path):
                 ):
                     logging.error("Download quota for the file has been exceeded.")
                     await cancelTask("Download quota for the file has been exceeded.")
+                    return
                 else:
                     logging.error("HttpError While Downloading: {0}".format(error))
                     await cancelTask("HttpError While Downloading: {0}".format(error))
+                    return
 
             except Exception as e:
                 logging.error("Error downloading: {0}".format(e))
                 await cancelTask("Error downloading: {0}".format(e))
+                return
 
 
 async def gDownloadFolder(folder_id, path):
