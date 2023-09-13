@@ -51,9 +51,8 @@ async def videoConverter(file: str):
             pass
 
     name, ext = ospath.splitext(file)
-    logging.info(f"File extension: {ext}")
+
     if ext.lower() in [".mkv", ".mp4"]:
-        logging.info(f"Returning")
         return file  # Return if It's already mp4 / mkv file
 
     c, out_file, Err = 0, f"{name}.{BOT.Options.video_out}", False
@@ -100,7 +99,7 @@ async def videoConverter(file: str):
         Err = False
 
     if Err:
-        print("This Video Can't Be Converted !")
+        logging.error("This Video Can't Be Converted !")
         return file
     else:
         os.remove(file)

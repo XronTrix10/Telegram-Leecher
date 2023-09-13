@@ -4,12 +4,13 @@
 import logging
 from asyncio import sleep
 from natsort import natsorted
+from colab_leecher.utility.handler import cancelTask
 from colab_leecher.downlader.ytdl import YTDL_Status, get_YT_Name
 from colab_leecher.downlader.aria2 import aria2_Download, get_Aria2c_Name
 from colab_leecher.utility.helper import isYtdlComplete, keyboard, sysINFO
 from colab_leecher.downlader.telegram import TelegramDownload, media_Identifier
 from colab_leecher.utility.variables import BOT, Transfer, MSG, Messages, Aria2c
-from colab_leecher.downlader.gdrive import g_DownLoad, get_Gfolder_size, getFileMetadata, getIDFromURL
+from colab_leecher.downlader.gdrive import build_service, g_DownLoad, get_Gfolder_size, getFileMetadata, getIDFromURL
 
 async def downloadManager(source, is_ytdl: bool):
    
@@ -47,7 +48,9 @@ async def downloadManager(source, is_ytdl: bool):
                     Aria2c.link_info = False
                     await aria2_Download(link, i + 1)
             except Exception as Error:
-                logging.exception(f"Error While Downloading: {Error}")
+                await cancelTask(f"Download Error: {str(Error)}")
+                logging.error(f"Error While Downloading: {Error}")
+                return
 
 
 async def calDownSize(sources):
@@ -68,10 +71,11 @@ async def calDownSize(sources):
                     )
                 else:
                     logging.error(f"Error in G-API: {e}")
-            if meta.get("mimeType") == "application/vnd.google-apps.folder":  # type: ignore
-                Transfer.total_down_size += get_Gfolder_size(id)
             else:
-                Transfer.total_down_size += int(meta["size"])  # type: ignore
+                if meta.get("mimeType") == "application/vnd.google-apps.folder":  
+                    Transfer.total_down_size += get_Gfolder_size(id)
+                else:
+                    Transfer.total_down_size += int(meta["size"])
         elif "t.me" in link:
             media, _ = await media_Identifier(link)
             if media is not None:
@@ -90,6 +94,7 @@ async def get_d_name(link: str):
         Messages.download_name = BOT.Options.custom_name
         return
     if "drive.google.com" in link:
+        await build_service()
         id = getIDFromURL(link)
         meta = getFileMetadata(id)
         Messages.download_name = meta["name"]
@@ -97,6 +102,6 @@ async def get_d_name(link: str):
         media, _ = await media_Identifier(link)
         Messages.download_name = media.file_name if hasattr(media, "file_name") else "None"  # type: ignore
     elif "youtube.com" in link or "youtu.be" in link:
-        Messages.download_name = get_YT_Name(link)
+        Messages.download_name = await get_YT_Name(link) # type: ignore
     else:
         Messages.download_name = get_Aria2c_Name(link)

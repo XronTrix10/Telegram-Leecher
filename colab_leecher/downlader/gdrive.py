@@ -3,7 +3,7 @@
 
 import io
 import logging
-from google.colab import auth
+import pickle
 from natsort import natsorted
 from re import search as re_search
 from os import makedirs, path as ospath
@@ -11,17 +11,22 @@ from urllib.parse import parse_qs, urlparse
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
+from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.helper import sizeUnit, getTime, speedETA, status_bar
 from colab_leecher.utility.variables import Gdrive, Messages, Paths, BotTimes, Transfer
 
 
-def build_service():
+async def build_service():
     global Gdrive
-    # create credentials object using colab auth
-    auth.authenticate_user()
-    Gdrive.service = build("drive", "v3")
-
-    return Gdrive.service
+    if ospath.exists("token.pickle"):
+        with open("token.pickle", "rb") as token:
+            creds = pickle.load(token)
+        # Build the service
+        Gdrive.service = build("drive", "v3", credentials=creds)
+    else:
+        await cancelTask(
+            "token.pickle NOT FOUND ! Stop the Bot and Run the Google Drive Cell to Generate, then Try again !"
+        )
 
 
 async def g_DownLoad(link, num):
@@ -36,13 +41,15 @@ async def g_DownLoad(link, num):
         await gDownloadFile(file_id, Paths.down_path)
 
 
-def getIDFromURL(link: str):
+async def getIDFromURL(link: str):
     if "folders" in link or "file" in link:
         regex = r"https:\/\/drive\.google\.com\/(?:drive(.*?)\/folders\/|file(.*?)?\/d\/)([-\w]+)"
         res = re_search(regex, link)
         if res is None:
-            raise IndexError("G-Drive ID not found.")
-        return res.group(3)
+            await cancelTask("G-Drive ID not found in Link.")
+            logging.error("G-Drive ID not found.")
+        else:
+            return res.group(3)
     parsed = urlparse(link)
     return parse_qs(parsed.query)["id"][0]
 
@@ -52,7 +59,7 @@ def getFilesByFolderID(folder_id):
     files = []
     while True:
         response = (
-            service.files()  # type: ignore
+            Gdrive.service.files()  # type: ignore
             .list(
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
@@ -74,7 +81,7 @@ def getFilesByFolderID(folder_id):
 
 def getFileMetadata(file_id):
     return (
-        service.files()  # type: ignore
+        Gdrive.service.files()  # type: ignore
         .get(fileId=file_id, supportsAllDrives=True, fields="name, id, mimeType, size")
         .execute()
     )
@@ -84,7 +91,7 @@ def get_Gfolder_size(folder_id):
     try:
         query = "trashed = false and '{0}' in parents".format(folder_id)
         results = (
-            service.files()  # type: ignore
+            Gdrive.service.files()  # type: ignore
             .list(
                 supportsAllDrives=True,
                 includeItemsFromAllDrives=True,
@@ -126,18 +133,14 @@ async def gDownloadFile(file_id, path):
     try:
         file = getFileMetadata(file_id)
     except HttpError as error:
-        logging.info("An error occurred: {0}".format(error))
-        file = None
-
-    if file is None:
-        logging.info(
-            "Sorry, the specified file or folder does not exist or is not accessible."
-        )
+        err = "Sorry, the specified file or folder does not exist or is not accessible."
+        logging.info(err)
+        await cancelTask(err)
     else:
         if file["mimeType"].startswith("application/vnd.google-apps"):
-            logging.info(
-                "Sorry, the specified ID is for a Google Docs, Sheets, Slides, or Forms document. You can only download these types of files in specific formats."
-            )
+            err = "Sorry, the specified ID is for a Google Docs, Sheets, Slides, or Forms document. You can only download these types of files in specific formats."
+            logging.info(err)
+            await cancelTask(err)
         else:
             try:
                 file_name = file.get("name", f"untitleddrivefile_{file_id}")
@@ -146,12 +149,14 @@ async def gDownloadFile(file_id, path):
                 file_contents = io.BytesIO()
 
                 # Download the file or folder contents to the BytesIO stream.
-                request = service.files().get_media(  # type: ignore
+                request = Gdrive.service.files().get_media(  # type: ignore
                     fileId=file_id, supportsAllDrives=True
                 )
+
                 file_downloader = MediaIoBaseDownload(
                     file_contents, request, chunksize=70 * 1024 * 1024
                 )
+
                 done = False
                 while done is False:
                     status, done = file_downloader.next_chunk()
@@ -184,10 +189,14 @@ async def gDownloadFile(file_id, path):
                     error
                 ):
                     logging.error("Download quota for the file has been exceeded.")
+                    await cancelTask("Download quota for the file has been exceeded.")
                 else:
-                    logging.error("Error downloading: {0}".format(error))
+                    logging.error("HttpError While Downloading: {0}".format(error))
+                    await cancelTask("HttpError While Downloading: {0}".format(error))
+
             except Exception as e:
                 logging.error("Error downloading: {0}".format(e))
+                await cancelTask("Error downloading: {0}".format(e))
 
 
 async def gDownloadFolder(folder_id, path):

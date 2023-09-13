@@ -6,13 +6,11 @@ import shutil
 import logging
 from time import time
 from datetime import datetime
-from google.colab import drive
 from os import makedirs, path as ospath
 from colab_leecher import OWNER, colab_bot, DUMP_ID
-from colab_leecher.downlader.gdrive import build_service
-from colab_leecher.utility.helper import getSize, applyCustomName, keyboard, sysINFO
 from colab_leecher.downlader.manager import calDownSize, get_d_name, downloadManager
-from colab_leecher.utility.handler import Leech, Unzip_Handler, Zip_Handler, FinalStep
+from colab_leecher.utility.helper import getSize, applyCustomName, keyboard, sysINFO
+from colab_leecher.utility.handler import Leech, Unzip_Handler, Zip_Handler, SendLogs, cancelTask
 from colab_leecher.utility.variables import (
     BOT,
     MSG,
@@ -21,8 +19,8 @@ from colab_leecher.utility.variables import (
     Paths,
     Transfer,
     TaskError,
-    Gdrive,
 )
+
 
 
 async def taskScheduler():
@@ -43,6 +41,8 @@ async def taskScheduler():
     )
     Transfer.sent_file = []
     Transfer.sent_file_names = []
+    Transfer.down_bytes = [0, 0]
+    Transfer.up_bytes = [0, 0]
 
     if is_dir:
         if not ospath.exists(BOT.SOURCE[0]):
@@ -56,13 +56,10 @@ async def taskScheduler():
         Transfer.total_down_size = getSize(BOT.SOURCE[0])
         Messages.download_name = ospath.basename(BOT.SOURCE[0])
     else:
-        await calDownSize(BOT.SOURCE)
-        await get_d_name(BOT.SOURCE[0])
         for link in BOT.SOURCE:
             if "t.me" in link:
                 ida = "💬"
             elif "drive.google.com" in link:
-                Gdrive.service = build_service()
                 ida = "♻️"
             elif "magnet" in link or "torrent" in link:
                 ida = "🧲"
@@ -94,10 +91,11 @@ async def taskScheduler():
     Messages.link_p = str(DUMP_ID)[4:]
 
     try:
-        os.system(f"aria2c -d {Paths.WORK_PATH} -o Hero.jpg 'https://picsum.photos/900/600'")
+        os.system(
+            f"aria2c -d {Paths.WORK_PATH} -o Hero.jpg 'https://picsum.photos/900/600'"
+        )
     except Exception:
         Paths.HERO_IMAGE = "/content/Telegram-Leecher/custom_thmb.jpg"
-    
 
     MSG.sent_msg = await colab_bot.send_message(chat_id=DUMP_ID, text=src_text[0])
 
@@ -108,7 +106,7 @@ async def taskScheduler():
     Messages.src_link = f"https://t.me/c/{Messages.link_p}/{MSG.sent_msg.id}"
     Messages.task_msg += f"__[{BOT.Mode.type.capitalize()} {BOT.Mode.mode.capitalize()} as {BOT.Setting.stream_upload}]({Messages.src_link})__\n\n"
 
-    await MSG.start.delete()
+    await MSG.status_msg.delete()
     MSG.status_msg = await colab_bot.send_photo(  # type: ignore
         chat_id=OWNER,
         photo=Paths.HERO_IMAGE,
@@ -118,6 +116,9 @@ async def taskScheduler():
         + sysINFO(),
         reply_markup=keyboard(),
     )
+
+    await calDownSize(BOT.SOURCE)
+    await get_d_name(BOT.SOURCE[0])
 
     if is_zip:
         Paths.down_path = ospath.join(Paths.down_path, Messages.download_name)
@@ -180,16 +181,14 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
         else:
             await Leech(Paths.down_path, True)
 
-    await FinalStep(True)
+    await SendLogs(True)
 
 
 async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
-    try:
-        if not ospath.exists("/content/drive"):
-            drive.mount("/content/drive")
-    except Exception as e:
-        logging.error(f"Failed to Mount Drive ! Because: {e}")
-
+    
+    if not ospath.exists("/content/drive"):
+        await cancelTask("Google Drive is NOT MOUNTED ! Stop the Bot and Run the Google Drive Cell to Mount, then Try again !")
+    
     if not ospath.exists(Paths.mirror_dir):
         makedirs(Paths.mirror_dir)
 
@@ -216,4 +215,4 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
     else:
         shutil.copytree(Paths.down_path, mirror_dir_)
 
-    await FinalStep(False)
+    await SendLogs(False)

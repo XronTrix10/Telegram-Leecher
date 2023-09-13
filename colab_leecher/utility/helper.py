@@ -2,14 +2,15 @@
 
 
 import os
-import psutil
 import math
+import psutil
 import logging
 from time import time
 from PIL import Image
 from os import path as ospath
 from datetime import datetime
 from urllib.parse import urlparse
+from asyncio import get_event_loop
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from colab_leecher.utility.variables import (
@@ -169,7 +170,9 @@ async def setThumbnail(message):
     try:
         if ospath.exists(Paths.THMB_PATH):
             os.remove(Paths.THMB_PATH)
-        await message.download(file_name=Paths.THMB_PATH)
+        event_loop = get_event_loop()
+        th_set = event_loop.create_task(message.download(file_name=Paths.THMB_PATH)) 
+        await th_set
         BOT.Setting.thumbnail = True
         return True
     except Exception as e:

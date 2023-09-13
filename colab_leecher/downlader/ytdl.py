@@ -1,17 +1,19 @@
 # copyright 2023 © Xron Trix | https://github.com/Xrontrix10
 
 
+import logging
 import yt_dlp
 from asyncio import sleep
 from threading import Thread
 from os import makedirs, path as ospath
+from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
 
 
 async def YTDL_Status(link, num):
     global Messages, YTDL
-    name = get_YT_Name(link)
+    name = await get_YT_Name(link)
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
 
     YTDL_Thread = Thread(target=YouTubeDL, name="YouTubeDL", args=(link,))
@@ -135,13 +137,16 @@ def YouTubeDL(url):
                 }
                 ydl.download([url])
         except Exception as e:
-            print(f"YTDL ERROR: {e}")
+            logging.error(f"YTDL ERROR: {e}")
 
 
-def get_YT_Name(link):
+async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
-        info = ydl.extract_info(link, download=False)
-        if "title" in info:  # type: ignore
-            return info["title"]  # type: ignore
-        else:
-            return "UNKNOWN DOWNLOAD NAME"
+        try:
+            info = ydl.extract_info(link, download=False)
+            if "title" in info:  # type: ignore
+                return info["title"]  # type: ignore
+            else:
+                return "UNKNOWN DOWNLOAD NAME"
+        except Exception as e:
+            await cancelTask(f"Can't Download from this link. Because: {str(e)}")

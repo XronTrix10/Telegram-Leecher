@@ -7,6 +7,7 @@ import logging
 import pathlib
 from asyncio import sleep
 from time import time
+from colab_leecher import OWNER, colab_bot
 from natsort import natsorted
 from datetime import datetime
 from os import makedirs, path as ospath
@@ -138,7 +139,8 @@ async def Zip_Handler(down_path: str, is_split: bool, remove: bool):
 
     try:
         MSG.status_msg = await MSG.status_msg.edit_text(
-            text=Messages.task_msg + Messages.status_head + sysINFO()
+            text=Messages.task_msg + Messages.status_head + sysINFO(),
+            reply_markup=keyboard(),
         )
     except Exception as e2:
         logging.error(f"Problem in ZipLeech !{e2}")
@@ -169,7 +171,8 @@ async def Unzip_Handler(down_path: str, remove: bool):
         text=Messages.task_msg
         + Messages.status_head
         + "\n⏳ __Starting.....__"
-        + sysINFO()
+        + sysINFO(),
+        reply_markup=keyboard(),
     )
     filenames = [str(p) for p in pathlib.Path(down_path).glob("**/*") if p.is_file()]
     for f in natsorted(filenames):
@@ -191,7 +194,40 @@ async def Unzip_Handler(down_path: str, remove: bool):
         shutil.rmtree(down_path)
 
 
-async def FinalStep(is_leech: bool):
+async def cancelTask(Reason: str):
+    text = f"#TASK_STOPPED\n\n**╭🔗 Source » **__[Here]({Messages.src_link})__\n**├🦄 Mode » **__{BOT.Mode.mode.capitalize()}__\n**├🤔 Reason » **__{Reason}__\n**╰🍃 Spent Time » **__{getTime((datetime.now() - BotTimes.start_time).seconds)}__"
+    if BOT.State.task_going:
+        try:
+            BOT.TASK.cancel()  # type: ignore
+            shutil.rmtree(Paths.WORK_PATH)
+        except Exception as e:
+            logging.error(f"Error Deleting Task Folder: {e}")
+        else:
+            logging.info(f"On-Going Task Cancelled !")
+        finally:
+            BOT.State.task_going = False
+            await MSG.status_msg.delete()
+            await colab_bot.send_message(
+                chat_id=OWNER,
+                text=text,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Channel 📣",
+                                url="https://t.me/Colab_Leecher",
+                            ),
+                            InlineKeyboardButton(  # Opens a web URL
+                                "Group 💬",
+                                url="https://t.me/Colab_Leecher_Discuss",
+                            ),
+                        ],
+                    ]
+                ),
+            )
+
+
+async def SendLogs(is_leech: bool):
     global Transfer, Messages
     final_text = f"<b>☘️ File Count:</b>  <code>{len(Transfer.sent_file)}</code>\n\n<b>📜 Logs:</b>\n"
     l_ink = "⌬─────[「 Colab Usage 」](https://colab.research.google.com/drive/12hdEqaidRZ8krqj7rpnyDzg1dkKmvdvp)─────⌬"
@@ -218,7 +254,6 @@ async def FinalStep(is_leech: bool):
     )
 
     if BOT.State.task_going:
-
         await MSG.sent_msg.reply_text(
             text=f"**SOURCE »** __[Here]({Messages.src_link})__" + last_text
         )
@@ -254,7 +289,9 @@ async def FinalStep(is_leech: bool):
                         f"https://t.me/c/{Messages.link_p}/{Transfer.sent_file[i].id}"
                     )
                     fileName = Transfer.sent_file_names[i]
-                    fileText = f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
+                    fileText = (
+                        f"\n({str(i+1).zfill(2)}) <a href={file_link}>{fileName}</a>"
+                    )
                     if len(final_text + fileText) >= 4096:
                         final_texts.append(final_text)
                         final_text = fileText

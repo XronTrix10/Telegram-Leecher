@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from os import path as ospath
 from colab_leecher import colab_bot
+from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import Transfer, Paths
 from colab_leecher.utility.helper import speedETA, getTime, sizeUnit, status_bar
 
@@ -32,6 +33,7 @@ async def media_Identifier(link):
     )
     if media is None:
         logging.error("Couldn't Download Telegram Message")
+        await cancelTask("Couldn't Download Telegram Message")
     return media, message
 
 
@@ -56,7 +58,9 @@ async def TelegramDownload(link, num):
         name = media.file_name if hasattr(  # type: ignore
             media, "file_name") else "None"
     else:
-        raise Exception("Couldn't Download Telegram Message")
+        logging.error("Couldn't Download Telegram Message")
+        await cancelTask("Couldn't Download Telegram Message")
+        return
 
     down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
     start_time = datetime.now()

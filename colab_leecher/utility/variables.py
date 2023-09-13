@@ -8,7 +8,7 @@ from pyrogram.types import Message
 
 class BOT:
     SOURCE = []
-
+    TASK = None
     class Setting:
         stream_upload = "Media"
         convert_video = "Yes"
@@ -84,7 +84,6 @@ class Messages:
 
 
 class MSG:
-    start = Message(id=0)
     sent_msg = Message(id=1)
     status_msg = Message(id=2)
 

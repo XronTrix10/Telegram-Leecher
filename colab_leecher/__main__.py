@@ -1,18 +1,18 @@
 # copyright 2023 © Xron Trix | https://github.com/Xrontrix10
 
 
-import logging, shutil
+import logging
 from pyrogram import filters
 from datetime import datetime
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
 from .utility.task_manager import taskScheduler
-from .utility.variables import BOT, MSG, BotTimes, Messages, Paths
-from .utility.helper import getTime, isLink, setThumbnail, message_deleter
+from .utility.variables import BOT, MSG, BotTimes
+from colab_leecher.utility.handler import cancelTask
+from .utility.helper import isLink, setThumbnail, message_deleter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 src_request_msg = None
-task = None
 
 
 @colab_bot.on_message(filters.command("start") & filters.private)
@@ -67,13 +67,13 @@ async def send_settings(client, message, msg_id, command: bool):
         ]
     )
     text = "**CURRENT BOT SETTINGS ⚙️**"
-    text += f"\n\nUPLOAD BOT: <code>{BOT.Setting.stream_upload}</code>"
-    text += f"\nCONVERT VIDEO: <code>{BOT.Setting.convert_video}</code>"
-    text += f"\nVIDEO OUT: <code>{BOT.Options.video_out}</code>"
-    text += f"\nCAPTION: <code>{BOT.Setting.caption}</code>"
+    text += f"\n\n╭UPLOAD BOT: <code>{BOT.Setting.stream_upload}</code>"
+    text += f"\n├CONVERT VIDEO: <code>{BOT.Setting.convert_video}</code>"
+    text += f"\n├VIDEO OUT: <code>{BOT.Options.video_out}</code>"
+    text += f"\n├CAPTION: <code>{BOT.Setting.caption}</code>"
     pr = "None" if BOT.Setting.prefix == "" else "Exists"
     thmb = "None" if not BOT.Setting.thumbnail else "Exists"
-    text += f"\nPREFIX: <code>{pr}</code>\nTHUMBNAIL: <code>{thmb}</code>"
+    text += f"\n╰PREFIX: <code>{pr}</code>\nTHUMBNAIL: <code>{thmb}</code>"
     if command:
         await message.reply_text(text=text, reply_markup=keyboard)
     else:
@@ -103,37 +103,29 @@ async def setPrefix(client, message):
 @colab_bot.on_message(filters.create(isLink) & ~filters.photo)
 async def handle_url(client, message):
     global BOT
-    if message.chat.id == OWNER:
-        if src_request_msg:
-            await src_request_msg.delete()
-        if BOT.State.task_going == False and BOT.State.started:
-            BOT.SOURCE = message.text.split()
-            keyboard = InlineKeyboardMarkup(
-                [
-                    [InlineKeyboardButton("Leech", callback_data="leech")],
-                    [InlineKeyboardButton("Mirror", callback_data="mirror")],
-                    [InlineKeyboardButton("Dir-Leech", callback_data="dir-leech")],
-                ]
-            )
-            await message.reply_text(
-                text="Choose Operation BOT:", reply_markup=keyboard, quote=True
-            )
-        elif BOT.State.started:
-            await message.delete()
-            await message.reply_text(
-                "I am Already Working ! Please Wait Until I finish !!"
-            )
 
-    else:
-        await message.reply_text(
-            "Please Deploy Your Own Bot. [Repo Link](https://github.com/XronTrix10/Telegram-Leecher)",
-            disable_web_page_preview=True,
+    if src_request_msg:
+        await src_request_msg.delete()
+    if BOT.State.task_going == False and BOT.State.started:
+        BOT.SOURCE = message.text.split()
+        keyboard = InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton("Leech", callback_data="leech")],
+                [InlineKeyboardButton("Mirror", callback_data="mirror")],
+                [InlineKeyboardButton("Dir-Leech", callback_data="dir-leech")],
+            ]
         )
+        await message.reply_text(
+            text="Choose Operation BOT:", reply_markup=keyboard, quote=True
+        )
+    elif BOT.State.started:
+        await message.delete()
+        await message.reply_text("I am Already Working ! Please Wait Until I finish !!")
 
 
 @colab_bot.on_callback_query()
 async def handle_options(client, callback_query):
-    global BOT, task
+    global BOT
 
     if callback_query.data in ["leech", "mirror", "dir-leech"]:
         BOT.Mode.mode = callback_query.data
@@ -253,50 +245,26 @@ async def handle_options(client, callback_query):
             chat_id=callback_query.message.chat.id,
             message_ids=callback_query.message.reply_to_message_id,
         )
-        MSG.start = await colab_bot.send_message(
-            chat_id=OWNER, text="**Starting your task...🦐**"
+        MSG.status_msg = await colab_bot.send_message(
+            chat_id=OWNER,
+            text="#STARTING_TASK\n\n**Starting your task in a few Seconds...🦐**",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
+                ]
+            ),
         )
         BOT.State.task_going = True
         BOT.State.started = False
         BotTimes.start_time = datetime.now()
         event_loop = get_event_loop()
-        task = event_loop.create_task(taskScheduler())
-        await task
+        BOT.TASK = event_loop.create_task(taskScheduler())  # type: ignore
+        await BOT.TASK
         BOT.State.task_going = False
-
 
     # If user Wants to Stop The Task
     elif callback_query.data == "cancel":
-        text = f"#TASK_STOPPED\n\n**╭🔗 Source » **__[Here]({Messages.src_link})__\n**├🤔 Reason » **__User cancelled__\n╰🍃 Spent Time » **__{getTime((datetime.now() - BotTimes.start_time).seconds)}__"
-        if BOT.State.task_going:
-            try:
-                task.cancel()  # type: ignore
-                shutil.rmtree(Paths.WORK_PATH)
-            except Exception as e:
-                logging.error(f"Error Deleting Task Folder: {e}")
-            else:
-                logging.info(f"Going Task Cancelled !")
-            finally:
-                BOT.State.task_going = False
-                await MSG.status_msg.delete()
-                await colab_bot.send_message(
-                    chat_id=OWNER,
-                    text=text,
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(  # Opens a web URL
-                                    "Channel 📣",
-                                    url="https://t.me/Colab_Leecher",
-                                ),
-                                InlineKeyboardButton(  # Opens a web URL
-                                    "Group 💬",
-                                    url="https://t.me/Colab_Leecher_Discuss",
-                                ),
-                            ],
-                        ]
-                    ),
-                )
+        await cancelTask("User Cancelled !")
 
 
 @colab_bot.on_message(filters.photo & filters.private)
@@ -309,7 +277,7 @@ async def handle_image(client, message):
         await message.delete()
     else:
         msg = await message.reply_text(
-            f"Couldn't Set Thumbnail ! Try Again !", quote=True
+            f"🥲 **Couldn't Set Thumbnail, Please Try Again !**", quote=True
         )
     await sleep(15)
     await message_deleter(message, msg)
