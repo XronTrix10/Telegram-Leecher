@@ -7,7 +7,7 @@ from datetime import datetime
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
 from .utility.task_manager import taskScheduler
-from .utility.variables import BOT, MSG, BotTimes
+from .utility.variables import BOT, MSG, BotTimes, Paths
 from colab_leecher.utility.handler import cancelTask
 from .utility.helper import isLink, setThumbnail, message_deleter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -18,13 +18,14 @@ src_request_msg = None
 @colab_bot.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     await message.delete()
-    text = "**Hey There, 👋🏼**\n\nI am a Powerful File Tranloading Bot 🚀\nI can Download and Upload Files To Telegram or Your Google Drive From Various Sources 🦐\n\nSend /help for more information on how to use me 🙃"
+    text = "**Hey There, 👋🏼 It's Colab Leecher**\n\n◲ I am a Powerful File Transloading Bot 🚀\n◲ I can Transfer Files To Telegram or Your Google Drive From Various Sources 🦐"
     keyboard = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "Repository", url="https://github.com/XronTrix10/Telegram-Leecher"
-                )
+                    "Repository 🦄", url="https://github.com/XronTrix10/Telegram-Leecher"
+                ),
+                InlineKeyboardButton("Support 💝", url="https://t.me/Colab_Leecher"),
             ],
         ]
     )
@@ -34,22 +35,17 @@ async def start(client, message):
 @colab_bot.on_message(filters.command("colabxr") & filters.private)
 async def colabxr(client, message):
     global BOT, src_request_msg
-    text = "<b>Please Send me a DOWNLOAD LINK / BULK LINKS:</b>\n\n<b>SUPPORTED LINKS ARE:</b>\n1. <code>Direct Links</code>\n2. <code>drive.google.com</code>\n3. <code>Telegram(t.me/)</code>\n4. <code>Torrent/Magnet</code>\n5. <code>Video Links (i.e, YouTube)</code>\n"
-    if message.chat.id == OWNER:
-        await message.delete()
-        BOT.State.started = True
-        if BOT.State.task_going == False:
-            src_request_msg = await message.reply_text(text)
-        else:
-            msg = await message.reply_text(
-                "I am Already Working ! Please Wait Until I finish !!"
-            )
-            await sleep(15)
-            await msg.delete()
+    text = "<b>◲ Please Send me a DOWNLOAD LINK / BULK LINKS 🔗:\n◲</b> <i>You can enter multiple links in new lines 😉 </i>"
+    await message.delete()
+    BOT.State.started = True
+    if BOT.State.task_going == False:
+        src_request_msg = await message.reply_text(text)
     else:
-        await message.reply_text(
-            "Please Deploy Your Own Bot. [Repo Link](https://github.com/XronTrix10/Telegram-Leecher)"
+        msg = await message.reply_text(
+            "I am Already Working ! Please Wait Until I finish !!"
         )
+        await sleep(15)
+        await msg.delete()
 
 
 async def send_settings(client, message, msg_id, command: bool):
@@ -116,11 +112,11 @@ async def handle_url(client, message):
             ]
         )
         await message.reply_text(
-            text="Choose Operation BOT:", reply_markup=keyboard, quote=True
+            text="<b>◲ Choose Operation BOT 🍳: </b>", reply_markup=keyboard, quote=True
         )
     elif BOT.State.started:
         await message.delete()
-        await message.reply_text("I am Already Working ! Please Wait Until I finish !!")
+        await message.reply_text("<i>I am Already Working ! Please Wait Until I finish 😣!!</i>")
 
 
 @colab_bot.on_callback_query()
@@ -140,18 +136,18 @@ async def handle_options(client, callback_query):
             ]
         )
         await callback_query.message.edit_text(
-            f"Tell me the type of {BOT.Mode.mode} you want:", reply_markup=keyboard
+            f"<b>◲ Tell me the type of {BOT.Mode.mode} you want 🍕: </b>", reply_markup=keyboard
         )
     elif callback_query.data in ["normal", "zip", "unzip", "undzip"]:
         BOT.Mode.type = callback_query.data
         keyboard = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Yes", callback_data="ytdl-true")],
-                [InlineKeyboardButton("No", callback_data="ytdl-false")],
+                [InlineKeyboardButton("Yes", callback_data="ytdl-true"),
+                 InlineKeyboardButton("No", callback_data="ytdl-false")],
             ]
         )
         await callback_query.message.edit_text(
-            "Is it a YTDL Link ?", reply_markup=keyboard
+            "<b>◲ Is it a YTDL Link ? 🧐</b>", reply_markup=keyboard
         )
     elif callback_query.data == "upload_mode":
         keyboard = InlineKeyboardMarkup(
@@ -161,7 +157,7 @@ async def handle_options(client, callback_query):
             ]
         )
         await callback_query.message.edit_text(
-            "Choose Upload Mode:", reply_markup=keyboard
+            "<b>◲ Choose Your Upload Mode: 🚅</b>", reply_markup=keyboard
         )
     elif callback_query.data == "video":
         keyboard = InlineKeyboardMarkup(

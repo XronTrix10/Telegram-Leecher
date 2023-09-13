@@ -91,11 +91,9 @@ async def taskScheduler():
     Messages.link_p = str(DUMP_ID)[4:]
 
     try:
-        os.system(
-            f"aria2c -d {Paths.WORK_PATH} -o Hero.jpg 'https://picsum.photos/900/600'"
-        )
+        system(f"aria2c -d {Paths.WORK_PATH} -o Hero.jpg {Aria2c.pic_dwn_url}")
     except Exception:
-        Paths.HERO_IMAGE = "/content/Telegram-Leecher/custom_thmb.jpg"
+        Paths.HERO_IMAGE = Paths.DEFAULT_HERO
 
     MSG.sent_msg = await colab_bot.send_message(chat_id=DUMP_ID, text=src_text[0])
 
@@ -107,9 +105,10 @@ async def taskScheduler():
     Messages.task_msg += f"__[{BOT.Mode.type.capitalize()} {BOT.Mode.mode.capitalize()} as {BOT.Setting.stream_upload}]({Messages.src_link})__\n\n"
 
     await MSG.status_msg.delete()
+    img = Paths.THMB_PATH if ospath.exists(Paths.THMB_PATH) else Paths.HERO_IMAGE
     MSG.status_msg = await colab_bot.send_photo(  # type: ignore
         chat_id=OWNER,
-        photo=Paths.HERO_IMAGE,
+        photo=img,
         caption=Messages.task_msg
         + Messages.status_head
         + f"\n📝 __Starting DOWNLOAD...__"
