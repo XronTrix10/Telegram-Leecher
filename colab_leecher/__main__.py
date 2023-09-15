@@ -1,7 +1,7 @@
 # copyright 2023 © Xron Trix | https://github.com/Xrontrix10
 
 
-import logging
+import logging, os
 from pyrogram import filters
 from datetime import datetime
 from asyncio import sleep, get_event_loop
@@ -35,7 +35,7 @@ async def start(client, message):
 @colab_bot.on_message(filters.command("colabxr") & filters.private)
 async def colabxr(client, message):
     global BOT, src_request_msg
-    text = "<b>◲ Please Send me a DOWNLOAD LINK / BULK LINKS 🔗:\n◲</b> <i>You can enter multiple links in new lines 😉 </i>"
+    text = "<b>◲ Send Me DOWNLOAD LINK(s) 🔗»\n◲</b> <i>You can enter multiple links in new lines and I will download each of them 😉 </i>"
     await message.delete()
     BOT.State.started = True
     if BOT.State.task_going == False:
@@ -49,28 +49,35 @@ async def colabxr(client, message):
 
 
 async def send_settings(client, message, msg_id, command: bool):
+    up_mode = "document" if BOT.Options.stream_upload else "media"
     keyboard = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("Upload Mode", callback_data="upload_mode"),
+                InlineKeyboardButton(
+                    f"Set {up_mode.capitalize()}", callback_data=up_mode
+                ),
                 InlineKeyboardButton("Video Convert", callback_data="video"),
             ],
             [
-                InlineKeyboardButton("Caption Style", callback_data="caption"),
+                InlineKeyboardButton("Caption Font", callback_data="caption"),
+                InlineKeyboardButton("Thumbnail", callback_data="thumb"),
+            ],
+            [
+                InlineKeyboardButton("Set Suffix", callback_data="set-suffix"),
                 InlineKeyboardButton("Set Prefix", callback_data="set-prefix"),
             ],
-            [InlineKeyboardButton("Close", callback_data="close")],
+            [InlineKeyboardButton("Close ✘", callback_data="close")],
         ]
     )
-    text = "**CURRENT BOT SETTINGS ⚙️**"
-    text += f"\n\n╭UPLOAD BOT: <code>{BOT.Setting.stream_upload}</code>"
-    text += f"\n├CONVERT VIDEO: <code>{BOT.Setting.convert_video}</code>"
-    text += f"\n├VIDEO OUT: <code>{BOT.Options.video_out}</code>"
-    text += f"\n├CAPTION: <code>{BOT.Setting.caption}</code>"
+    text = "**CURRENT BOT SETTINGS ⚙️ »**"
+    text += f"\n\n╭⌬ UPLOAD » <i>{BOT.Setting.stream_upload}</i>"
+    text += f"\n├⌬ CONVERT » <i>{BOT.Setting.convert_video}</i>"
+    text += f"\n├⌬ CAPTION » <i>{BOT.Setting.caption}</i>"
     pr = "None" if BOT.Setting.prefix == "" else "Exists"
     su = "None" if BOT.Setting.suffix == "" else "Exists"
     thmb = "None" if not BOT.Setting.thumbnail else "Exists"
-    text += f"\n╰PREFIX: <code>{pr}</code>\nTHUMBNAIL: <code>{thmb}</code>"
+    text += f"\n├⌬ PREFIX » <i>{pr}</i>\n├⌬ SUFFIX » <i>{su}</i>"
+    text += f"\n╰⌬ THUMBNAIL » <i>{thmb}</i>"
     if command:
         await message.reply_text(text=text, reply_markup=keyboard)
     else:
@@ -95,6 +102,12 @@ async def setPrefix(client, message):
 
         await send_settings(client, message, message.reply_to_message_id, False)
         await message.delete()
+    elif BOT.State.suffix:
+        BOT.Setting.suffix = message.text
+        BOT.State.suffix = False
+
+        await send_settings(client, message, message.reply_to_message_id, False)
+        await message.delete()
 
 
 @colab_bot.on_message(filters.create(isLink) & ~filters.photo)
@@ -107,17 +120,23 @@ async def handle_url(client, message):
         BOT.SOURCE = message.text.split()
         keyboard = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Leech", callback_data="leech")],
-                [InlineKeyboardButton("Mirror", callback_data="mirror")],
+                [
+                    InlineKeyboardButton("Leech", callback_data="leech"),
+                    InlineKeyboardButton("Mirror", callback_data="mirror"),
+                ],
                 [InlineKeyboardButton("Dir-Leech", callback_data="dir-leech")],
             ]
         )
         await message.reply_text(
-            text="<b>◲ Choose Operation BOT 🍳: </b>", reply_markup=keyboard, quote=True
+            text="<b>◲ Choose COLAB LEECHER Operation MODE For This Current Task 🍳 »</b>",
+            reply_markup=keyboard,
+            quote=True,
         )
     elif BOT.State.started:
         await message.delete()
-        await message.reply_text("<i>I am Already Working ! Please Wait Until I finish 😣!!</i>")
+        await message.reply_text(
+            "<i>I am Already Working ! Please Wait Until I finish 😣!!</i>"
+        )
 
 
 @colab_bot.on_callback_query()
@@ -137,28 +156,21 @@ async def handle_options(client, callback_query):
             ]
         )
         await callback_query.message.edit_text(
-            f"<b>◲ Tell me the type of {BOT.Mode.mode} you want 🍕: </b>", reply_markup=keyboard
+            f"<b>◲ Tell Me The Type of {BOT.Mode.mode} You Want 🍕» </b>",
+            reply_markup=keyboard,
         )
     elif callback_query.data in ["normal", "zip", "unzip", "undzip"]:
         BOT.Mode.type = callback_query.data
         keyboard = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Yes", callback_data="ytdl-true"),
-                 InlineKeyboardButton("No", callback_data="ytdl-false")],
+                [
+                    InlineKeyboardButton("Yes", callback_data="ytdl-true"),
+                    InlineKeyboardButton("No", callback_data="ytdl-false"),
+                ],
             ]
         )
         await callback_query.message.edit_text(
             "<b>◲ Is it a YTDL Link ? 🧐</b>", reply_markup=keyboard
-        )
-    elif callback_query.data == "upload_mode":
-        keyboard = InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("Media", callback_data="media")],
-                [InlineKeyboardButton("Document", callback_data="document")],
-            ]
-        )
-        await callback_query.message.edit_text(
-            "<b>◲ Choose Your Upload Mode: 🚅</b>", reply_markup=keyboard
         )
     elif callback_query.data == "video":
         keyboard = InlineKeyboardMarkup(
@@ -170,33 +182,60 @@ async def handle_options(client, callback_query):
                     ),
                 ],
                 [
-                    InlineKeyboardButton("MP4", callback_data="mp4"),
-                    InlineKeyboardButton("MKV", callback_data="mkv"),
+                    InlineKeyboardButton("To » Mp4", callback_data="mp4"),
+                    InlineKeyboardButton("To » Mkv", callback_data="mkv"),
                 ],
+                [InlineKeyboardButton("Back ⏎", callback_data="back")],
             ]
         )
         await callback_query.message.edit_text(
-            f"CHOOSE YOUR DESIRED BOT ⚙️:\n\nOUTPUT VIDEO: <code>{BOT.Options.video_out}</code>",
+            f"CHOOSE YOUR DESIRED OPTION ⚙️ »\n\nOUTPUT FORMAT » <code>{BOT.Options.video_out}</code>",
             reply_markup=keyboard,
         )
     elif callback_query.data == "caption":
         keyboard = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Monospace", callback_data="code-Monospace")],
+                [
+                    InlineKeyboardButton("Monospace", callback_data="code-Monospace"),
+                    InlineKeyboardButton("Bold", callback_data="b-Bold"),
+                ],
+                [
+                    InlineKeyboardButton("Italic", callback_data="i-Italic"),
+                    InlineKeyboardButton("Underlined", callback_data="u-Underlined"),
+                ],
                 [InlineKeyboardButton("Regular", callback_data="p-Regular")],
-                [InlineKeyboardButton("Bold", callback_data="b-Bold")],
-                [InlineKeyboardButton("Italic", callback_data="i-Italic")],
-                [InlineKeyboardButton("Underlined", callback_data="u-Underlined")],
             ]
         )
         await callback_query.message.edit_text(
-            "Choose Your Caption Style:", reply_markup=keyboard
+            "CHOOSE YOUR CAPTION FONT STYLE »\n\n⌬ <code>Monospace</code>\n⌬ Regular\n⌬ <b>Bold</b>\n⌬ <i>Italic</i>\n⌬ <u>Underlined</u>",
+            reply_markup=keyboard,
         )
-    elif callback_query.data == "close":
-        await callback_query.message.delete()
+    elif callback_query.data == "thumb":
+        keyboard = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("Delete Thumbnail", callback_data="del-thumb"),
+                ],
+                [
+                    InlineKeyboardButton("Go Back ⏎", callback_data="back"),
+                ],
+            ]
+        )
+        thmb_ = "None" if not BOT.Setting.thumbnail else "Exists"
+        await callback_query.message.edit_text(
+            f"CHOOSE YOUR THUMBNAIL SETTINGS »\n\n⌬ Thumbnail » {thmb_}\n⌬ Send an Image to set as Your Thumbnail",
+            reply_markup=keyboard,
+        )
+    elif callback_query.data == "del-thumb":
+        if BOT.Setting.thumbnail:
+            os.remove(Paths.THMB_PATH)
+        BOT.Setting.thumbnail = False
+        await send_settings(
+            client, callback_query.message, callback_query.message.id, False
+        )
     elif callback_query.data == "set-prefix":
         await callback_query.message.edit_text(
-            "Send a Text to Set as PREFIX by REPLYING THIS MESSAGE:"
+            "Send a Text to Set as PREFIX by REPLYING THIS MESSAGE »"
         )
         BOT.State.prefix = True
     elif callback_query.data == "set-suffix":
@@ -239,6 +278,13 @@ async def handle_options(client, callback_query):
             client, callback_query.message, callback_query.message.id, False
         )
 
+    elif callback_query.data == "close":
+        await callback_query.message.delete()
+    elif callback_query.data == "back":
+        await send_settings(
+            client, callback_query.message, callback_query.message.id, False
+        )
+
     # @main Triggering Actual Leech Functions
     elif callback_query.data in ["ytdl-true", "ytdl-false"]:
         BOT.Mode.ytdl = True if callback_query.data == "ytdl-true" else False
@@ -273,13 +319,11 @@ async def handle_options(client, callback_query):
 async def handle_image(client, message):
     success = await setThumbnail(message)
     if success:
-        msg = await message.reply_text(
-            f"**Thumbnail Successfully Changed ✅**", quote=True
-        )
+        msg = await message.reply_text("**Thumbnail Successfully Changed ✅**")
         await message.delete()
     else:
         msg = await message.reply_text(
-            f"🥲 **Couldn't Set Thumbnail, Please Try Again !**", quote=True
+            "🥲 **Couldn't Set Thumbnail, Please Try Again !**", quote=True
         )
     await sleep(15)
     await message_deleter(message, msg)
@@ -344,6 +388,26 @@ async def help_command(client, message):
     msg = await message.reply_text(
         "Send /start To Check If I am alive 🤨\n\nSend /colabxr and follow prompts to start transloading 🚀\n\nSend /settings to edit bot settings ⚙️\n\nSend /setname To Set Custom File Name 📛\n\nSend /zipaswd To Set Password For Zip File 🔐\n\nSend /unzipaswd To Set Password to Extract Archives 🔓\n\n⚠️ **You can ALWAYS SEND an image To Set it as THUMBNAIL for your files 🌄**",
         quote=True,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "Instructions 📖",
+                        url="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS",
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(  # Opens a web URL
+                        "Channel 📣",
+                        url="https://t.me/Colab_Leecher",
+                    ),
+                    InlineKeyboardButton(  # Opens a web URL
+                        "Group 💬",
+                        url="https://t.me/Colab_Leecher_Discuss",
+                    ),
+                ],
+            ]
+        ),
     )
     await sleep(15)
     await message_deleter(message, msg)

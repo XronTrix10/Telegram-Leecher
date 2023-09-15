@@ -146,9 +146,8 @@ def videoExtFix(file_path: str):
 
 
 def thumbMaintainer(file_path):
-    thmb = f"{Paths.WORK_PATH}/video_frame.jpg"
-    if ospath.exists(thmb):
-        os.remove(thmb)
+    if ospath.exists(Paths.VIDEO_FRAME):
+        os.remove(Paths.VIDEO_FRAME)
     try:
         fname, _ = ospath.splitext(ospath.basename(file_path))
         ytdl_thmb = f"{Paths.WORK_PATH}/ytdl_thumbnails/{fname}.webp"
@@ -158,10 +157,12 @@ def thumbMaintainer(file_path):
             elif ospath.exists(ytdl_thmb):
                 return convertIMG(ytdl_thmb), video.duration
             else:
-                video.save_frame(thmb, t=math.floor(video.duration / 2))
-                return thmb, video.duration
+                video.save_frame(Paths.VIDEO_FRAME, t=math.floor(video.duration / 2))
+                return Paths.VIDEO_FRAME, video.duration
     except Exception as e:
         print(f"Thmb Gen ERROR: {e}")
+        if ospath.exists(Paths.THMB_PATH):
+            return Paths.THMB_PATH, 0
         return Paths.HERO_IMAGE, 0
 
 
