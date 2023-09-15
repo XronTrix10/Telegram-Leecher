@@ -68,6 +68,7 @@ async def send_settings(client, message, msg_id, command: bool):
     text += f"\n├VIDEO OUT: <code>{BOT.Options.video_out}</code>"
     text += f"\n├CAPTION: <code>{BOT.Setting.caption}</code>"
     pr = "None" if BOT.Setting.prefix == "" else "Exists"
+    su = "None" if BOT.Setting.suffix == "" else "Exists"
     thmb = "None" if not BOT.Setting.thumbnail else "Exists"
     text += f"\n╰PREFIX: <code>{pr}</code>\nTHUMBNAIL: <code>{thmb}</code>"
     if command:
@@ -198,6 +199,11 @@ async def handle_options(client, callback_query):
             "Send a Text to Set as PREFIX by REPLYING THIS MESSAGE:"
         )
         BOT.State.prefix = True
+    elif callback_query.data == "set-suffix":
+        await callback_query.message.edit_text(
+            "Send a Text to Set as SUFFIX by REPLYING THIS MESSAGE »"
+        )
+        BOT.State.suffix = True
     elif callback_query.data in [
         "code-Monospace",
         "p-Regular",

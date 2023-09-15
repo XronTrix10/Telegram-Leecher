@@ -30,7 +30,7 @@ async def progress_bar(current, total):
 async def upload_file(file_path, real_name):
     global Transfer, MSG
 
-    caption = f"<{BOT.Options.caption}>{BOT.Setting.prefix} {real_name}</{BOT.Options.caption}>"
+    caption = f"<{BOT.Options.caption}>{BOT.Setting.prefix} {real_name} {BOT.Setting.suffix}</{BOT.Options.caption}>"
     type_ = fileType(file_path)
 
     f_type = type_ if BOT.Options.stream_upload else "document"

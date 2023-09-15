@@ -14,6 +14,7 @@ class BOT:
         convert_video = "Yes"
         caption = "Monospace"
         prefix = ""
+        suffix = ""
         thumbnail = False
 
     class Options:
@@ -34,6 +35,7 @@ class BOT:
         started = False
         task_going = False
         prefix = False
+        suffix = False
 
 
 class YTDL:
