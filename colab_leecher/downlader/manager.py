@@ -4,12 +4,13 @@
 import logging
 from asyncio import sleep
 from natsort import natsorted
+from datetime import datetime
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.downlader.ytdl import YTDL_Status, get_YT_Name
 from colab_leecher.downlader.aria2 import aria2_Download, get_Aria2c_Name
 from colab_leecher.utility.helper import isYtdlComplete, keyboard, sysINFO
 from colab_leecher.downlader.telegram import TelegramDownload, media_Identifier
-from colab_leecher.utility.variables import BOT, Gdrive, Transfer, MSG, Messages, Aria2c
+from colab_leecher.utility.variables import BOT, Gdrive, Transfer, MSG, Messages, Aria2c, BotTimes
 from colab_leecher.downlader.gdrive import (
     build_service,
     g_DownLoad,
@@ -21,6 +22,7 @@ from colab_leecher.downlader.gdrive import (
 
 async def downloadManager(source, is_ytdl: bool):
     message = "\n<b>Please Wait...</b> ⏳\n<i>Merging YTDL Video...</i> 🐬"
+    BotTimes.task_start = datetime.now()
     if is_ytdl:
         for i, link in enumerate(source):
             await YTDL_Status(link, i + 1)

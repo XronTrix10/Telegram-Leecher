@@ -11,7 +11,7 @@ from colab_leecher.utility.helper import sizeUnit, fileType, getTime, status_bar
 async def progress_bar(current, total):
     global status_msg, status_head
     upload_speed = 4 * 1024 * 1024
-    elapsed_time_seconds = (datetime.now() - BotTimes.start_time).seconds
+    elapsed_time_seconds = (datetime.now() - BotTimes.task_start).seconds
     if current > 0 and elapsed_time_seconds > 0:
         upload_speed = current / elapsed_time_seconds
     eta = (Transfer.total_down_size - current - sum(Transfer.up_bytes)) / upload_speed
@@ -29,7 +29,7 @@ async def progress_bar(current, total):
 
 async def upload_file(file_path, real_name):
     global Transfer, MSG
-
+    BotTimes.task_start = datetime.now()
     caption = f"<{BOT.Options.caption}>{BOT.Setting.prefix} {real_name} {BOT.Setting.suffix}</{BOT.Options.caption}>"
     type_ = fileType(file_path)
 

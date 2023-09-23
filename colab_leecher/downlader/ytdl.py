@@ -29,14 +29,13 @@ async def YTDL_Status(link, num):
                 pass
         else:
             try:
-                message = YTDL.info.split("@")
                 await status_bar(
                     down_msg=Messages.status_head,
-                    speed=message[0],
-                    percentage=float(message[1]),
-                    eta=message[2],
-                    done=message[3],
-                    left=message[4],
+                    speed=YTDL.speed,
+                    percentage=float(YTDL.percentage),
+                    eta=YTDL.eta,
+                    done=YTDL.done,
+                    left=YTDL.left,
                     engine="Xr-YtDL 🏮",
                 )
             except Exception:
@@ -93,12 +92,18 @@ def YouTubeDL(url):
             #     end="",
             # )
             YTDL.header = ""
-            YTDL.info = f"{sizeUnit(speed)}/s@{percent}@{getTime(eta)}@{sizeUnit(dl_bytes)}@{sizeUnit(total_bytes)}"
+            YTDL.speed = sizeUnit(speed)
+            YTDL.percentage = percent
+            YTDL.eta = getTime(eta)
+            YTDL.done = sizeUnit(dl_bytes)
+            YTDL.left = sizeUnit(total_bytes)
 
         elif d["status"] == "downloading fragment":
             # log_str = d["message"]
             # print(log_str, end="")
             pass
+        else:
+            logging.info(d)
 
     ydl_opts = {
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
@@ -118,15 +123,15 @@ def YouTubeDL(url):
         try:
             info_dict = ydl.extract_info(url, download=False)
             YTDL.header = "⌛ __Please WAIT a bit...__"
-            if "_type" in info_dict and info_dict["_type"] == "playlist": #type: ignore
-                playlist_name = info_dict["title"] #type: ignore
+            if "_type" in info_dict and info_dict["_type"] == "playlist":
+                playlist_name = info_dict["title"] 
                 if not ospath.exists(ospath.join(Paths.down_path, playlist_name)):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/{playlist_name}/%(title)s.%(ext)s",
                     "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
-                for entry in info_dict["entries"]: #type: ignore
+                for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
                     ydl.download([video_url])
             else:
@@ -144,8 +149,8 @@ async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info:  # type: ignore
-                return info["title"]  # type: ignore
+            if "title" in info: 
+                return info["title"] 
             else:
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:

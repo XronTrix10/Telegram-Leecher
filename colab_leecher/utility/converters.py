@@ -148,7 +148,7 @@ async def archive(path, is_split, remove: bool):
         name = Messages.download_name
     Messages.status_head = f"<b>🔐 ZIPPING » </b>\n\n<code>{name}</code>\n"
     Messages.download_name = f"{name}.zip"
-    starting_time = datetime.now()
+    BotTimes.task_start = datetime.now()
 
     if len(BOT.Options.zip_pswd) == 0:
         cmd = f'cd "{dir_p}" && zip {r} {split} -0 "{Paths.temp_zpath}/{name}.zip" "{p_name}"'
@@ -158,7 +158,7 @@ async def archive(path, is_split, remove: bool):
     total = sizeUnit(getSize(path))
     while proc.poll() is None:
         speed_string, eta, percentage = speedETA(
-            starting_time, getSize(Paths.temp_zpath), getSize(path)
+            BotTimes.task_start, getSize(Paths.temp_zpath), getSize(path)
         )
         await status_bar(
             Messages.status_head,
@@ -180,12 +180,16 @@ async def archive(path, is_split, remove: bool):
 
 async def extract(zip_filepath, remove: bool):
     global BOT, Paths, Messages
-    starting_time = datetime.now()
     _, filename = ospath.split(zip_filepath)
     Messages.status_head = f"<b>📂 EXTRACTING »</b>\n\n<code>{filename}</code>\n"
     p = f"-p{BOT.Options.unzip_pswd}" if len(BOT.Options.unzip_pswd) != 0 else ""
     name, ext = ospath.splitext(filename)
-    file_pattern, rname, temp_unzip_path, total_ = "", name, Paths.temp_unzip_path, 0
+    file_pattern, real_name, temp_unzip_path, total_ = (
+        "",
+        name,
+        Paths.temp_unzip_path,
+        0,
+    )
     if ext == ".rar":
         if "part" in name:
             cmd = f"unrar x -kb -idq {p} '{zip_filepath}' {temp_unzip_path}"
@@ -208,14 +212,16 @@ async def extract(zip_filepath, remove: bool):
         total_ = getSize(zip_filepath)
         total = sizeUnit(total_)
     else:
-        rname, total_ = multipartArchive(zip_filepath, file_pattern, False)
+        real_name, total_ = multipartArchive(zip_filepath, file_pattern, False)
         total = sizeUnit(total_)
+
+    BotTimes.task_start = datetime.now()
 
     proc = subprocess.Popen(cmd, shell=True)
 
     while proc.poll() is None:
         speed_string, eta, percentage = speedETA(
-            starting_time,
+            BotTimes.task_start,
             getSize(temp_unzip_path),
             total_,
         )
@@ -236,17 +242,19 @@ async def extract(zip_filepath, remove: bool):
         if ospath.exists(zip_filepath):
             os.remove(zip_filepath)
 
-    Messages.download_name = rname
+    Messages.download_name = real_name
 
 
 async def splitArchive(file_path, max_size):
     global Paths, BOT, MSG, Messages
-    starting_time = datetime.now()
     _, filename = ospath.split(file_path)
     new_path = f"{Paths.temp_zpath}/{filename}"
     Messages.status_head = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     # Get the total size of the file
     total_size = ospath.getsize(file_path)
+
+    BotTimes.task_start = datetime.now()
+
     with open(file_path, "rb") as f:
         chunk = f.read(max_size)
         i = 1
@@ -262,7 +270,7 @@ async def splitArchive(file_path, max_size):
 
             bytes_written += len(chunk)
             speed_string, eta, percentage = speedETA(
-                starting_time, bytes_written, total_size
+                BotTimes.task_start, bytes_written, total_size
             )
             await status_bar(
                 Messages.status_head,

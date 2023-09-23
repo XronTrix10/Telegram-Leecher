@@ -163,10 +163,10 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
                     await Leech(Paths.down_path, False)
                 else:
                     Transfer.total_down_size = ospath.getsize(s)
-                    makedirs(f"{Paths.WORK_PATH}/tdjk")
-                    shutil.copy(s, f"{Paths.WORK_PATH}/tdjk")
+                    makedirs(Paths.temp_dirleech_path)
+                    shutil.copy(s, Paths.temp_dirleech_path)
                     Messages.download_name = ospath.basename(s)
-                    await Leech(f"{Paths.WORK_PATH}/tdjk", True)
+                    await Leech(Paths.temp_dirleech_path, True)
     else:
         await downloadManager(source, is_ytdl)
 

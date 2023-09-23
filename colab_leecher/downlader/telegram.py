@@ -6,7 +6,7 @@ from datetime import datetime
 from os import path as ospath
 from colab_leecher import colab_bot
 from colab_leecher.utility.handler import cancelTask
-from colab_leecher.utility.variables import Transfer, Paths
+from colab_leecher.utility.variables import Transfer, Paths, Messages, BotTimes
 from colab_leecher.utility.helper import speedETA, getTime, sizeUnit, status_bar
 
 
@@ -42,7 +42,7 @@ async def download_progress(current, total):
     speed_string, eta, percentage = speedETA(start_time, current, total)
 
     await status_bar(
-        down_msg=down_msg,
+        down_msg=Messages.status_head,
         speed=speed_string,
         percentage=percentage,
         eta=getTime(eta),
@@ -53,7 +53,7 @@ async def download_progress(current, total):
 
 
 async def TelegramDownload(link, num):
-    global start_time, down_msg, TRANSFER_INFO
+    global start_time, TRANSFER_INFO
     media, message = await media_Identifier(link)
     if media is not None:
         name = media.file_name if hasattr(  # type: ignore
@@ -63,7 +63,7 @@ async def TelegramDownload(link, num):
         await cancelTask("Couldn't Download Telegram Message")
         return
 
-    down_msg = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
+    Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
     start_time = datetime.now()
     file_path = ospath.join(Paths.down_path, name)
     

@@ -174,7 +174,7 @@ async def gDownloadFile(file_id, path):
                     file_d_size = int(status.progress() * int(file["size"]))
                     down_done = sum(Transfer.down_bytes) + file_d_size
                     speed_string, eta, percentage = speedETA(
-                        BotTimes.start_time, down_done, Transfer.total_down_size
+                        BotTimes.task_start, down_done, Transfer.total_down_size
                     )
                     await status_bar(
                         down_msg=down_msg,

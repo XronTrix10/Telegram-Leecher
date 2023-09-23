@@ -413,6 +413,5 @@ async def help_command(client, message):
     await message_deleter(message, msg)
 
 
-BotTimes.start_time = datetime.now()
 logging.info("Colab Leecher Started !")
 colab_bot.run()

@@ -181,7 +181,7 @@ async def setThumbnail(message):
             )
         return True
     except Exception as e:
-        BOT.Setting.thumbnail = True
+        BOT.Setting.thumbnail = False
         logging.info(f"Error Downloading Thumbnail: {e}")
         return False
 

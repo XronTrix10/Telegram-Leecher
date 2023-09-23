@@ -40,7 +40,11 @@ class BOT:
 
 class YTDL:
     header = ""
-    info = ""
+    speed = ""
+    percentage = 0.0
+    eta = ""
+    done = ""
+    left = ""
 
 
 class Transfer:

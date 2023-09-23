@@ -12,7 +12,7 @@ from colab_leecher.utility.variables import BOT, Aria2c, Paths, Messages, BotTim
 async def aria2_Download(link: str, num: int):
     global BotTimes, Messages
     name_d = get_Aria2c_Name(link)
-    BotTimes.start_time = datetime.now()
+    BotTimes.task_start = datetime.now()
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{name_d}</code>\n"
 
     # Create a command to run aria2p with the link
@@ -101,7 +101,7 @@ async def on_output(output: str):
     else:
         spd = 0
 
-    elapsed_time_seconds = (datetime.now() - BotTimes.start_time).seconds
+    elapsed_time_seconds = (datetime.now() - BotTimes.task_start).seconds
 
     if elapsed_time_seconds >= 270 and not Aria2c.link_info:
         logging.error("Failed to get download information ! Probably dead link 💀")
