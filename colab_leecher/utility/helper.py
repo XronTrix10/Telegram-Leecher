@@ -265,6 +265,9 @@ def multipartArchive(path: str, type: str, remove: bool):
             na_p = name + ".z" + str(c).zfill(2)
             p_ap = ospath.join(dirname, na_p)
 
+        if rname.endswith(".zip"): # When the Archive was file.zip.001
+            rname, _ = ospath.splitext(rname)
+
     return rname, size
 
 
