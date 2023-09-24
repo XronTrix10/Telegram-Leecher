@@ -49,6 +49,9 @@ async def taskScheduler():
     Transfer.sent_file_names = []
     Transfer.down_bytes = [0, 0]
     Transfer.up_bytes = [0, 0]
+    Messages.download_name = ""
+    Messages.task_msg = ""
+    Messages.status_head = f"<b>📥 DOWNLOADING » </b>\n"
 
     if is_dir:
         if not ospath.exists(BOT.SOURCE[0]):
