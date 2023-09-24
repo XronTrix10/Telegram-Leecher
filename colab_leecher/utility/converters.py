@@ -58,12 +58,14 @@ async def videoConverter(file: str):
     c, out_file, Err = 0, f"{name}.{BOT.Options.video_out}", False
     gpu = len(GPUtil.getAvailable())
 
+    quality = "-preset slow -qp 0" if BOT.Options.convert_quality else ""
+
     # ignored = "-hwaccel cuvid -c:v h264_cuvid"
     if gpu == 1:
-        cmd = f"ffmpeg -y -i '{file}' -preset slow -qp 0 -c:v h264_nvenc -c:a copy '{out_file}'"
+        cmd = f"ffmpeg -y -i '{file}' {quality} -c:v h264_nvenc -c:a copy '{out_file}'"
         core = "GPU"
     else:
-        cmd = f"ffmpeg -y -i '{file}' -preset slow -qp 0 -c:v libx264 -c:a copy '{out_file}'"
+        cmd = f"ffmpeg -y -i '{file}' {quality} -c:v libx264 -c:a copy '{out_file}'"
         core = "CPU"
 
     mtext = f"<b>🎥 Converting Video »</b>\n\n{ospath.basename(file)}\n\n"

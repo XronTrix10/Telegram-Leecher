@@ -185,11 +185,15 @@ async def handle_options(client, callback_query):
                     InlineKeyboardButton("To » Mp4", callback_data="mp4"),
                     InlineKeyboardButton("To » Mkv", callback_data="mkv"),
                 ],
+                [
+                    InlineKeyboardButton("Qua. » High", callback_data="q-High"),
+                    InlineKeyboardButton("Qua. » Low", callback_data="q-Low"),
+                ],
                 [InlineKeyboardButton("Back ⏎", callback_data="back")],
             ]
         )
         await callback_query.message.edit_text(
-            f"CHOOSE YOUR DESIRED OPTION ⚙️ »\n\nOUTPUT FORMAT » <code>{BOT.Options.video_out}</code>",
+            f"CHOOSE YOUR DESIRED OPTION ⚙️ »\n\n╭⌬ CONVERT » <code>{BOT.Setting.convert_video}</code>\n├⌬ OUTPUT FORMAT » <code>{BOT.Options.video_out}</code>\n├⌬ OUTPUT QUALITY » <code>{BOT.Setting.convert_quality}</code>",
             reply_markup=keyboard,
         )
     elif callback_query.data == "caption":
@@ -256,7 +260,7 @@ async def handle_options(client, callback_query):
         await send_settings(
             client, callback_query.message, callback_query.message.id, False
         )
-    elif callback_query.data in ["convert-true", "convert-false", "mp4", "mkv"]:
+    elif callback_query.data in ["convert-true", "convert-false", "mp4", "mkv", "q-High", "q-Low"]:
         if callback_query.data in ["convert-true", "convert-false"]:
             BOT.Options.convert_video = (
                 True if callback_query.data == "convert-true" else False
@@ -264,6 +268,12 @@ async def handle_options(client, callback_query):
             BOT.Setting.convert_video = (
                 "Yes" if callback_query.data == "convert-true" else "No"
             )
+        elif callback_query.data in ["q-High", "q-Low"] :
+            BOT.Setting.convert_quality = callback_query.data.split("-")[-1]
+            BOT.Options.convert_quality = True if BOT.Setting.convert_quality == "High" else False
+            await send_settings(
+            client, callback_query.message, callback_query.message.id, False
+        )
         else:
             BOT.Options.video_out = callback_query.data
         await send_settings(
