@@ -4,11 +4,12 @@
 import logging, os
 from pyrogram import filters
 from datetime import datetime
+from pyrogram.errors import BadRequest
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
 from .utility.task_manager import taskScheduler
-from .utility.variables import BOT, MSG, BotTimes, Paths
 from colab_leecher.utility.handler import cancelTask
+from .utility.variables import BOT, MSG, BotTimes, Paths
 from .utility.helper import isLink, setThumbnail, message_deleter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -78,12 +79,17 @@ async def send_settings(client, message, msg_id, command: bool):
     thmb = "None" if not BOT.Setting.thumbnail else "Exists"
     text += f"\n├⌬ PREFIX » <i>{pr}</i>\n├⌬ SUFFIX » <i>{su}</i>"
     text += f"\n╰⌬ THUMBNAIL » <i>{thmb}</i>"
-    if command:
-        await message.reply_text(text=text, reply_markup=keyboard)
-    else:
-        await colab_bot.edit_message_text(
-            chat_id=message.chat.id, message_id=msg_id, text=text, reply_markup=keyboard
-        )
+    try:
+        if command:
+            await message.reply_text(text=text, reply_markup=keyboard)
+        else:
+            await colab_bot.edit_message_text(
+                chat_id=message.chat.id, message_id=msg_id, text=text, reply_markup=keyboard
+            )
+    except BadRequest as error:
+        logging.error(f"Same text not modified | {error}")
+    except Exception as error:
+        logging.error(f"Error Modifying message | {error}")
 
 
 @colab_bot.on_message(filters.command("settings") & filters.private)
@@ -186,14 +192,14 @@ async def handle_options(client, callback_query):
                     InlineKeyboardButton("To » Mkv", callback_data="mkv"),
                 ],
                 [
-                    InlineKeyboardButton("Qua. » High", callback_data="q-High"),
-                    InlineKeyboardButton("Qua. » Low", callback_data="q-Low"),
+                    InlineKeyboardButton("High Quality", callback_data="q-High"),
+                    InlineKeyboardButton("Low Quality", callback_data="q-Low"),
                 ],
                 [InlineKeyboardButton("Back ⏎", callback_data="back")],
             ]
         )
         await callback_query.message.edit_text(
-            f"CHOOSE YOUR DESIRED OPTION ⚙️ »\n\n╭⌬ CONVERT » <code>{BOT.Setting.convert_video}</code>\n├⌬ OUTPUT FORMAT » <code>{BOT.Options.video_out}</code>\n├⌬ OUTPUT QUALITY » <code>{BOT.Setting.convert_quality}</code>",
+            f"CHOOSE YOUR DESIRED OPTION ⚙️ »\n\n╭⌬ CONVERT » <code>{BOT.Setting.convert_video}</code>\n├⌬ OUTPUT FORMAT » <code>{BOT.Options.video_out}</code>\n╰⌬ OUTPUT QUALITY » <code>{BOT.Setting.convert_quality}</code>",
             reply_markup=keyboard,
         )
     elif callback_query.data == "caption":

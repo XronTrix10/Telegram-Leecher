@@ -3,8 +3,10 @@
 
 import logging
 from PIL import Image
+from asyncio import sleep
 from os import path as ospath
 from datetime import datetime
+from pyrogram.errors import FloodWait
 from colab_leecher.utility.variables import BOT, Transfer, BotTimes, Messages, MSG, Paths
 from colab_leecher.utility.helper import sizeUnit, fileType, getTime, status_bar, thumbMaintainer, videoExtFix
 
@@ -95,5 +97,8 @@ async def upload_file(file_path, real_name):
         Transfer.sent_file.append(MSG.sent_msg)
         Transfer.sent_file_names.append(real_name)
 
+    except FloodWait as e:
+        await sleep(5)  # Wait 5 seconds before Trying Again
+        await upload_file(file_path, real_name)
     except Exception as e:
         logging.error(f"Error When Uploading : {e}")

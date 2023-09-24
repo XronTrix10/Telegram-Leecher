@@ -11,6 +11,7 @@ from os import path as ospath
 from datetime import datetime
 from urllib.parse import urlparse
 from asyncio import get_event_loop
+from pyrogram.errors import BadRequest
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from colab_leecher.utility.variables import (
@@ -68,7 +69,7 @@ def sizeUnit(size):
     elif size > 1024:
         siz = f"{size/1024:.2f} KiB"
     else:
-        siz = f"{size} B"
+        siz = f"{size:.2f} B"
     return siz
 
 
@@ -324,9 +325,11 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
         if isTimeOver():
             await MSG.status_msg.edit_text(
                 text=Messages.task_msg + down_msg + text + sysINFO(),
+                disable_web_page_preview=True,
                 reply_markup=keyboard(),
             )
-
+    except BadRequest as e:
+        logging.error(f"Same Status Not Modified: {str(e)}")
     except Exception as e:
         # Catch any exceptions that might occur while editing the message.
         logging.error(f"Error Updating Status bar: {str(e)}")
