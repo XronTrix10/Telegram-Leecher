@@ -1,5 +1,9 @@
-google-colab
 GPUtil
+natsort
+pytz
+Pillow
+psutil
+moviepy
 asyncio
 google-api-python-client
 google-auth-httplib2

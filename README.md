@@ -25,7 +25,7 @@
 
 - Easy To Use With Bot Commands ( Update 🔥 )
 - Powerful Video Converter, Convert Videos to mp4 / mkv ( New 🔥)
-- Get Restrricted Content From Telegram ( Beta Stage )
+- Get Restricted Content From Telegram ( Beta Stage )
 - Added Custom File Name Support 
 - Download Multiple Files or Folders from Multiple Links 
 - Support for Multi-Part Archive Extraction of all Type Extensions
@@ -40,19 +40,18 @@
 - Direct Download Link ✅
 - Google Drive Link ( Auto Authenticate ) ✅
 - Telegram File Link ✅
-- Magnet Link ✅
-- Torrent Link ✅
 - Video Links ( YouTube and 2000 More Sites 😉 ) ✅
+- Torrent / Magnet Link ❌ ( Intentionally omitted 😔 )
 - Mega.nz Link ❌ ( Coming Soon ♨️)
 - GDTot, Sharer and Short Links ❌ ( Coming Soon ♨️)
 
-## **🔥 Benifits**
+## **🔥 Benefits**
 
 - No need of VPS or RDP
 - Immersive Network speed in Google Servers
 - Unlimited Storage in Telegram
-- Upload Files of size upto 2000 MB
-- Premium Upload upto 4000 MB ( Coming Soon ♨️)
+- Upload Files of size up to 2000 MB
+- Premium Upload up to 4000 MB ( Coming Soon ♨️)
 
 ## **🚀 UPTO 200 MiB/s Download Speed and 30 MiB/s Upload Speed**
 
@@ -65,8 +64,8 @@
 
 ## **🚨 NOTE:**
 
-- Video Splitting is intentionally disabled to avoid video curruptions. Instead, they are zipped if they exceed MAX_UPLOAD_SIZE
-- Magnet or Torrent Links are supported, But avoid using, because `Google Colab Stricly Prohibits Torrents`
+- Video Splitting is intentionally disabled to avoid video corruptions. Instead, they are zipped if they exceed MAX_UPLOAD_SIZE
+<!-- - Magnet or Torrent Links are supported, But avoid using, because `Google Colab Strictly Prohibits Torrents` -->
 - Downloading `YouTube Video without permission of the owner` can lead to copyright issues. Use with Caution
 
 ## **🤙🏼 Connect With Us**
@@ -84,7 +83,7 @@
 
 ## **⚠️ You Should NOT use it as it goes against Google Colab's Policy**
 
-> Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtimes:
+> Resources in Colab are prioritized for interactive use cases. We prohibit actions associated with `bulk compute`, actions that negatively impact others, as well as actions associated with bypassing our policies. The following are disallowed from Colab runtime:
 >
 > - file hosting, `media serving`, or `other web service offerings not related to interactive compute with Colab`
 > - `downloading torrents` or `engaging in peer-to-peer file-sharing`
