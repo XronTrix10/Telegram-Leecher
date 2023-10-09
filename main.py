@@ -85,6 +85,9 @@ with open('/content/Telegram-Leecher/credentials.json', 'w') as file:
 
 Working = False
 
+if os.path.exists("/content/Telegram-Leecher/my_bot.session"):
+    os.remove("/content/Telegram-Leecher/my_bot.session") # Remove previous bot session
+    
 print("\rStarting Bot....")
 
 !cd /content/Telegram-Leecher/ && python3 -m colab_leecher #type:ignore
