@@ -54,7 +54,7 @@ async def download_progress(current, total):
 
 async def TelegramDownload(link, num):
     global start_time, TRANSFER_INFO
-    media, message = await media_Identifier(link)
+    media, message = await media_Identifier(link) # type: ignore
     if media is not None:
         name = media.file_name if hasattr(  # type: ignore
             media, "file_name") else "None"

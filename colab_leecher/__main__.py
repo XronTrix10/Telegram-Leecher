@@ -120,10 +120,31 @@ async def setPrefix(client, message):
 async def handle_url(client, message):
     global BOT
 
+    # Reset
+    BOT.Options.custom_name = ""
+    BOT.Options.zip_pswd = ""
+    BOT.Options.unzip_pswd = ""
+
     if src_request_msg:
         await src_request_msg.delete()
     if BOT.State.task_going == False and BOT.State.started:
-        BOT.SOURCE = message.text.split()
+        temp_source = message.text.splitlines()
+
+        # Check for arguments in message
+        for _ in range(3):
+            if temp_source[-1][0] == "[":
+                BOT.Options.custom_name = temp_source[-1][1:-1]
+                temp_source.pop()
+            elif temp_source[-1][0] == "{":
+                BOT.Options.zip_pswd = temp_source[-1][1:-1]
+                temp_source.pop()
+            elif temp_source[-1][0] == "(":
+                BOT.Options.unzip_pswd = temp_source[-1][1:-1]
+                temp_source.pop()
+            else:
+                break
+
+        BOT.SOURCE = temp_source
         keyboard = InlineKeyboardMarkup(
             [
                 [
@@ -333,12 +354,13 @@ async def handle_options(client, callback_query):
 
 @colab_bot.on_message(filters.photo & filters.private)
 async def handle_image(client, message):
+    msg = await message.reply_text("<i>Trying To Save Thumbnail...</i>")
     success = await setThumbnail(message)
     if success:
-        msg = await message.reply_text("**Thumbnail Successfully Changed ✅**")
+        await msg.edit_text("**Thumbnail Successfully Changed ✅**")
         await message.delete()
     else:
-        msg = await message.reply_text(
+        await msg.edit_text(
             "🥲 **Couldn't Set Thumbnail, Please Try Again !**", quote=True
         )
     await sleep(15)
