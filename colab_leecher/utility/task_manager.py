@@ -94,7 +94,7 @@ async def taskScheduler():
 
     if ospath.exists(Paths.WORK_PATH):
         shutil.rmtree(Paths.WORK_PATH)
-        makedirs(Paths.WORK_PATH)
+        # makedirs(Paths.WORK_PATH)
         makedirs(Paths.down_path)
     else:
         makedirs(Paths.WORK_PATH)
@@ -128,7 +128,11 @@ async def taskScheduler():
     )
 
     await calDownSize(BOT.SOURCE)
-    await get_d_name(BOT.SOURCE[0])
+
+    if not is_dir:
+        await get_d_name(BOT.SOURCE[0])
+    else:
+        Messages.download_name = ospath.basename(BOT.SOURCE[0])
 
     if is_zip:
         Paths.down_path = ospath.join(Paths.down_path, Messages.download_name)
@@ -137,7 +141,7 @@ async def taskScheduler():
 
     BotTimes.current_time = time()
 
-    if BOT.Mode.mode == "leech":
+    if BOT.Mode.mode != "mirror":
         await Do_Leech(BOT.SOURCE, is_dir, BOT.Mode.ytdl, is_zip, is_unzip, is_dualzip)
     else:
         await Do_Mirror(BOT.SOURCE, BOT.Mode.ytdl, is_zip, is_unzip, is_dualzip)

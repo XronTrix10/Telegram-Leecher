@@ -80,7 +80,7 @@ class Paths:
     mirror_dir = "/content/drive/MyDrive/Colab Leecher Uploads"
     temp_zpath = f"{WORK_PATH}/Leeched_Files"
     temp_unzip_path = f"{WORK_PATH}/Unzipped_Files"
-    temp_files_dir = f"{WORK_PATH}/dir_leech_temp"
+    temp_files_dir = f"{WORK_PATH}/leech_temp"
     thumbnail_ytdl = f"{WORK_PATH}/ytdl_thumbnails"
     access_token = "/content/token.pickle"
 

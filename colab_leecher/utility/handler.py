@@ -89,6 +89,9 @@ async def Leech(folder_path: str, remove: bool):
             shutil.rmtree(Paths.temp_zpath)
 
         else:
+            if not ospath.exists(Paths.temp_files_dir): # Create Directory
+                makedirs(Paths.temp_files_dir)
+
             if not remove:  # Copy To Temp Dir for Renaming Purposes
                 file_path = shutil.copy(file_path, Paths.temp_files_dir)
             file_name = ospath.basename(file_path)
