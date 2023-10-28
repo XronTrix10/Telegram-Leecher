@@ -111,6 +111,16 @@ I'm a full stack developer...(for example) write about yourself
 
 <br>
 
+## FAQ
+
+#### Question 1
+
+Answer 1
+
+#### Question 2
+
+Answer 2
+
 <h3 align="center">Please Leave a 🌟 If this repo Helped you</h4>
 
 <h4 align="center">Pull Requests are welcome 💗</h4>
