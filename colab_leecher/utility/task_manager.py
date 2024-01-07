@@ -71,10 +71,8 @@ async def taskScheduler():
             elif "drive.google.com" in link:
                 ida = "♻️"
             elif "magnet" in link or "torrent" in link:
-                await cancelTask(
-                    "<i><b>Sorry, But Torrents Are Strictly Prohibited in Google Colab</b>, I Can't allow you because it may shut down the whole project ! Please Find Any alternative Site !</i>"
-                )
-                return
+                ida = "🧲"
+                Messages.caution_msg = "\n\n⚠️<i><b> Torrents Are Strictly Prohibited in Google Colab</b>, Try to avoid Magnets !</i>"
             elif "youtube.com" in link or "youtu.be" in link:
                 ida = "🏮"
             else:
@@ -85,6 +83,7 @@ async def taskScheduler():
                 Messages.dump_task = code_link
             else:
                 Messages.dump_task += code_link
+                
     # Get the current date and time in the specified time zone
     cdt = datetime.now(pytz.timezone("Asia/Kolkata"))
     dt = cdt.strftime(" %d-%m-%Y")
