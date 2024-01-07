@@ -2,9 +2,11 @@
 
 
 import logging
-from asyncio import sleep
 from natsort import natsorted
 from datetime import datetime
+from asyncio import sleep, get_running_loop
+from colab_leecher.downlader.mega import megadl
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.downlader.ytdl import YTDL_Status, get_YT_Name
 from colab_leecher.downlader.aria2 import aria2_Download, get_Aria2c_Name
@@ -56,6 +58,10 @@ async def downloadManager(source, is_ytdl: bool):
                         pass
                     while not isYtdlComplete():
                         await sleep(2)
+                elif "mega.nz" in link:
+                    executor = ProcessPoolExecutor()
+                    # await loop.run_in_executor(executor, megadl, link, i + 1)
+                    await megadl(link, i + 1)
                 else:
                     aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
                     try:
@@ -119,5 +125,7 @@ async def get_d_name(link: str):
         Messages.download_name = media.file_name if hasattr(media, "file_name") else "None"  # type: ignore
     elif "youtube.com" in link or "youtu.be" in link:
         Messages.download_name = await get_YT_Name(link)
+    elif "mega.nz" in link:
+        Messages.download_name = "Don't Know 🥲 (Trying)" # TODO: Get download name via megadl
     else:
         Messages.download_name = get_Aria2c_Name(link)
