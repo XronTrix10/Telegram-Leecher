@@ -72,31 +72,21 @@ def YouTubeDL(url):
         global YTDL
 
         if d["status"] == "downloading":
-            if d.get("total_bytes"):
-                total_bytes = d["total_bytes"]
-            elif d.get("total_bytes_estimate"):
-                total_bytes = d["total_bytes_estimate"]
-            else:
-                total_bytes = 0
+            total_bytes = d.get("total_bytes", 0)  # Use 0 as default if total_bytes is None
             dl_bytes = d.get("downloaded_bytes", 0)
             percent = d.get("downloaded_percent", 0)
             speed = d.get("speed", "N/A")
             eta = d.get("eta", 0)
 
-            if percent == 0 and total_bytes != 0:
-                percent = round(
-                    (float(dl_bytes) * 100 / float(total_bytes)), 2)
+            if total_bytes:
+                percent = round((float(dl_bytes) * 100 / float(total_bytes)), 2)
 
-            # print(
-            #     f"\rDL: {sizeUnit(dl_bytes)}/{sizeUnit(total_bytes)} | {percent}% | Speed: {sizeUnit(speed)}/s | ETA: {eta}",
-            #     end="",
-            # )
             YTDL.header = ""
-            YTDL.speed = sizeUnit(speed)
+            YTDL.speed = sizeUnit(speed) if speed else "N/A"
             YTDL.percentage = percent
-            YTDL.eta = getTime(eta)
-            YTDL.done = sizeUnit(dl_bytes)
-            YTDL.left = sizeUnit(total_bytes)
+            YTDL.eta = getTime(eta) if eta else "N/A"
+            YTDL.done = sizeUnit(dl_bytes) if dl_bytes else "N/A"
+            YTDL.left = sizeUnit(total_bytes) if total_bytes else "N/A"
 
         elif d["status"] == "downloading fragment":
             # log_str = d["message"]
@@ -106,7 +96,7 @@ def YouTubeDL(url):
             logging.info(d)
 
     ydl_opts = {
-        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
+        "format": "best",
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
@@ -114,6 +104,8 @@ def YouTubeDL(url):
         "overwrites": True,
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
         "progress_hooks": [my_hook],
+        "writesubtitles": "srt",  # Enable subtitles download
+        "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
         "logger": MyLogger(),
     }
 
@@ -149,8 +141,8 @@ async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info: 
-                return info["title"] 
+            if "title" in info and info["title"]: 
+                return info["title"]
             else:
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
