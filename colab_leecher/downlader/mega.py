@@ -22,7 +22,7 @@ async def megadl(link: str, num: int):
 async def pro_for_mega(stream, process):
     line =stream[-1]
     file_name = "N/A"
-    percentage = "0"
+    percentage = 0
     downloaded_size = "N/A"
     total_size = "N/A"
     speed = "N/A"
