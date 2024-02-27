@@ -35,7 +35,7 @@ async def pro_for_mega(stream, process):
         speed = ok[10][1:]+" "+ok[11][:-1]
     except Exception:
         logging.error(f"Got this \n{line}")
-        
+        return
     Messages.status_head = f"<b>📥 DOWNLOADING FROM MEGA » </b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
     
     await status_bar(
