@@ -27,12 +27,13 @@ async def pro_for_mega(stream, process):
     total_size = "N/A"
     speed = "N/A"
     try :
-        ok =line.split()
-        file_name = ok[0][:-1]
-        percentage = float(ok[1][:-1])
-        downloaded_size = ok[3]+" "+ok[4]
-        total_size =  ok[8]+" "+ok[9]
-        speed = ok[10][1:]+" "+ok[11][:-1]
+        ok =line.split(":")
+        file_name = ok[0]
+        ok=ok[1].split()
+        percentage = float(ok[0][:-1])
+        downloaded_size = ok[2]+" "+ok[3]
+        total_size =  ok[7]+" "+ok[8]
+        speed = ok[9][1:]+" "+ok[10][:-1]
     except Exception:
         logging.error(f"Got this \n{line}")
         return
