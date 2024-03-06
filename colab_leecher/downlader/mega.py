@@ -24,6 +24,7 @@ async def pro_for_mega(stream, process):
     downloaded_size = "N/A"
     total_size = "N/A"
     speed = "N/A"
+    eta = "Unknown"  # Initialize eta with a default value
     try:
         ok = line.split(":")
         file_name = ok[0]
@@ -37,9 +38,7 @@ async def pro_for_mega(stream, process):
         remaining_bytes = float(ok[7]) - float(ok[2])
         time_elapsed = datetime.now() - BotTimes.task_start
         bytes_per_second = float(ok[9][1:]) * (1024 if ok[10][-1] == 'K' else 1)  # Convert KB/s to bytes/s if necessary
-        if bytes_per_second == 0:
-            eta = "Unknown"
-        else:
+        if bytes_per_second != 0:
             remaining_seconds = remaining_bytes / bytes_per_second
             eta = timedelta(seconds=remaining_seconds)
 
@@ -58,4 +57,4 @@ async def pro_for_mega(stream, process):
         total_size,
         "Meg 😡",
     )
-   
+    
