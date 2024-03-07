@@ -3,7 +3,7 @@
 
 import subprocess, logging
 from datetime import datetime, timedelta
-from colab_leecher.utility.helper import status_bar
+from colab_leecher.utility.helper import status_bar, getTime
 from colab_leecher.utility.variables import BotTimes, Messages, Paths
 from pymegatools import Megatools, MegaError
 
@@ -39,7 +39,7 @@ async def pro_for_mega(stream, process):
         bytes_per_second = float(ok[9][1:]) * (1024 if ok[10][-1] == 'K' else 1)  # Convert KB/s to bytes/s if necessary
         if bytes_per_second != 0:
             remaining_seconds = remaining_bytes / bytes_per_second
-            eta = format_time(remaining_seconds)
+            eta = getTime(remaining_seconds)
 
     except Exception:
         pass
@@ -56,14 +56,3 @@ async def pro_for_mega(stream, process):
         total_size,
         "Meg 😡",
     )
-
-def format_time(seconds):
-    if seconds < 60:
-        return f"{int(seconds)}s"
-    elif seconds < 3600:
-        return f"{int(seconds // 60)}min {int(seconds % 60)}s"
-    else:
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        return f"{hours}hour {minutes}min"
-        
