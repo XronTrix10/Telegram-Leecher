@@ -100,6 +100,7 @@ def YouTubeDL(url):
         "allow_multiple_video_streams": True,
         "allow_multiple_audio_streams": True,
         "writethumbnail": True,
+        "--concurrent-fragments": 4 , # Set the maximum number of concurrent fragments
         "allow_playlist_files": True,
         "overwrites": True,
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
@@ -121,18 +122,34 @@ def YouTubeDL(url):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/{playlist_name}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
-                    ydl.download([video_url])
+                    try:
+                        ydl.download([video_url])
+                    except yt_dlp.utils.DownloadError as e:
+                        if e.exc_info[0] == 36:
+                            ydl_opts["outtmpl"] = {
+                                "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                            }
+                            ydl.download([video_url])
             else:
                 YTDL.header = ""
                 ydl_opts["outtmpl"] = {
-                    "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
+                    "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
                 }
-                ydl.download([url])
+                try:
+                    ydl.download([url])
+                except yt_dlp.utils.DownloadError as e:
+                    if e.exc_info[0] == 36:
+                        ydl_opts["outtmpl"] = {
+                            "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                        }
+                        ydl.download([url])
         except Exception as e:
             logging.error(f"YTDL ERROR: {e}")
 
