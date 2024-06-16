@@ -6,6 +6,7 @@ import shutil
 import logging
 from time import time
 from datetime import datetime
+from asyncio import sleep
 from os import makedirs, path as ospath, system
 from colab_leecher import OWNER, colab_bot, DUMP_ID
 from colab_leecher.downlader.manager import calDownSize, get_d_name, downloadManager
@@ -28,6 +29,22 @@ from colab_leecher.utility.variables import (
     TaskError,
 )
 
+
+async def task_starter(message, text):
+    global BOT
+    await message.delete()
+    BOT.State.started = True
+    if BOT.State.task_going == False:
+        src_request_msg = await message.reply_text(text)
+        return src_request_msg
+    else:
+        msg = await message.reply_text(
+            "I am already working ! Please wait until I finish !!"
+        )
+        await sleep(15)
+        await msg.delete()
+        return None
+        
 
 async def taskScheduler():
     global BOT, MSG, BotTimes, Messages, Paths, Transfer, TaskError
