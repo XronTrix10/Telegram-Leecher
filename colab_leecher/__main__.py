@@ -142,7 +142,7 @@ async def handle_url(client, message):
             ]
         )
         await message.reply_text(
-            text=f"<b>◲ Tell Me The Type of {BOT.Mode.mode} You Want 🍕» </b>",
+            text=f"<b>🐹 Select Type of {BOT.Mode.mode.capitalize()} You Want » </b>\n\nRegular:<i> Normal file upload</i>\nCompress:<i> Zip file upload</i>\nExtract:<i> extract before upload</i>\nUnDoubleZip:<i> Unzip then compress</i>",
             reply_markup=keyboard,
             quote=True,
         )
@@ -155,7 +155,7 @@ async def handle_url(client, message):
 
 @colab_bot.on_callback_query()
 async def handle_options(client, callback_query):
-    global BOT
+    global BOT, MSG
 
     if callback_query.data in ["normal", "zip", "unzip", "undzip"]:
         BOT.Mode.type = callback_query.data
