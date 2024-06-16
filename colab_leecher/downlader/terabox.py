@@ -35,5 +35,5 @@ async def terabox_download(link: str, index):
                     logging.info("Fast donload link is unusable")
                     await aria2_Download(slow_download_url, index)
             except Exception as e:
-                logging.error(f"Error: {e}")
-                await cancelTask(f"Error downloading file: {e}")
+                logging.info("Fast donload link is unusable")
+                await aria2_Download(slow_download_url, index)
