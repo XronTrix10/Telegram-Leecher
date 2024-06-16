@@ -6,13 +6,31 @@ from natsort import natsorted
 from datetime import datetime
 from asyncio import sleep, get_running_loop
 from colab_leecher.downlader.mega import megadl
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from colab_leecher.utility.handler import cancelTask
+from colab_leecher.downlader.terabox import terabox_download
 from colab_leecher.downlader.ytdl import YTDL_Status, get_YT_Name
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from colab_leecher.downlader.aria2 import aria2_Download, get_Aria2c_Name
-from colab_leecher.utility.helper import isYtdlComplete, keyboard, sysINFO
 from colab_leecher.downlader.telegram import TelegramDownload, media_Identifier
-from colab_leecher.utility.variables import BOT, Gdrive, Transfer, MSG, Messages, Aria2c, BotTimes
+from colab_leecher.utility.variables import (
+    BOT,
+    Gdrive,
+    Transfer,
+    MSG,
+    Messages,
+    Aria2c,
+    BotTimes,
+)
+from colab_leecher.utility.helper import (
+    isYtdlComplete,
+    keyboard,
+    sysINFO,
+    is_google_drive,
+    is_mega,
+    is_terabox,
+    is_ytdl_link,
+    is_telegram,
+)
 from colab_leecher.downlader.gdrive import (
     build_service,
     g_DownLoad,
@@ -40,11 +58,11 @@ async def downloadManager(source, is_ytdl: bool):
     else:
         for i, link in enumerate(source):
             try:
-                if "drive.google.com" in link:
+                if is_google_drive(link):
                     await g_DownLoad(link, i + 1)
-                elif "t.me" in link:
+                elif is_telegram(link):
                     await TelegramDownload(link, i + 1)
-                elif "youtube.com" in link or "youtu.be" in link:
+                elif is_ytdl_link(link):
                     await YTDL_Status(link, i + 1)
                     try:
                         await MSG.status_msg.edit_text(
@@ -58,10 +76,20 @@ async def downloadManager(source, is_ytdl: bool):
                         pass
                     while not isYtdlComplete():
                         await sleep(2)
-                elif "mega.nz" in link:
+                elif is_mega(link):
                     executor = ProcessPoolExecutor()
                     # await loop.run_in_executor(executor, megadl, link, i + 1)
                     await megadl(link, i + 1)
+                elif is_terabox(link):
+                    tera_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Generating Download Link For__\n\n<code>{link}</code>"
+                    try:
+                        await MSG.status_msg.edit_text(
+                            text=tera_dn + sysINFO(), reply_markup=keyboard()
+                        )
+                    except Exception as e1:
+                        print(f"Couldn't Update text ! Because: {e1}")
+
+                    await terabox_download(link, i + 1)
                 else:
                     aria2_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Getting Download Info For__\n\n<code>{link}</code>"
                     try:
@@ -81,7 +109,7 @@ async def downloadManager(source, is_ytdl: bool):
 async def calDownSize(sources):
     global TRANSFER_INFO
     for link in natsorted(sources):
-        if "drive.google.com" in link:
+        if is_google_drive(link):
             await build_service()
             id = await getIDFromURL(link)
             try:
@@ -100,7 +128,7 @@ async def calDownSize(sources):
                     Transfer.total_down_size += get_Gfolder_size(id)
                 else:
                     Transfer.total_down_size += int(meta["size"])
-        elif "t.me" in link:
+        elif is_telegram(link):
             media, _ = await media_Identifier(link)
             if media is not None:
                 size = media.file_size
@@ -116,16 +144,18 @@ async def get_d_name(link: str):
     if len(BOT.Options.custom_name) != 0:
         Messages.download_name = BOT.Options.custom_name
         return
-    if "drive.google.com" in link:
+    if is_google_drive(link):
         id = await getIDFromURL(link)
         meta = getFileMetadata(id)
         Messages.download_name = meta["name"]
-    elif "t.me" in link:
+    elif is_telegram(link):
         media, _ = await media_Identifier(link)
         Messages.download_name = media.file_name if hasattr(media, "file_name") else "None"  # type: ignore
-    elif "youtube.com" in link or "youtu.be" in link:
+    elif is_ytdl_link(link):
         Messages.download_name = await get_YT_Name(link)
-    elif "mega.nz" in link:
-        Messages.download_name = "Don't Know 🥲 (Trying)" # TODO: Get download name via megadl
+    elif is_mega(link):
+        Messages.download_name = (
+            "Don't Know 🥲 (Trying)"  # TODO: Get download name via megadl
+        )
     else:
         Messages.download_name = get_Aria2c_Name(link)

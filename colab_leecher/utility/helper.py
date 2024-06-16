@@ -1,4 +1,4 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
+# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
 
 import os
@@ -11,6 +11,7 @@ from os import path as ospath
 from datetime import datetime
 from urllib.parse import urlparse
 from asyncio import get_event_loop
+from colab_leecher import colab_bot
 from pyrogram.errors import BadRequest
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
@@ -25,7 +26,7 @@ from colab_leecher.utility.variables import (
 
 def isLink(_, __, update):
     if update.text:
-        if "/content/" in str(update.text):
+        if "/content/" in str(update.text) or "/home" in str(update.text):
             return True
         elif update.text.startswith("magnet:?xt=urn:btih:"):
             return True
@@ -36,6 +37,25 @@ def isLink(_, __, update):
             return True
 
     return False
+
+
+def is_google_drive(link):
+    return "drive.google.com" in link
+
+def is_mega(link):
+    return "mega.nz" in link
+
+def is_terabox(link):
+    return "terabox" in link or "1024tera" in link
+
+def is_ytdl_link(link):
+    return "youtube.com" in link or "youtu.be" in link
+
+def is_telegram(link):
+    return "t.me" in link
+
+def is_torrent(link):
+    return "magnet" in link or "torrent" in link
 
 
 def getTime(seconds):
@@ -308,6 +328,52 @@ async def message_deleter(message1, message2):
         await message2.delete()
     except Exception as e:
         logging.error(f"MSG Delete Failed: {e}")
+
+
+async def send_settings(client, message, msg_id, command: bool):
+    up_mode = "document" if BOT.Options.stream_upload else "media"
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    f"Set {up_mode.capitalize()}", callback_data=up_mode
+                ),
+                InlineKeyboardButton("Video Convert", callback_data="video"),
+            ],
+            [
+                InlineKeyboardButton("Caption Font", callback_data="caption"),
+                InlineKeyboardButton("Thumbnail", callback_data="thumb"),
+            ],
+            [
+                InlineKeyboardButton("Set Suffix", callback_data="set-suffix"),
+                InlineKeyboardButton("Set Prefix", callback_data="set-prefix"),
+            ],
+            [InlineKeyboardButton("Close ✘", callback_data="close")],
+        ]
+    )
+    text = "**CURRENT BOT SETTINGS ⚙️ »**"
+    text += f"\n\n╭⌬ UPLOAD » <i>{BOT.Setting.stream_upload}</i>"
+    text += f"\n├⌬ CONVERT » <i>{BOT.Setting.convert_video}</i>"
+    text += f"\n├⌬ CAPTION » <i>{BOT.Setting.caption}</i>"
+    pr = "None" if BOT.Setting.prefix == "" else "Exists"
+    su = "None" if BOT.Setting.suffix == "" else "Exists"
+    thmb = "None" if not BOT.Setting.thumbnail else "Exists"
+    text += f"\n├⌬ PREFIX » <i>{pr}</i>\n├⌬ SUFFIX » <i>{su}</i>"
+    text += f"\n╰⌬ THUMBNAIL » <i>{thmb}</i>"
+    try:
+        if command:
+            await message.reply_text(text=text, reply_markup=keyboard)
+        else:
+            await colab_bot.edit_message_text(
+                chat_id=message.chat.id,
+                message_id=msg_id,
+                text=text,
+                reply_markup=keyboard,
+            )
+    except BadRequest as error:
+        logging.error(f"Same text not modified | {error}")
+    except Exception as error:
+        logging.error(f"Error Modifying message | {error}")
 
 
 async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
