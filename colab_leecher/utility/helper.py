@@ -39,6 +39,25 @@ def isLink(_, __, update):
     return False
 
 
+def is_google_drive(link):
+    return "drive.google.com" in link
+
+def is_mega(link):
+    return "mega.nz" in link
+
+def is_terabox(link):
+    return "terabox" in link or "1024tera" in link
+
+def is_ytdl_link(link):
+    return "youtube.com" in link or "youtu.be" in link
+
+def is_telegram(link):
+    return "t.me" in link
+
+def is_torrent(link):
+    return "magnet" in link or "torrent" in link
+
+
 def getTime(seconds):
     seconds = int(seconds)
     days = seconds // (24 * 3600)
