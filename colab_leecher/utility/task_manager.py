@@ -92,6 +92,8 @@ async def taskScheduler():
                 Messages.caution_msg = "\n\n⚠️<i><b> Torrents Are Strictly Prohibited in Google Colab</b>, Try to avoid Magnets !</i>"
             elif "youtube.com" in link or "youtu.be" in link:
                 ida = "🏮"
+            elif "terabox" in link:
+                ida = "🍑"
             else:
                 ida = "🔗"
             code_link = f"\n\n{ida} <code>{link}</code>"
