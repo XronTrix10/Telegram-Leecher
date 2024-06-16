@@ -1,4 +1,4 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
+# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
 
 import logging, os
