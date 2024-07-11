@@ -1,17 +1,17 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
+# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
 
 import logging, os
 from pyrogram import filters
 from datetime import datetime
-from pyrogram.errors import BadRequest
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
-from .utility.task_manager import taskScheduler
 from colab_leecher.utility.handler import cancelTask
 from .utility.variables import BOT, MSG, BotTimes, Paths
-from .utility.helper import isLink, setThumbnail, message_deleter
+from .utility.task_manager import taskScheduler, task_starter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from .utility.helper import isLink, setThumbnail, message_deleter, send_settings
+
 
 src_request_msg = None
 
@@ -24,7 +24,8 @@ async def start(client, message):
         [
             [
                 InlineKeyboardButton(
-                    "Repository 🦄", url="https://github.com/XronTrix10/Telegram-Leecher"
+                    "Repository 🦄",
+                    url="https://github.com/XronTrix10/Telegram-Leecher",
                 ),
                 InlineKeyboardButton("Support 💝", url="https://t.me/Colab_Leecher"),
             ],
@@ -33,63 +34,48 @@ async def start(client, message):
     await message.reply_text(text, reply_markup=keyboard)
 
 
-@colab_bot.on_message(filters.command("colabxr") & filters.private)
-async def colabxr(client, message):
+@colab_bot.on_message(filters.command("tupload") & filters.private)
+async def telegram_upload(client, message):
     global BOT, src_request_msg
-    text = "<b>◲ Send Me DOWNLOAD LINK(s) 🔗»\n◲</b> <i>You can enter multiple links in new lines and I will download each of them 😉 </i>"
-    await message.delete()
-    BOT.State.started = True
-    if BOT.State.task_going == False:
-        src_request_msg = await message.reply_text(text)
-    else:
-        msg = await message.reply_text(
-            "I am Already Working ! Please Wait Until I finish !!"
-        )
-        await sleep(15)
-        await msg.delete()
+    BOT.Mode.mode = "leech"
+    BOT.Mode.ytdl = False
+
+    text = "<b>⚡ Send Me DOWNLOAD LINK(s) 🔗»</b>\n\n🦀 Follow the below pattern\n\n<code>https//linktofile1.mp4\nhttps//linktofile2.mp4\n[Custom name space.mp4]\n{Password for zipping}\n(Password for unzip)</code>"
+
+    src_request_msg = await task_starter(message, text)
 
 
-async def send_settings(client, message, msg_id, command: bool):
-    up_mode = "document" if BOT.Options.stream_upload else "media"
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    f"Set {up_mode.capitalize()}", callback_data=up_mode
-                ),
-                InlineKeyboardButton("Video Convert", callback_data="video"),
-            ],
-            [
-                InlineKeyboardButton("Caption Font", callback_data="caption"),
-                InlineKeyboardButton("Thumbnail", callback_data="thumb"),
-            ],
-            [
-                InlineKeyboardButton("Set Suffix", callback_data="set-suffix"),
-                InlineKeyboardButton("Set Prefix", callback_data="set-prefix"),
-            ],
-            [InlineKeyboardButton("Close ✘", callback_data="close")],
-        ]
-    )
-    text = "**CURRENT BOT SETTINGS ⚙️ »**"
-    text += f"\n\n╭⌬ UPLOAD » <i>{BOT.Setting.stream_upload}</i>"
-    text += f"\n├⌬ CONVERT » <i>{BOT.Setting.convert_video}</i>"
-    text += f"\n├⌬ CAPTION » <i>{BOT.Setting.caption}</i>"
-    pr = "None" if BOT.Setting.prefix == "" else "Exists"
-    su = "None" if BOT.Setting.suffix == "" else "Exists"
-    thmb = "None" if not BOT.Setting.thumbnail else "Exists"
-    text += f"\n├⌬ PREFIX » <i>{pr}</i>\n├⌬ SUFFIX » <i>{su}</i>"
-    text += f"\n╰⌬ THUMBNAIL » <i>{thmb}</i>"
-    try:
-        if command:
-            await message.reply_text(text=text, reply_markup=keyboard)
-        else:
-            await colab_bot.edit_message_text(
-                chat_id=message.chat.id, message_id=msg_id, text=text, reply_markup=keyboard
-            )
-    except BadRequest as error:
-        logging.error(f"Same text not modified | {error}")
-    except Exception as error:
-        logging.error(f"Error Modifying message | {error}")
+@colab_bot.on_message(filters.command("gdupload") & filters.private)
+async def drive_upload(client, message):
+    global BOT, src_request_msg
+    BOT.Mode.mode = "mirror"
+    BOT.Mode.ytdl = False
+
+    text = "<b>⚡ Send Me DOWNLOAD LINK(s) 🔗»</b>\n\n🦀 Follow the below pattern\n\n<code>https//linktofile1.mp4\nhttps//linktofile2.mp4\n[Custom name space.mp4]\n{Password for zipping}\n(Password for unzip)</code>"
+
+    src_request_msg = await task_starter(message, text)
+
+
+@colab_bot.on_message(filters.command("drupload") & filters.private)
+async def directory_upload(client, message):
+    global BOT, src_request_msg
+    BOT.Mode.mode = "dir-leech"
+    BOT.Mode.ytdl = False
+
+    text = "<b>⚡ Send Me FOLDER PATH 🔗»</b>\n\n🦀 Below is an example\n\n<code>/home/user/Downloads/bot</code>"
+
+    src_request_msg = await task_starter(message, text)
+
+
+@colab_bot.on_message(filters.command("ytupload") & filters.private)
+async def yt_upload(client, message):
+    global BOT, src_request_msg
+    BOT.Mode.mode = "leech"
+    BOT.Mode.ytdl = True
+
+    text = "<b>⚡ Send YTDL DOWNLOAD LINK(s) 🔗»</b>\n\n🦀 Follow the below pattern\n\n<code>https//linktofile1.mp4\nhttps//linktofile2.mp4\n[Custom name space.mp4]\n{Password for zipping}</code>"
+
+    src_request_msg = await task_starter(message, text)
 
 
 @colab_bot.on_message(filters.command("settings") & filters.private)
@@ -147,15 +133,16 @@ async def handle_url(client, message):
         BOT.SOURCE = temp_source
         keyboard = InlineKeyboardMarkup(
             [
+                [InlineKeyboardButton("Regular", callback_data="normal")],
                 [
-                    InlineKeyboardButton("Leech", callback_data="leech"),
-                    InlineKeyboardButton("Mirror", callback_data="mirror"),
+                    InlineKeyboardButton("Compress", callback_data="zip"),
+                    InlineKeyboardButton("Extract", callback_data="unzip"),
                 ],
-                [InlineKeyboardButton("Dir-Leech", callback_data="dir-leech")],
+                [InlineKeyboardButton("UnDoubleZip", callback_data="undzip")],
             ]
         )
         await message.reply_text(
-            text="<b>◲ Choose COLAB LEECHER Operation MODE For This Current Task 🍳 »</b>",
+            text=f"<b>🐹 Select Type of {BOT.Mode.mode.capitalize()} You Want » </b>\n\nRegular:<i> Normal file upload</i>\nCompress:<i> Zip file upload</i>\nExtract:<i> extract before upload</i>\nUnDoubleZip:<i> Unzip then compress</i>",
             reply_markup=keyboard,
             quote=True,
         )
@@ -168,37 +155,32 @@ async def handle_url(client, message):
 
 @colab_bot.on_callback_query()
 async def handle_options(client, callback_query):
-    global BOT
+    global BOT, MSG
 
-    if callback_query.data in ["leech", "mirror", "dir-leech"]:
-        BOT.Mode.mode = callback_query.data
-        keyboard = InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("Normal", callback_data="normal")],
-                [
-                    InlineKeyboardButton("Zip", callback_data="zip"),
-                    InlineKeyboardButton("Unzip", callback_data="unzip"),
-                    InlineKeyboardButton("UnDoubleZip", callback_data="undzip"),
-                ],
-            ]
-        )
-        await callback_query.message.edit_text(
-            f"<b>◲ Tell Me The Type of {BOT.Mode.mode} You Want 🍕» </b>",
-            reply_markup=keyboard,
-        )
-    elif callback_query.data in ["normal", "zip", "unzip", "undzip"]:
+    if callback_query.data in ["normal", "zip", "unzip", "undzip"]:
         BOT.Mode.type = callback_query.data
-        keyboard = InlineKeyboardMarkup(
-            [
+        await callback_query.message.delete()
+        await colab_bot.delete_messages(
+            chat_id=callback_query.message.chat.id,
+            message_ids=callback_query.message.reply_to_message_id,
+        )
+        MSG.status_msg = await colab_bot.send_message(
+            chat_id=OWNER,
+            text="#STARTING_TASK\n\n**Starting your task in a few Seconds...🦐**",
+            reply_markup=InlineKeyboardMarkup(
                 [
-                    InlineKeyboardButton("Yes", callback_data="ytdl-true"),
-                    InlineKeyboardButton("No", callback_data="ytdl-false"),
-                ],
-            ]
+                    [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
+                ]
+            ),
         )
-        await callback_query.message.edit_text(
-            "<b>◲ Is it a YTDL Link ? 🧐</b>", reply_markup=keyboard
-        )
+        BOT.State.task_going = True
+        BOT.State.started = False
+        BotTimes.start_time = datetime.now()
+        event_loop = get_event_loop()
+        BOT.TASK = event_loop.create_task(taskScheduler())  # type: ignore
+        await BOT.TASK
+        BOT.State.task_going = False
+
     elif callback_query.data == "video":
         keyboard = InlineKeyboardMarkup(
             [
@@ -287,7 +269,14 @@ async def handle_options(client, callback_query):
         await send_settings(
             client, callback_query.message, callback_query.message.id, False
         )
-    elif callback_query.data in ["convert-true", "convert-false", "mp4", "mkv", "q-High", "q-Low"]:
+    elif callback_query.data in [
+        "convert-true",
+        "convert-false",
+        "mp4",
+        "mkv",
+        "q-High",
+        "q-Low",
+    ]:
         if callback_query.data in ["convert-true", "convert-false"]:
             BOT.Options.convert_video = (
                 True if callback_query.data == "convert-true" else False
@@ -295,12 +284,14 @@ async def handle_options(client, callback_query):
             BOT.Setting.convert_video = (
                 "Yes" if callback_query.data == "convert-true" else "No"
             )
-        elif callback_query.data in ["q-High", "q-Low"] :
+        elif callback_query.data in ["q-High", "q-Low"]:
             BOT.Setting.convert_quality = callback_query.data.split("-")[-1]
-            BOT.Options.convert_quality = True if BOT.Setting.convert_quality == "High" else False
+            BOT.Options.convert_quality = (
+                True if BOT.Setting.convert_quality == "High" else False
+            )
             await send_settings(
-            client, callback_query.message, callback_query.message.id, False
-        )
+                client, callback_query.message, callback_query.message.id, False
+            )
         else:
             BOT.Options.video_out = callback_query.data
         await send_settings(

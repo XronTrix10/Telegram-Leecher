@@ -3,14 +3,14 @@ google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 GPUtil
-httpx
+aiohttp
 moviepy
 natsort
 opencv-python
 Pillow
 psutil
 pytz
-pyrogram==2.0.106
+pyroblack
 requests
 tgcrypto
 uvloop

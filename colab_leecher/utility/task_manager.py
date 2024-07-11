@@ -1,4 +1,4 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
+# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
 
 import pytz
@@ -6,10 +6,22 @@ import shutil
 import logging
 from time import time
 from datetime import datetime
+from asyncio import sleep
 from os import makedirs, path as ospath, system
 from colab_leecher import OWNER, colab_bot, DUMP_ID
 from colab_leecher.downlader.manager import calDownSize, get_d_name, downloadManager
-from colab_leecher.utility.helper import getSize, applyCustomName, keyboard, sysINFO
+from colab_leecher.utility.helper import (
+    getSize,
+    applyCustomName,
+    keyboard,
+    sysINFO,
+    is_google_drive,
+    is_telegram,
+    is_ytdl_link,
+    is_mega,
+    is_terabox,
+    is_torrent,
+)
 from colab_leecher.utility.handler import (
     Leech,
     Unzip_Handler,
@@ -27,6 +39,22 @@ from colab_leecher.utility.variables import (
     Transfer,
     TaskError,
 )
+
+
+async def task_starter(message, text):
+    global BOT
+    await message.delete()
+    BOT.State.started = True
+    if BOT.State.task_going == False:
+        src_request_msg = await message.reply_text(text)
+        return src_request_msg
+    else:
+        msg = await message.reply_text(
+            "I am already working ! Please wait until I finish !!"
+        )
+        await sleep(15)
+        await msg.delete()
+        return None
 
 
 async def taskScheduler():
@@ -66,15 +94,19 @@ async def taskScheduler():
         Messages.download_name = ospath.basename(BOT.SOURCE[0])
     else:
         for link in BOT.SOURCE:
-            if "t.me" in link:
+            if is_telegram(link):
                 ida = "💬"
-            elif "drive.google.com" in link:
+            elif is_google_drive(link):
                 ida = "♻️"
-            elif "magnet" in link or "torrent" in link:
+            elif is_torrent(link):
                 ida = "🧲"
                 Messages.caution_msg = "\n\n⚠️<i><b> Torrents Are Strictly Prohibited in Google Colab</b>, Try to avoid Magnets !</i>"
-            elif "youtube.com" in link or "youtu.be" in link:
+            elif is_ytdl_link(link):
                 ida = "🏮"
+            elif is_terabox(link):
+                ida = "🍑"
+            elif is_mega(link):
+                ida = "💾"
             else:
                 ida = "🔗"
             code_link = f"\n\n{ida} <code>{link}</code>"
@@ -83,7 +115,7 @@ async def taskScheduler():
                 Messages.dump_task = code_link
             else:
                 Messages.dump_task += code_link
-                
+
     # Get the current date and time in the specified time zone
     cdt = datetime.now(pytz.timezone("Asia/Kolkata"))
     dt = cdt.strftime(" %d-%m-%Y")
