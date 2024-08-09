@@ -25,7 +25,7 @@ async def progress_bar(current, total):
         eta=getTime(eta),
         done=sizeUnit(current + sum(Transfer.up_bytes)),
         left=sizeUnit(Transfer.total_down_size),
-        engine="Pyrogram 💥",
+        engine="Pyrofork 💥",
     )
 
 
