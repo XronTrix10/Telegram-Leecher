@@ -58,9 +58,9 @@ def Loading():
 _Thread = Thread(target=Loading, name="Prepare", args=())
 _Thread.start()
 
-if len(str(DUMP_ID)) == 10 and "-100" not in str(DUMP_ID):
-    n_dump = "-100" + str(DUMP_ID)
-    DUMP_ID = int(n_dump)
+#if len(str(DUMP_ID)) == 10 and "-100" not in str(DUMP_ID):
+#    n_dump = "-100" + str(DUMP_ID)
+#    DUMP_ID = int(n_dump)
 
 if os.path.exists("/content/sample_data"):
     shutil.rmtree("/content/sample_data")
