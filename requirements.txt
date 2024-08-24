@@ -10,9 +10,9 @@ opencv-python
 Pillow
 psutil
 pytz
-pyrofork==2.2.11
+Pyrotgfork
+PyTgCrypto
 requests
-tgcrypto
 uvloop
 yt_dlp
 pymegatools

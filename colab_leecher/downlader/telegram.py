@@ -48,7 +48,7 @@ async def download_progress(current, total):
         eta=getTime(eta),
         done=sizeUnit(sum(Transfer.down_bytes) + current),
         left=sizeUnit(Transfer.total_down_size),
-        engine="Pyrogram 💥",
+        engine="PyroTgFork 💥",
     )
 
 
