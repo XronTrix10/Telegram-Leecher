@@ -24,8 +24,6 @@ async def aria2_Download(link: str, num: int):
         "--max-tries=3",
         "--console-log-level=notice",
         "-d",
-        "--max-concurrent-downloads=99,
-        "--split=1M", # Minimum possible value. Default is 20M.
         Paths.down_path,
         link,
     ]
