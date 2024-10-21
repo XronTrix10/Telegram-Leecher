@@ -1,5 +1,4 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
+# Copyright 2023 © Xron Trix | https://github.com/Xrontrix10
 
 import logging
 from PIL import Image
@@ -12,10 +11,11 @@ from colab_leecher.utility.helper import sizeUnit, fileType, getTime, status_bar
 
 async def progress_bar(current, total):
     global status_msg, status_head
-    upload_speed = 4 * 1024 * 1024
     elapsed_time_seconds = (datetime.now() - BotTimes.task_start).seconds
-    if current > 0 and elapsed_time_seconds > 0:
+    if elapsed_time_seconds > 0:
         upload_speed = current / elapsed_time_seconds
+    else:
+        upload_speed = 0
     eta = (Transfer.total_down_size - current - sum(Transfer.up_bytes)) / upload_speed
     percentage = (current + sum(Transfer.up_bytes)) / Transfer.total_down_size * 100
     await status_bar(
@@ -27,7 +27,6 @@ async def progress_bar(current, total):
         left=sizeUnit(Transfer.total_down_size),
         engine="Pyrofork 💥",
     )
-
 
 async def upload_file(file_path, real_name):
     global Transfer, MSG
