@@ -27,6 +27,7 @@ from colab_leecher.utility.helper import (
     sysINFO,
     is_google_drive,
     is_mega,
+    is_s3,
     is_terabox,
     is_ytdl_link,
     is_telegram,
@@ -37,6 +38,11 @@ from colab_leecher.downlader.gdrive import (
     get_Gfolder_size,
     getFileMetadata,
     getIDFromURL,
+)
+from colab_leecher.downlader.s3 import (
+    get_S3_Name,
+    get_S3_size,
+    s3_Download,
 )
 
 
@@ -80,6 +86,15 @@ async def downloadManager(source, is_ytdl: bool):
                     executor = ProcessPoolExecutor()
                     # await loop.run_in_executor(executor, megadl, link, i + 1)
                     await megadl(link, i + 1)
+                elif is_s3(link):
+                    s3_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Connecting to S3 for__\n\n<code>{link}</code>"
+                    try:
+                        await MSG.status_msg.edit_text(
+                            text=s3_dn + sysINFO(), reply_markup=keyboard()
+                        )
+                    except Exception as e1:
+                        print(f"Couldn't Update text ! Because: {e1}")
+                    await s3_Download(link, i + 1)
                 elif is_terabox(link):
                     tera_dn = f"<b>PLEASE WAIT ⌛</b>\n\n__Generating Download Link For__\n\n<code>{link}</code>"
                     try:
@@ -135,6 +150,11 @@ async def calDownSize(sources):
                 Transfer.total_down_size += size
             else:
                 logging.error("Couldn't Download Telegram Message")
+        elif is_s3(link):
+            try:
+                Transfer.total_down_size += get_S3_size(link)
+            except Exception as e:
+                logging.error(f"S3 size lookup failed: {e}")
         else:
             pass
 
@@ -157,5 +177,7 @@ async def get_d_name(link: str):
         Messages.download_name = (
             "Don't Know 🥲 (Trying)"  # TODO: Get download name via megadl
         )
+    elif is_s3(link):
+        Messages.download_name = get_S3_Name(link)
     else:
         Messages.download_name = get_Aria2c_Name(link)

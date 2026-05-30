@@ -7,7 +7,7 @@ from datetime import datetime
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
 from colab_leecher.utility.handler import cancelTask
-from .utility.variables import BOT, MSG, BotTimes, Paths
+from .utility.variables import BOT, MSG, BotTimes, Paths, S3
 from .utility.task_manager import taskScheduler, task_starter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from .utility.helper import isLink, setThumbnail, message_deleter, send_settings
@@ -76,6 +76,107 @@ async def yt_upload(client, message):
     text = "<b>⚡ Send YTDL DOWNLOAD LINK(s) 🔗»</b>\n\n🦀 Follow the below pattern\n\n<code>https//linktofile1.mp4\nhttps//linktofile2.mp4\n[Custom name space.mp4]\n{Password for zipping}</code>"
 
     src_request_msg = await task_starter(message, text)
+
+
+@colab_bot.on_message(filters.command("s3upload") & filters.private)
+async def s3_upload_cmd(client, message):
+    """Mirror downloaded files to a configurable S3 / Wasabi bucket."""
+    global BOT, src_request_msg
+    from colab_leecher.uploader.s3 import is_s3_configured
+
+    if not is_s3_configured():
+        await message.reply_text(
+            "⚠️ <b>S3 not configured.</b>\n\nFill <code>S3_ACCESS_KEY</code>, "
+            "<code>S3_SECRET_KEY</code> and <code>S3_BUCKET_NAME</code> in the Colab "
+            "cell (and optionally <code>S3_ENDPOINT_URL</code> for Wasabi/B2/etc.), "
+            "then restart the bot."
+        )
+        return
+
+    BOT.Mode.mode = "s3-mirror"
+    BOT.Mode.ytdl = False
+
+    text = (
+        "<b>⚡ Send Me DOWNLOAD LINK(s) 🔗»</b>\n\n"
+        f"☁️ <i>Files will be mirrored to bucket</i> <code>{S3.bucket}</code>"
+        f"{(' under prefix <code>' + S3.prefix + '</code>') if S3.prefix else ''}\n\n"
+        "🦀 Follow the below pattern\n\n"
+        "<code>https//linktofile1.mp4\nhttps//linktofile2.mp4\n"
+        "s3://other-bucket/source/object\n"
+        "[Custom name space.mp4]\n{Password for zipping}\n(Password for unzip)</code>"
+    )
+
+    src_request_msg = await task_starter(message, text)
+
+
+@colab_bot.on_message(filters.command("s3leech") & filters.private)
+async def s3_leech_cmd(client, message):
+    """Leech objects from S3 / Wasabi to Telegram (with all standard options)."""
+    global BOT, src_request_msg
+    from colab_leecher.uploader.s3 import is_s3_configured
+
+    if not is_s3_configured():
+        await message.reply_text(
+            "⚠️ <b>S3 not configured.</b>\n\nFill <code>S3_ACCESS_KEY</code>, "
+            "<code>S3_SECRET_KEY</code> and <code>S3_BUCKET_NAME</code> in the Colab "
+            "cell, then restart the bot."
+        )
+        return
+
+    BOT.Mode.mode = "leech"
+    BOT.Mode.ytdl = False
+
+    text = (
+        "<b>⚡ Send Me S3 URI(s) 🔗»</b>\n\n"
+        "🦀 Patterns:\n\n"
+        "<code>s3://my-bucket/path/to/object.mkv\n"
+        "s3://my-bucket/folder/  (downloads everything under the prefix)\n"
+        "s3:///object-in-default-bucket\n"
+        "[Custom name.ext]\n{Zip password}\n(Unzip password)</code>"
+    )
+
+    src_request_msg = await task_starter(message, text)
+
+
+@colab_bot.on_message(filters.command("s3bucket") & filters.private)
+async def s3_bucket_cmd(client, message):
+    """Override the destination S3 bucket at runtime."""
+    global S3
+    if len(message.command) != 2:
+        msg = await message.reply_text(
+            "Send\n/s3bucket <code>bucket-name</code>\nTo Change the Destination S3 Bucket. 🪣",
+            quote=True,
+        )
+    else:
+        S3.bucket = message.command[1].strip()
+        # Rebuild client lazily next call (creds didn't change, but bucket scope did).
+        msg = await message.reply_text(
+            f"S3 destination bucket set to <code>{S3.bucket}</code> ☁️", quote=True
+        )
+
+    await sleep(15)
+    await message_deleter(message, msg)
+
+
+@colab_bot.on_message(filters.command("s3prefix") & filters.private)
+async def s3_prefix_cmd(client, message):
+    """Set or clear the destination key prefix used when mirroring TO S3."""
+    global S3
+    if len(message.command) < 2:
+        S3.prefix = ""
+        msg = await message.reply_text(
+            "S3 destination prefix cleared. (Use /s3prefix <code>folder/sub</code> to set one.)",
+            quote=True,
+        )
+    else:
+        # Rebuild prefix from remaining tokens (allows spaces if quoted)
+        S3.prefix = " ".join(message.command[1:]).strip().strip("/")
+        msg = await message.reply_text(
+            f"S3 destination prefix set to <code>{S3.prefix}</code>", quote=True
+        )
+
+    await sleep(15)
+    await message_deleter(message, msg)
 
 
 @colab_bot.on_message(filters.command("settings") & filters.private)
@@ -427,7 +528,18 @@ async def unzip_pswd(client, message):
 @colab_bot.on_message(filters.command("help") & filters.private)
 async def help_command(client, message):
     msg = await message.reply_text(
-        "Send /start To Check If I am alive 🤨\n\nSend /colabxr and follow prompts to start transloading 🚀\n\nSend /settings to edit bot settings ⚙️\n\nSend /setname To Set Custom File Name 📛\n\nSend /zipaswd To Set Password For Zip File 🔐\n\nSend /unzipaswd To Set Password to Extract Archives 🔓\n\n⚠️ **You can ALWAYS SEND an image To Set it as THUMBNAIL for your files 🌄**",
+        "Send /start To Check If I am alive 🤨\n\n"
+        "Send /tupload, /gdupload, /drupload, /ytupload to start transloading 🚀\n\n"
+        "Send /s3upload to mirror downloads to your S3 / Wasabi bucket ☁️\n"
+        "Send /s3leech to leech objects from S3 / Wasabi to Telegram 📥\n"
+        "Send /s3bucket <code>name</code> to change the destination S3 bucket\n"
+        "Send /s3prefix <code>folder/sub</code> to set a destination key prefix\n\n"
+        "Send /settings to edit bot settings ⚙️\n\n"
+        "Send /setname To Set Custom File Name 📛\n\n"
+        "Send /zipaswd To Set Password For Zip File 🔐\n\n"
+        "Send /unzipaswd To Set Password to Extract Archives 🔓\n\n"
+        "⚠️ <b>You can ALWAYS SEND an image To Set it as THUMBNAIL for your files 🌄</b>\n\n"
+        "📒 S3 transfers are logged to <code>s3teletracker.json</code>",
         quote=True,
         reply_markup=InlineKeyboardMarkup(
             [

@@ -16,3 +16,4 @@ tgcrypto
 uvloop
 yt_dlp
 pymegatools
+boto3

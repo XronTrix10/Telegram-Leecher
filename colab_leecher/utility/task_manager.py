@@ -16,6 +16,7 @@ from colab_leecher.utility.helper import (
     keyboard,
     sysINFO,
     is_google_drive,
+    is_s3,
     is_telegram,
     is_ytdl_link,
     is_mega,
@@ -28,6 +29,12 @@ from colab_leecher.utility.handler import (
     Zip_Handler,
     SendLogs,
     cancelTask,
+    S3_Mirror_Handler,
+)
+from colab_leecher.utility.s3_iter import (
+    is_multi_object_s3,
+    iterate_s3_to_s3,
+    iterate_s3_to_telegram,
 )
 from colab_leecher.utility.variables import (
     BOT,
@@ -39,6 +46,29 @@ from colab_leecher.utility.variables import (
     Transfer,
     TaskError,
 )
+
+
+def _should_iterate_s3(is_dir: bool) -> bool:
+    """Return True iff the current task is a single multi-object S3 URI.
+
+    Triggers the iterative whole-bucket pipeline (download → process →
+    upload → cleanup → next) instead of the existing bulk pipeline.
+    Only single-source tasks qualify; mixed sources keep the bulk flow.
+    """
+    if is_dir:
+        return False
+    if BOT.Mode.mode not in ("leech", "s3-mirror"):
+        return False
+    if len(BOT.SOURCE) != 1:
+        return False
+    src = BOT.SOURCE[0]
+    if not is_s3(src):
+        return False
+    try:
+        return is_multi_object_s3(src)
+    except Exception as e:
+        logging.warning(f"Falling back to bulk S3 flow ({e})")
+        return False
 
 
 async def task_starter(message, text):
@@ -75,6 +105,7 @@ async def taskScheduler():
     )
     Transfer.sent_file = []
     Transfer.sent_file_names = []
+    Transfer.failed_files = []
     Transfer.down_bytes = [0, 0]
     Transfer.up_bytes = [0, 0]
     Messages.download_name = ""
@@ -98,6 +129,8 @@ async def taskScheduler():
                 ida = "💬"
             elif is_google_drive(link):
                 ida = "♻️"
+            elif is_s3(link):
+                ida = "☁️"
             elif is_torrent(link):
                 ida = "🧲"
                 Messages.caution_msg = "\n\n⚠️<i><b> Torrents Are Strictly Prohibited in Google Colab</b>, Try to avoid Magnets !</i>"
@@ -120,6 +153,16 @@ async def taskScheduler():
     cdt = datetime.now(pytz.timezone("Asia/Kolkata"))
     dt = cdt.strftime(" %d-%m-%Y")
     Messages.dump_task += f"\n\n<b>📆 Task Date » </b><i>{dt}</i>"
+
+    # Detect iterative whole-bucket / prefix S3 mode and annotate the
+    # dump message so users see at a glance that this is a long-running
+    # batch with crash-resume support.
+    iterate_mode = _should_iterate_s3(is_dir)
+    if iterate_mode:
+        Messages.dump_task += (
+            "\n\n<b>🔁 Iterative bucket mode » </b>"
+            "<i>processing one object at a time, with S3-persisted tracker resume</i>"
+        )
 
     src_text.append(Messages.dump_task)
 
@@ -158,6 +201,33 @@ async def taskScheduler():
         reply_markup=keyboard(),
     )
 
+    # Iterative whole-bucket / prefix mode: skip the bulk pipeline
+    # (calDownSize → get_d_name → downloadManager → Do_Leech/Do_*_Mirror)
+    # and dispatch to the per-object handler instead. Each iteration
+    # downloads one object, runs the user-selected pipeline (Regular /
+    # Compress / Extract / UnDoubleZip — including the >2 GB sizeChecker
+    # split for Telegram destinations), uploads, then deletes the local
+    # files and moves to the next object. The tracker is persisted to
+    # S3 after every entry so a Colab crash can be resumed by re-running
+    # the same command.
+    if iterate_mode:
+        BotTimes.current_time = time()
+        if BOT.Mode.mode == "leech":
+            await iterate_s3_to_telegram(BOT.SOURCE[0], is_zip, is_unzip, is_dualzip)
+            await SendLogs(True)
+        else:  # s3-mirror — also validate destination is configured
+            from colab_leecher.uploader.s3 import is_s3_configured
+
+            if not is_s3_configured():
+                await cancelTask(
+                    "S3 is NOT CONFIGURED ! Set S3_ACCESS_KEY, S3_SECRET_KEY and "
+                    "S3_BUCKET_NAME in the Colab cell, restart the bot and try again."
+                )
+                return
+            await iterate_s3_to_s3(BOT.SOURCE[0], is_zip, is_unzip, is_dualzip)
+            await SendLogs(False)
+        return
+
     await calDownSize(BOT.SOURCE)
 
     if not is_dir:
@@ -172,11 +242,12 @@ async def taskScheduler():
 
     BotTimes.current_time = time()
 
-    if BOT.Mode.mode != "mirror":
-        await Do_Leech(BOT.SOURCE, is_dir, BOT.Mode.ytdl, is_zip, is_unzip, is_dualzip)
-    else:
+    if BOT.Mode.mode == "mirror":
         await Do_Mirror(BOT.SOURCE, BOT.Mode.ytdl, is_zip, is_unzip, is_dualzip)
-
+    elif BOT.Mode.mode == "s3-mirror":
+        await Do_S3_Mirror(BOT.SOURCE, BOT.Mode.ytdl, is_zip, is_unzip, is_dualzip)
+    else:
+        await Do_Leech(BOT.SOURCE, is_dir, BOT.Mode.ytdl, is_zip, is_unzip, is_dualzip)
 
 async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
     if is_dir:
@@ -263,5 +334,44 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
         shutil.copytree(Paths.temp_zpath, mirror_dir_)
     else:
         shutil.copytree(Paths.down_path, mirror_dir_)
+
+    await SendLogs(False)
+
+
+
+async def Do_S3_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
+    """Mirror downloaded sources to a configurable S3 bucket.
+
+    Mirrors `Do_Mirror` (Google Drive) but the destination is S3.
+    Supports the full set of options exposed by other commands:
+    Regular / Compress (zip) / Extract (unzip) / UnDoubleZip, plus the
+    >2 GB pipeline (split or zip-split) when applicable upstream.
+    """
+    from colab_leecher.uploader.s3 import is_s3_configured
+
+    if not is_s3_configured():
+        await cancelTask(
+            "S3 is NOT CONFIGURED ! Set S3_ACCESS_KEY, S3_SECRET_KEY and S3_BUCKET_NAME in the Colab cell, restart the bot and try again."
+        )
+        return
+
+    await downloadManager(source, is_ytdl)
+
+    Transfer.total_down_size = getSize(Paths.down_path)
+
+    applyCustomName()
+
+    if is_zip:
+        await Zip_Handler(Paths.down_path, True, True)
+        await S3_Mirror_Handler(Paths.temp_zpath, True)
+    elif is_unzip:
+        await Unzip_Handler(Paths.down_path, True)
+        await S3_Mirror_Handler(Paths.temp_unzip_path, True)
+    elif is_dualzip:
+        await Unzip_Handler(Paths.down_path, True)
+        await Zip_Handler(Paths.temp_unzip_path, True, True)
+        await S3_Mirror_Handler(Paths.temp_zpath, True)
+    else:
+        await S3_Mirror_Handler(Paths.down_path, True)
 
     await SendLogs(False)

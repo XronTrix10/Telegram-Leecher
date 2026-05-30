@@ -245,12 +245,24 @@ async def SendLogs(is_leech: bool):
         else sizeUnit(Transfer.total_down_size)
     )
 
+    # Surface any parts/files that failed to upload (e.g. a split part that
+    # exceeded Telegram's 2 GB limit) so the report never falsely claims a
+    # clean COMPLETE while data is actually missing.
+    failed_note = ""
+    if getattr(Transfer, "failed_files", None):
+        failed_list = "\n".join(f"   • <code>{n}</code>" for n in Transfer.failed_files)
+        failed_note = (
+            f"\n\n<b>⚠️ {len(Transfer.failed_files)} FILE(S) FAILED TO UPLOAD »</b>\n"
+            f"{failed_list}\n<i>These were NOT delivered. Check logs / retry.</i>"
+        )
+
     last_text = (
         f"\n\n<b>#{(BOT.Mode.mode).upper()}_COMPLETE 🔥</b>\n\n"
         + f"╭<b>📛 Name » </b><code>{Messages.download_name}</code>\n"
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
         + f"╰<b>🍃 Saved Time »</b> <code>{getTime((datetime.now() - BotTimes.start_time).seconds)}</code>"
+        + failed_note
     )
 
     if BOT.State.task_going:
@@ -308,3 +320,30 @@ async def SendLogs(is_leech: bool):
 
     BOT.State.started = False
     BOT.State.task_going = False
+
+
+
+async def S3_Mirror_Handler(folder_path: str, remove: bool):
+    """Top-level handler that uploads `folder_path` to S3.
+
+    Honours the same status-bar conventions as `Leech` (Telegram upload
+    handler) so the user-facing experience is identical.
+    """
+    # Local import keeps this module import-cycle free.
+    from colab_leecher.uploader.s3 import S3_Mirror
+
+    Messages.status_head = (
+        f"<b>📤 UPLOADING TO S3 » </b>\n\n<code>{Messages.download_name}</code>\n"
+    )
+    try:
+        MSG.status_msg = await MSG.status_msg.edit_text(
+            text=Messages.task_msg
+            + Messages.status_head
+            + "\n⏳ __Starting.....__"
+            + sysINFO(),
+            reply_markup=keyboard(),
+        )
+    except Exception as e:
+        logging.error(f"Error updating status bar (S3 handler): {e}")
+
+    await S3_Mirror(folder_path, remove)

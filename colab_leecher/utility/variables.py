@@ -57,6 +57,7 @@ class Transfer:
     total_down_size = 0
     sent_file = []
     sent_file_names = []
+    failed_files = []  # names of files/parts that failed to upload (e.g. >2 GB)
 
 
 class TaskError:
@@ -85,6 +86,7 @@ class Paths:
     temp_files_dir = f"{WORK_PATH}/leech_temp"
     thumbnail_ytdl = f"{WORK_PATH}/ytdl_thumbnails"
     access_token = "/content/token.pickle"
+    s3_tracker = "/content/Telegram-Leecher/s3teletracker.json"
 
 
 class Messages:
@@ -110,3 +112,22 @@ class Aria2c:
 
 class Gdrive:
     service = None
+
+
+class S3:
+    """Runtime S3 / Wasabi-compatible config and shared state.
+
+    Values are populated from credentials.json on bot start (see
+    `colab_leecher/uploader/s3.py::ensure_s3_client`). The destination
+    `bucket` and `prefix` can also be changed at runtime via /s3bucket
+    and /s3prefix commands.
+    """
+    access_key = ""
+    secret_key = ""
+    endpoint_url = ""
+    bucket = ""
+    region = "us-east-1"
+    prefix = ""  # destination key prefix when mirroring TO S3
+    client = None  # cached boto3 client
+    # progress shared between callback (thread) and async status loop
+    bytes_transferred = 0

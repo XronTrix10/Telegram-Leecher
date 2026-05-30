@@ -30,6 +30,8 @@ def isLink(_, __, update):
             return True
         elif update.text.startswith("magnet:?xt=urn:btih:"):
             return True
+        elif str(update.text).lstrip().lower().startswith("s3://"):
+            return True
 
         parsed = urlparse(update.text)
 
@@ -56,6 +58,27 @@ def is_telegram(link):
 
 def is_torrent(link):
     return "magnet" in link or "torrent" in link
+
+
+def is_s3(link):
+    return str(link).strip().lower().startswith("s3://")
+
+
+def parse_s3_uri(uri: str):
+    """Parse an `s3://bucket/key` URI.
+
+    Returns a ``(bucket, key)`` tuple. If the bucket part is empty
+    (e.g. ``s3:///some/key``), bucket is returned as an empty string and
+    callers should fall back to the configured default bucket.
+    """
+    raw = str(uri).strip()
+    if not raw.lower().startswith("s3://"):
+        return "", ""
+    rest = raw[5:]
+    parts = rest.split("/", 1)
+    bucket = parts[0]
+    key = parts[1] if len(parts) > 1 else ""
+    return bucket, key
 
 
 def getTime(seconds):

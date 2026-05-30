@@ -297,52 +297,131 @@ async def splitArchive(file_path, max_size):
 
 
 async def splitVideo(file_path, max_size, remove: bool):
+    """Split a video into parts that are EACH guaranteed <= the Telegram cap.
+
+    `max_size` is the per-part cap in MiB (e.g. 2000 → 2000 MiB = 2 GB).
+
+    The old implementation computed the segment duration from ffprobe's
+    reported ``format.bit_rate``, which is often missing or under-reported.
+    When the bitrate read low, the derived ``segment_time`` was too long and
+    ffmpeg produced fewer, OVERSIZED parts (e.g. a 5 GiB file → 2 parts of
+    ~2.5 GiB), each of which exceeds Telegram's 2 GB limit and fails to
+    upload — so the file was never delivered completely.
+
+    This version:
+      1. Derives the segment time from the ACTUAL file size and duration
+         (reliable), not the reported bitrate.
+      2. Targets ~94% of the cap so keyframe-aligned cuts stay under it.
+      3. VERIFIES every produced part and, if any part still exceeds the
+         cap (or ffmpeg produced nothing), falls back to a guaranteed raw
+         byte-split so no part is ever larger than the limit.
+    """
     global Paths, BOT, MSG, Messages
     _, filename = ospath.split(file_path)
     just_name, extension = ospath.splitext(filename)
 
-    # FFmpeg command to get video information in JSON format
-    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", file_path]
-
-    bitrate = None
-    try:
-        # Run the command and get output
-        output = subprocess.check_output(cmd)
-        video_info = json.loads(output)
-        # Get bitrate in bits per second
-        bitrate = float(video_info["format"]["bit_rate"])
-    except subprocess.CalledProcessError:
-        logging.error("Error: Could not get video bitrate")
-        bitrate = 1000
-
-    # Convert target size from MB to bits
-    target_size_bits = max_size * 8 * 1024 * 1024
-
-    # Calculate duration in seconds
-    duration = int(target_size_bits / bitrate)
-
-    cmd = f'ffmpeg -i {file_path} -c copy -f segment -segment_time {duration} -reset_timestamps 1 "{Paths.temp_zpath}/{just_name}.part%03d{extension}"'
+    total_size = ospath.getsize(file_path)
+    # Telegram hard cap for a single part, in bytes.
+    max_part_bytes = int(max_size) * 1024 * 1024
 
     Messages.status_head = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     BotTimes.task_start = datetime.now()
 
-    proc = subprocess.Popen(cmd, shell=True)
-    total_size = getSize(file_path)
-    total_in_unit = sizeUnit(total_size)
-    while proc.poll() is None:
-        speed_string, eta, percentage = speedETA(
-            BotTimes.task_start, getSize(Paths.temp_zpath), total_size
+    # --- determine total duration (seconds) — reliable, unlike bit_rate ---
+    duration_total = 0.0
+    try:
+        output = subprocess.check_output(
+            ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", file_path]
         )
-        await status_bar(
-            Messages.status_head,
-            speed_string,
-            percentage,
-            getTime(eta),
-            sizeUnit(getSize(Paths.temp_zpath)),
-            total_in_unit,
-            "Xr-Split ✂️",
-        )
-        await sleep(1)
+        duration_total = float(json.loads(output)["format"].get("duration", 0) or 0)
+    except Exception as e:
+        logging.error(f"splitVideo: could not read duration ({e})")
+        duration_total = 0.0
 
-    if remove:
+    use_raw_fallback = False
+
+    if duration_total <= 0 or total_size <= 0:
+        # Can't time-segment reliably → guaranteed raw byte split.
+        use_raw_fallback = True
+    else:
+        # Variable-bitrate (VBR) content — e.g. 4K AV1 movies — has bitrate
+        # peaks far above the average. A single attempt at 94% of the cap can
+        # still produce an oversized segment if a high-bitrate scene lands in
+        # one part. So we try progressively smaller per-part targets and
+        # re-verify each time; the first attempt whose parts are ALL within
+        # the cap wins. If none succeed we drop to the raw byte-split.
+        out_pattern = f"{Paths.temp_zpath}/{just_name}.part%03d{extension}"
+        total_in_unit = sizeUnit(total_size)
+
+        def _clear_parts():
+            for f in os.listdir(Paths.temp_zpath):
+                if f.startswith(just_name + ".part"):
+                    try:
+                        os.remove(ospath.join(Paths.temp_zpath, f))
+                    except OSError:
+                        pass
+
+        success = False
+        for target_ratio in (0.94, 0.85, 0.72, 0.60):
+            _clear_parts()
+            target_bytes = int(max_part_bytes * target_ratio)
+            seg_time = max(1, int(duration_total * target_bytes / total_size))
+
+            # -map 0 keeps every audio/subtitle track (important for movies).
+            cmd = (
+                f'ffmpeg -i "{file_path}" -c copy -map 0 -f segment '
+                f'-segment_time {seg_time} -reset_timestamps 1 "{out_pattern}"'
+            )
+            Messages.status_head = (
+                f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
+                f"<i>target {int(target_ratio*100)}% of cap, ~{seg_time}s/part</i>\n"
+            )
+            BotTimes.task_start = datetime.now()
+            proc = subprocess.Popen(cmd, shell=True)
+            while proc.poll() is None:
+                speed_string, eta, percentage = speedETA(
+                    BotTimes.task_start, getSize(Paths.temp_zpath), total_size
+                )
+                await status_bar(
+                    Messages.status_head,
+                    speed_string,
+                    percentage,
+                    getTime(eta),
+                    sizeUnit(getSize(Paths.temp_zpath)),
+                    total_in_unit,
+                    "Xr-Split ✂️",
+                )
+                await sleep(1)
+
+            # --- verify: every produced part must be within the cap ---
+            produced = [
+                ospath.join(Paths.temp_zpath, f)
+                for f in os.listdir(Paths.temp_zpath)
+                if f.startswith(just_name + ".part")
+            ]
+            oversized = [p for p in produced if ospath.getsize(p) > max_part_bytes]
+            if produced and not oversized:
+                logging.info(
+                    f"splitVideo: OK at {int(target_ratio*100)}% target → "
+                    f"{len(produced)} part(s), largest "
+                    f"{max(ospath.getsize(p) for p in produced)/1024**3:.2f} GiB"
+                )
+                success = True
+                break
+            logging.warning(
+                f"splitVideo: {int(target_ratio*100)}% target produced "
+                f"{len(produced)} part(s) with {len(oversized)} over the "
+                f"{max_size} MiB cap — retrying smaller."
+            )
+
+        if not success:
+            _clear_parts()
+            use_raw_fallback = True
+
+    if use_raw_fallback:
+        # Raw byte split: parts are EACH exactly <= max_part_bytes. They are
+        # not individually playable but reassemble with `cat parts* > file`.
+        await splitArchive(file_path, max_part_bytes)
+
+    if remove and ospath.exists(file_path):
         os.remove(file_path)
